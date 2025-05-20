@@ -42,14 +42,14 @@ export default function HeroSection() {
   // State để theo dõi index của card hiện tại (trung tâm)
   const [activeIndex, setActiveIndex] = useState<number>(2);
   // State để lưu trữ hướng chuyển động (trái hoặc phải)
-  const [direction, setDirection] = useState<number>(0);
-  // State để theo dõi kích thước màn hình cho responsive
+  const [direction, setDirection] = useState<number>(0);  // State để theo dõi kích thước màn hình cho responsive
   const [isMobile, setIsMobile] = useState<boolean>(false);
   // State để lưu trữ kích thước màn hình
   const [windowSize, setWindowSize] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
-  });  // Effect để preload tất cả hình ảnh
+  });
+    // Effect để preload tất cả hình ảnh
   useEffect(() => {
     const preloadImages = () => {
       const imagePromises = artworks.map((artwork) => {
@@ -62,8 +62,8 @@ export default function HeroSection() {
       });
 
       Promise.all(imagePromises)
-        .then((loadedImageUrls) => {
-          setLoadedImages(loadedImageUrls);
+        .then(() => {
+          console.log("All images preloaded successfully");
         })
         .catch((err) => {
           console.error("Error preloading images", err);
@@ -194,8 +194,7 @@ export default function HeroSection() {
       style={backgroundStyle}
       className="h-screen w-screen flex flex-col items-center justify-center relative overflow-hidden bg-blue-900"
     >
-      {/* Overlay gradient để làm tối nhẹ background mà không làm mờ */}
-      <motion.div
+      {/* Overlay gradient để làm tối nhẹ background mà không làm mờ */}      <motion.div
         className="absolute inset-0 bg-black/20"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -203,8 +202,8 @@ export default function HeroSection() {
       />
 
       {/* Container cho toàn bộ nội dung - đảm bảo không vượt quá kích thước màn hình */}
-      <div className="w-full h-full flex flex-col items-center justify-center px-4">
-        <div className="text-center space-y-4">
+      <div className="w-full h-full flex flex-col items-center justify-center px-4 pt-12">
+        <div className="text-center space-y-4 mt-16">
           <motion.h1
             className="text-2xl md:text-4xl lg:text-5xl font-bold text-white relative z-40 drop-shadow-lg"
             initial={{ opacity: 0, y: 20 }}
