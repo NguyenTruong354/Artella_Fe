@@ -49,7 +49,11 @@ export default {
         'fade-up': 'fade-up 0.8s ease-out',
         'slideInLeft': 'slideInLeft 0.8s ease-out',
         'slideInRight': 'slideInRight 0.8s ease-out'
-      }
+      },
+      translate: {
+        '30': '7.5rem',
+        '-30': '-7.5rem',
+      },
     },
   },
   plugins: [],
