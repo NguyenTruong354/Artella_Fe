@@ -296,12 +296,11 @@ export default function EnhancedHeroSection() {
       display: "block",
     };
   };
-
   return (
     <div
       ref={parallaxRef}
       style={backgroundStyle}
-      className="h-screen w-screen flex flex-col items-center justify-center relative overflow-hidden bg-blue-900"
+      className="h-screen w-full flex flex-col items-center justify-center relative overflow-hidden bg-blue-900"
     >
       {/* Overlay gradient với hiệu ứng nhẹ */}      
       <motion.div
