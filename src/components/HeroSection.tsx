@@ -1,6 +1,5 @@
-// filepath: d:\Project_Nodejs\Smart_Market\src\components\HeroSection.tsx
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, useAnimation, useMotionValue, AnimatePresence } from "framer-motion";
 import ArtCard from "./ArtCard";
 
 // Mảng dữ liệu nghệ thuật
@@ -38,18 +37,66 @@ const artworks = [
   },
 ];
 
-export default function HeroSection() {
+// Các đối tượng cho phần tử trang trí
+const decorElements = [
+  { x: -15, y: -15, size: 10, delay: 0 },
+  { x: 25, y: 25, size: 8, delay: 0.3 },
+  { x: -25, y: 15, size: 14, delay: 0.5 },
+  { x: 15, y: -25, size: 6, delay: 0.7 },
+  { x: -5, y: 30, size: 12, delay: 0.2 },
+  { x: 30, y: -5, size: 9, delay: 0.4 },
+];
+
+// Variants cho animation
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { 
+      staggerChildren: 0.2,
+      delayChildren: 0.3
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: { 
+      type: "spring",
+      stiffness: 300,
+      damping: 24
+    }
+  }
+};
+
+export default function EnhancedHeroSection() {
   // State để theo dõi index của card hiện tại (trung tâm)
   const [activeIndex, setActiveIndex] = useState<number>(2);
   // State để lưu trữ hướng chuyển động (trái hoặc phải)
-  const [direction, setDirection] = useState<number>(0);  // State để theo dõi kích thước màn hình cho responsive
+  const [direction, setDirection] = useState<number>(0);
+  // State để theo dõi kích thước màn hình cho responsive
   const [isMobile, setIsMobile] = useState<boolean>(false);
   // State để lưu trữ kích thước màn hình
   const [windowSize, setWindowSize] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
   });
-    // Effect để preload tất cả hình ảnh
+  // State cho auto-slide
+  const [isAutoSliding, setIsAutoSliding] = useState<boolean>(true);
+  // State để theo dõi khi người dùng tương tác với slide
+  const [userInteracted, setUserInteracted] = useState<boolean>(false);
+  // Animation controls
+  const controls = useAnimation();
+  // Ref cho parallax effect
+  const parallaxRef = useRef<HTMLDivElement>(null);
+  // Motion values for parallax effect
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  // Effect để preload tất cả hình ảnh
   useEffect(() => {
     const preloadImages = () => {
       const imagePromises = artworks.map((artwork) => {
@@ -65,13 +112,61 @@ export default function HeroSection() {
         .then(() => {
           console.log("All images preloaded successfully");
         })
-        .catch((err) => {
+        .catch((err: Error) => {
           console.error("Error preloading images", err);
         });
     };
 
     preloadImages();
   }, []);
+
+  // Effect để xử lý chuyển động parallax
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const { clientX, clientY } = e;
+      // Cập nhật giá trị motion values theo vị trí chuột
+      mouseX.set(clientX / windowSize.width - 0.5);
+      mouseY.set(clientY / windowSize.height - 0.5);
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [mouseX, mouseY, windowSize]);
+
+  // Effect để xử lý auto-sliding
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+    
+    // Chỉ auto-slide khi người dùng không tương tác với slider
+    if (isAutoSliding && !userInteracted) {
+      intervalId = setInterval(() => {
+        handleNextClick(false);
+      }, 5000); // Chuyển slide sau mỗi 5 giây
+    }
+    
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [isAutoSliding, activeIndex, userInteracted]);
+
+  // Effect tạm dừng auto-slide nếu người dùng tương tác, và khôi phục sau 10 giây
+  useEffect(() => {
+    let pauseTimeout: NodeJS.Timeout;
+    
+    if (userInteracted) {
+      pauseTimeout = setTimeout(() => {
+        setUserInteracted(false);
+      }, 10000);
+    }
+    
+    return () => {
+      clearTimeout(pauseTimeout);
+    };
+  }, [userInteracted]);
+
   // Effect để kiểm tra kích thước màn hình
   useEffect(() => {
     const handleResize = () => {
@@ -91,18 +186,22 @@ export default function HeroSection() {
     // Cleanup
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-  // Sử dụng background image dựa trên card hiện tại
+
+  // Sử dụng background image dựa trên card hiện tại với hiệu ứng parallax
   const backgroundStyle = {
     backgroundImage: `url(${artworks[activeIndex].imageUrl})`,
-    backgroundSize: "cover",
-    backgroundPosition: "center",
+    backgroundSize: "cover", 
+    backgroundPosition: `calc(50% + ${mouseX.get() * 20}px) calc(50% + ${mouseY.get() * 20}px)`,
     backgroundRepeat: "no-repeat",
     backgroundAttachment: "fixed",
     transition: "background-image 0.8s ease-in-out",
   };
 
   // Xử lý khi nhấn nút điều hướng trước đó
-  const handlePrevClick = () => {
+  const handlePrevClick = (userInitiated: boolean = true) => {
+    if(userInitiated) {
+      setUserInteracted(true);
+    }
     setDirection(-1);
     setActiveIndex((prevIndex) => {
       // Tạo hiệu ứng vòng tròn khi quay lại
@@ -112,10 +211,16 @@ export default function HeroSection() {
         return prevIndex - 1;
       }
     });
+    
+    // Animate elements
+    controls.start("visible");
   };
 
   // Xử lý khi nhấn nút điều hướng tiếp theo
-  const handleNextClick = () => {
+  const handleNextClick = (userInitiated: boolean = true) => {
+    if(userInitiated) {
+      setUserInteracted(true);
+    }
     setDirection(1);
     setActiveIndex((prevIndex) => {
       // Tạo hiệu ứng vòng tròn khi đi tiếp
@@ -125,6 +230,9 @@ export default function HeroSection() {
         return prevIndex + 1;
       }
     });
+    
+    // Animate elements
+    controls.start("visible");
   };
 
   // Tính toán vị trí và z-index cho mỗi card
@@ -191,72 +299,179 @@ export default function HeroSection() {
 
   return (
     <div
+      ref={parallaxRef}
       style={backgroundStyle}
       className="h-screen w-screen flex flex-col items-center justify-center relative overflow-hidden bg-blue-900"
     >
-      {/* Overlay gradient để làm tối nhẹ background mà không làm mờ */}      <motion.div
-        className="absolute inset-0 bg-black/20"
+      {/* Overlay gradient với hiệu ứng nhẹ */}      
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-b from-black/30 to-black/10"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1 }}
+        style={{ backgroundPosition: `calc(50% + ${mouseX.get() * 10}px) calc(50% + ${mouseY.get() * 10}px)` }}
       />
 
-      {/* Container cho toàn bộ nội dung - đảm bảo không vượt quá kích thước màn hình */}
-      <div className="w-full h-full flex flex-col items-center justify-center px-4 pt-12">
-        <div className="text-center space-y-4 mt-16">
+      {/* Phần tử trang trí */}
+      {decorElements.map((elem, index) => (
+        <motion.div
+          key={index}
+          className="absolute rounded-full bg-white/30 backdrop-blur-sm"
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{ 
+            opacity: [0.4, 0.8, 0.4],
+            scale: [1, 1.2, 1],
+            x: elem.x + '%',
+            y: elem.y + '%',
+          }}
+          transition={{
+            duration: 5,
+            delay: elem.delay,
+            repeat: Infinity,
+            repeatType: "reverse"
+          }}
+          style={{
+            width: elem.size * 5,
+            height: elem.size * 5,
+          }}
+        />
+      ))}
+
+      {/* Container cho toàn bộ nội dung với hiệu ứng stagger */}
+      <motion.div 
+        className="w-full h-full flex flex-col items-center justify-center px-4 pt-12"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.div
+          className="text-center space-y-4 mt-16"
+          variants={itemVariants}
+        >
           <motion.h1
             className="text-2xl md:text-4xl lg:text-5xl font-bold text-white relative z-40 drop-shadow-lg"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
             style={{
               fontFamily: "'Segoe Print', cursive",
               textShadow: "2px 2px 4px rgba(0,0,0,0.5)",
               letterSpacing: "1px",
             }}
+            whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
           >
-            Touch the art.<br />
-            Own the emotion
+            <motion.span 
+              className="inline-block" 
+              animate={{ 
+                y: [0, -5, 0],
+                rotateZ: [0, 2, 0]
+              }}
+              transition={{ 
+                duration: 5, 
+                repeat: Infinity,
+                repeatType: "reverse" 
+              }}
+            >
+              Touch the art.
+            </motion.span>
+            <br />
+            <motion.span 
+              className="inline-block" 
+              animate={{ 
+                y: [0, -3, 0],
+                rotateZ: [0, -1, 0]
+              }}
+              transition={{ 
+                duration: 4, 
+                delay: 0.5,
+                repeat: Infinity,
+                repeatType: "reverse" 
+              }}
+            >
+              Own the emotion
+            </motion.span>
           </motion.h1>
           <motion.button
             className="px-6 py-2 bg-yellow-500 text-white rounded-md text-lg font-semibold shadow-md hover:bg-yellow-600 transition-colors duration-200 focus:outline-none z-40"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.6 }}
-            whileHover={{ scale: 1.05 }}
+            whileHover={{ 
+              scale: 1.05, 
+              boxShadow: "0 0 15px rgba(255,200,0,0.5)",
+              transition: { duration: 0.2 } 
+            }}
             whileTap={{ scale: 0.95 }}
           >
             Explore More
           </motion.button>
-        </div>
+        </motion.div>
+        
+        {/* Indicator cho navigation */}
+        <motion.div 
+          className="absolute bottom-8 flex space-x-2 z-50"
+          variants={itemVariants}
+        >
+          {artworks.map((_, index) => (
+            <motion.div
+              key={index}
+              className={`h-2 rounded-full cursor-pointer ${index === activeIndex ? 'w-6 bg-yellow-500' : 'w-2 bg-white/50'}`}
+              onClick={() => {
+                setUserInteracted(true);
+                setActiveIndex(index);
+              }}
+              whileHover={{ scale: 1.2 }}
+              whileTap={{ scale: 0.9 }}
+              animate={index === activeIndex ? { 
+                width: 24,
+                backgroundColor: "rgb(234 179 8)" 
+              } : { 
+                width: 8,
+                backgroundColor: "rgba(255, 255, 255, 0.5)" 
+              }}
+              transition={{
+                duration: 0.3,
+                type: "spring",
+                stiffness: 300,
+                damping: 25
+              }}
+            />
+          ))}
+        </motion.div>
         
         {/* Container for art cards */}
         <div className="relative w-full h-[200px] sm:h-[220px] md:h-[250px] lg:h-[300px] flex items-center justify-center mt-8">
-          {artworks.map((artwork, index) => (
-            <motion.div
-              key={artwork.id}
-              className="absolute pointer-events-auto"
-              custom={direction}
-              initial={false}
-              animate={getCardStyles(index)}
-              transition={{
-                type: "spring",
-                stiffness: 200,
-                damping: 25,
-                mass: 1,
-              }}
-            >
-              <ArtCard
-                title={artwork.title}
-                quote={artwork.quote}
-                imageUrl={artwork.imageUrl}
-                onPrev={handlePrevClick}
-                onNext={handleNextClick}
-              />
-            </motion.div>
-          ))}
+          <AnimatePresence mode="wait">
+            {artworks.map((artwork, index) => (
+              <motion.div
+                key={artwork.id}
+                className="absolute pointer-events-auto"
+                custom={direction}
+                initial={false}
+                animate={getCardStyles(index)}
+                transition={{
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 30,
+                  mass: 1,
+                }}
+                whileHover={{ 
+                  y: index === activeIndex ? [0, -10, 0] : 30,
+                  transition: {
+                    y: {
+                      repeat: index === activeIndex ? Infinity : 0,
+                      duration: index === activeIndex ? 2 : 0.3,
+                      repeatType: "reverse"
+                    }
+                  }
+                }}
+              >
+                <ArtCard
+                  title={artwork.title}
+                  quote={artwork.quote}
+                  imageUrl={artwork.imageUrl}
+                  onPrev={() => handlePrevClick()}
+                  onNext={() => handleNextClick()}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

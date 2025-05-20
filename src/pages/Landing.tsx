@@ -1,4 +1,3 @@
-// filepath: d:\Project_Nodejs\Smart_Market\src\pages\Home.tsx
 import React from 'react';
 import HeroSection from '../components/HeroSection';
 import Navbar from '../components/Navbar';

@@ -7,7 +7,7 @@ interface ArtCardProps {
   imageUrl: string;
   onPrev?: () => void;
   onNext?: () => void;
-  index?: number; // Thêm index để tạo hiệu ứng stagger
+  index?: number; 
 }
 
 // Định nghĩa các variants để tối ưu hóa hiệu suất animation
