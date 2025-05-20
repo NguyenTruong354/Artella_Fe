@@ -15,14 +15,14 @@ const artworks = [
     id: 2,
     title: "Autumn Landscape",
     quote: '"Nature always wears the colors of the spirit."',
-    imageUrl: "/src/assets/background_2.jpeg",
+    imageUrl: "/src/assets/background_2.jpg",
   },
   {
-    id: 33,
+    id: 3,
     title: "The Starry Night",
     quote:
       '"I look at the stars and with all my being feel that I am part of one of these stars."',
-    imageUrl: "/src/assets/background_1.jpeg",
+    imageUrl: "/src/assets/background_1.jpg",
   },
   {
     id: 4,
