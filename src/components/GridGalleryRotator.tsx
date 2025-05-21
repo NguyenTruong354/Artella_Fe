@@ -28,7 +28,7 @@ const gridTemplates = [
     "area-big area-big area-big area-1 area-2 area-3"
     "area-big area-big area-big area-4 area-5 area-6"
     "area-big area-big area-big area-7 area-7 area-7"
-    "area-8 area-9 area-10 area-11 area-11 area-11" 
+    "area-8 area-9 area-10 area-11 area-11 area-11"
     "area-12 area-13 area-14 area-11 area-11 area-11"
     "area-15 area-16 area-17 area-18 area-19 area-20"
   `,
@@ -41,14 +41,14 @@ const gridTemplates = [
     "area-v7 area-v7 area-v8 area-v8 area-v9 area-v9"
     "area-v7 area-v7 area-v8 area-v8 area-v9 area-v9"
   `,
-  // Template 5: Kiểu kim tự tháp với hiệu ứng sóng gợn từ trung tâm
+  // Template 5: Kiểu lưới chữ nhật xen kẽ lớn nhỏ
   `
-    "corner1 corner1 corner1 corner2 corner2 corner2"
-    "edge1 ring1 ring1 ring1 ring1 edge2"
-    "edge1 ring1 ring2 ring2 ring1 edge2"
-    "edge3 ring1 ring2 center ring1 edge4"
-    "edge3 ring1 ring1 ring1 ring1 edge4"
-    "corner3 corner3 corner3 corner4 corner4 corner4"
+    "rect-big rect-big rect-big rect1 rect2 rect3"
+    "rect-big rect-big rect-big rect4 rect5 rect6"
+    "rect-big rect-big rect-big rect7 rect8 rect9"
+    "rect10 rect10 rect10 rect10 rect10 rect10"
+    "rect11 rect12 rect13 rect14 rect15 rect16"
+    "rect17 rect18 rect19 rect20 rect21 rect22"
   `
 ];
 
@@ -130,29 +130,31 @@ const templateItems: GridItem[][] = [
     { id: "sym-8", area: "area-v8", animationDelay: 1.4, animationType: "slide" },
     { id: "sym-9", area: "area-v9", animationDelay: 1.6, animationType: "fade" }
   ],
-  // Items cho template 5 (kiểu kim tự tháp với hiệu ứng sóng gợn từ trung tâm)
+  // Items cho template 5 (lưới chữ nhật xen kẽ lớn nhỏ)
   [
-    // Điểm trung tâm - xuất hiện đầu tiên với hiệu ứng zoom mạnh
-    { id: "pyramid-center-1", area: "center", animationDelay: 0, animationType: "zoom", backgroundColor: "rgba(249, 115, 22, 0.8)", className: "min-h-[60px] min-w-[60px]" },
-    // Vòng trong - hiệu ứng xuất hiện thứ hai với màu ấm
-    { id: "pyramid-ring2-1", area: "ring2", animationDelay: 0.2, animationType: "zoom", backgroundColor: "rgba(245, 158, 11, 0.75)", className: "min-h-[50px] min-w-[50px]" },
-    { id: "pyramid-ring2-2", area: "ring2", animationDelay: 0.3, animationType: "zoom", backgroundColor: "rgba(217, 119, 6, 0.75)", className: "min-h-[50px] min-w-[50px]" },
-    { id: "pyramid-ring2-3", area: "ring2", animationDelay: 0.4, animationType: "zoom", backgroundColor: "rgba(180, 83, 9, 0.75)", className: "min-h-[50px] min-w-[50px]" },
-    // Vòng ngoài - xuất hiện theo kiểu sóng gợn với màu nhạt hơn
-    { id: "pyramid-ring1-1", area: "ring1", animationDelay: 0.5, animationType: "fade", backgroundColor: "rgba(234, 88, 12, 0.7)", className: "min-h-[50px] min-w-[50px]" },
-    { id: "pyramid-ring1-2", area: "ring1", animationDelay: 0.6, animationType: "fade", backgroundColor: "rgba(251, 146, 60, 0.7)", className: "min-h-[50px] min-w-[50px]" },
-    { id: "pyramid-ring1-3", area: "ring1", animationDelay: 0.7, animationType: "fade", backgroundColor: "rgba(249, 115, 22, 0.7)", className: "min-h-[50px] min-w-[50px]" },
-    { id: "pyramid-ring1-4", area: "ring1", animationDelay: 0.8, animationType: "fade", backgroundColor: "rgba(253, 186, 116, 0.7)", className: "min-h-[50px] min-w-[50px]" },
-    // Các cạnh - xuất hiện với hiệu ứng slide từ các hướng khác nhau
-    { id: "pyramid-edge1-1", area: "edge1", animationDelay: 1.3, animationType: "slide", backgroundColor: "rgba(154, 52, 18, 0.65)", slideDirection: "right", className: "min-h-[50px] min-w-[50px]" },
-    { id: "pyramid-edge2-1", area: "edge2", animationDelay: 1.4, animationType: "slide", backgroundColor: "rgba(194, 65, 12, 0.65)", slideDirection: "left", className: "min-h-[50px] min-w-[50px]" },
-    { id: "pyramid-edge3-1", area: "edge3", animationDelay: 1.5, animationType: "slide", backgroundColor: "rgba(154, 52, 18, 0.65)", slideDirection: "right", className: "min-h-[50px] min-w-[50px]" },
-    { id: "pyramid-edge4-1", area: "edge4", animationDelay: 1.6, animationType: "slide", backgroundColor: "rgba(194, 65, 12, 0.65)", slideDirection: "left", className: "min-h-[50px] min-w-[50px]" },
-    // Các góc - xuất hiện cuối cùng với hiệu ứng rotate
-    { id: "pyramid-corner1-1", area: "corner1", animationDelay: 2.0, animationType: "rotate", backgroundColor: "rgba(120, 53, 15, 0.6)", className: "min-h-[50px] min-w-[50px]" },
-    { id: "pyramid-corner2-1", area: "corner2", animationDelay: 2.1, animationType: "rotate", backgroundColor: "rgba(120, 53, 15, 0.6)", className: "min-h-[50px] min-w-[50px]" },
-    { id: "pyramid-corner3-1", area: "corner3", animationDelay: 2.2, animationType: "rotate", backgroundColor: "rgba(120, 53, 15, 0.6)", className: "min-h-[50px] min-w-[50px]" },
-    { id: "pyramid-corner4-1", area: "corner4", animationDelay: 2.3, animationType: "rotate", backgroundColor: "rgba(120, 53, 15, 0.6)", className: "min-h-[50px] min-w-[50px]" }
+    { id: "rect-big-1", area: "rect-big", animationDelay: 0, animationType: "zoom", backgroundColor: "rgba(59, 130, 246, 0.7)", className: "min-h-[100px] min-w-[100px]" },
+    { id: "rect1-1", area: "rect1", animationDelay: 0.2, animationType: "fade", backgroundColor: "rgba(99, 102, 241, 0.7)", className: "min-h-[50px] min-w-[50px]" },
+    { id: "rect2-1", area: "rect2", animationDelay: 0.3, animationType: "fade", backgroundColor: "rgba(79, 70, 229, 0.7)", className: "min-h-[50px] min-w-[50px]" },
+    { id: "rect3-1", area: "rect3", animationDelay: 0.4, animationType: "fade", backgroundColor: "rgba(139, 92, 246, 0.7)", className: "min-h-[50px] min-w-[50px]" },
+    { id: "rect4-1", area: "rect4", animationDelay: 0.5, animationType: "slide", backgroundColor: "rgba(124, 58, 237, 0.7)", slideDirection: "down", className: "min-h-[50px] min-w-[50px]" },
+    { id: "rect5-1", area: "rect5", animationDelay: 0.6, animationType: "slide", backgroundColor: "rgba(167, 139, 250, 0.7)", slideDirection: "down", className: "min-h-[50px] min-w-[50px]" },
+    { id: "rect6-1", area: "rect6", animationDelay: 0.7, animationType: "slide", backgroundColor: "rgba(96, 165, 250, 0.7)", slideDirection: "down", className: "min-h-[50px] min-w-[50px]" },
+    { id: "rect7-1", area: "rect7", animationDelay: 0.8, animationType: "rotate", backgroundColor: "rgba(37, 99, 235, 0.7)", className: "min-h-[50px] min-w-[50px]" },
+    { id: "rect8-1", area: "rect8", animationDelay: 0.9, animationType: "rotate", backgroundColor: "rgba(59, 130, 246, 0.7)", className: "min-h-[50px] min-w-[50px]" },
+    { id: "rect9-1", area: "rect9", animationDelay: 1.0, animationType: "rotate", backgroundColor: "rgba(99, 102, 241, 0.7)", className: "min-h-[50px] min-w-[50px]" },
+    { id: "rect10-1", area: "rect10", animationDelay: 1.1, animationType: "zoom", backgroundColor: "rgba(220, 38, 38, 0.7)", className: "min-h-[50px] min-w-[50px]" },
+    { id: "rect11-1", area: "rect11", animationDelay: 1.2, animationType: "fade", backgroundColor: "rgba(239, 68, 68, 0.7)", className: "min-h-[50px] min-w-[50px]" },
+    { id: "rect12-1", area: "rect12", animationDelay: 1.3, animationType: "fade", backgroundColor: "rgba(244, 63, 94, 0.7)", className: "min-h-[50px] min-w-[50px]" },
+    { id: "rect13-1", area: "rect13", animationDelay: 1.4, animationType: "fade", backgroundColor: "rgba(251, 191, 36, 0.7)", className: "min-h-[50px] min-w-[50px]" },
+    { id: "rect14-1", area: "rect14", animationDelay: 1.5, animationType: "slide", backgroundColor: "rgba(245, 158, 11, 0.7)", slideDirection: "left", className: "min-h-[50px] min-w-[50px]" },
+    { id: "rect15-1", area: "rect15", animationDelay: 1.6, animationType: "slide", backgroundColor: "rgba(217, 119, 6, 0.7)", slideDirection: "left", className: "min-h-[50px] min-w-[50px]" },
+    { id: "rect16-1", area: "rect16", animationDelay: 1.7, animationType: "slide", backgroundColor: "rgba(180, 83, 9, 0.7)", slideDirection: "left", className: "min-h-[50px] min-w-[50px]" },
+    { id: "rect17-1", area: "rect17", animationDelay: 1.8, animationType: "rotate", backgroundColor: "rgba(16, 185, 129, 0.7)", className: "min-h-[50px] min-w-[50px]" },
+    { id: "rect18-1", area: "rect18", animationDelay: 1.9, animationType: "rotate", backgroundColor: "rgba(52, 211, 153, 0.7)", className: "min-h-[50px] min-w-[50px]" },
+    { id: "rect19-1", area: "rect19", animationDelay: 2.0, animationType: "rotate", backgroundColor: "rgba(5, 150, 105, 0.7)", className: "min-h-[50px] min-w-[50px]" },
+    { id: "rect20-1", area: "rect20", animationDelay: 2.1, animationType: "zoom", backgroundColor: "rgba(8, 145, 178, 0.7)", className: "min-h-[50px] min-w-[50px]" },
+    { id: "rect21-1", area: "rect21", animationDelay: 2.2, animationType: "zoom", backgroundColor: "rgba(14, 165, 233, 0.7)", className: "min-h-[50px] min-w-[50px]" },
+    { id: "rect22-1", area: "rect22", animationDelay: 2.3, animationType: "zoom", backgroundColor: "rgba(96, 165, 250, 0.7)", className: "min-h-[50px] min-w-[50px]" }
   ]
 ];
 
