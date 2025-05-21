@@ -2,6 +2,7 @@ import React from 'react';
 import HeroSection from '../components/HeroSection';
 import AboutSection from '../components/AboutSection';
 import ServiceSection from '../components/ServiceSection';
+import ExploreSection from '../components/ExploreSection';
 import Navbar from '../components/Navbar';
 
 const Home: React.FC = () => {
@@ -11,6 +12,7 @@ const Home: React.FC = () => {
       <HeroSection />
       <AboutSection />
       <ServiceSection />
+      <ExploreSection />
     </div>
   );
 };
