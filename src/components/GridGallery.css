@@ -1,0 +1,35 @@
+/* GridGallery Styles */
+/* Grid template transitions */
+.grid-transition {
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Zoom effect on hover (enhanced) */
+.zoom-hover {
+  overflow: hidden;
+}
+
+.zoom-hover > div {
+  transition: transform 0.5s ease-in-out;
+}
+
+.zoom-hover:hover > div {
+  transform: scale(1.1);
+}
+
+/* Custom image filters */
+.filter-warm {
+  filter: sepia(20%) brightness(105%) saturate(110%);
+}
+
+.filter-cool {
+  filter: brightness(105%) saturate(90%) hue-rotate(5deg);
+}
+
+.filter-vintage {
+  filter: sepia(30%) brightness(95%) contrast(110%);
+}
+
+.filter-sharp {
+  filter: contrast(110%) brightness(110%) saturate(110%);
+}
