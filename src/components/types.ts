@@ -6,6 +6,8 @@ export interface GridItem {
   className?: string; // Additional classnames if needed
   animationDelay?: number; // Delay for animation (in seconds)
   animationType?: 'zoom' | 'fade' | 'slide' | 'rotate' | 'none'; // Type of animation
+  backgroundColor?: string; // Background color for the grid item
+  slideDirection?: 'up' | 'down' | 'left' | 'right'; // Direction for slide animation
 }
 
 export type TransitionAnimationState = 'initial' | 'animate' | 'exit';

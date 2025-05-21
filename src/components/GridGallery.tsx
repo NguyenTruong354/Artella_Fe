@@ -1,4 +1,4 @@
-import { motion, useAnimationControls, AnimationControls, Variants } from "framer-motion";
+import { motion } from "framer-motion";
 import { useMemo, useState, useEffect } from "react";
 import './GridGallery.css';
 import { GridItem } from './types';
@@ -93,7 +93,6 @@ const GridGallery: React.FC<GridGalleryProps> = ({
       },
     },
   };
-
   // Tạo các animation props dựa trên loại animation
   const getAnimationProps = (type?: string, delay: number = 0) => {
     // Base transition properties
@@ -104,8 +103,7 @@ const GridGallery: React.FC<GridGalleryProps> = ({
       delay: delay,
       ease: "easeInOut"
     };
-    
-    switch(type) {
+      switch(type) {
       case 'zoom':
         return {
           initial: { scale: 1 },
@@ -113,13 +111,26 @@ const GridGallery: React.FC<GridGalleryProps> = ({
             ? { scale: [1, 1.05, 1], transition: baseTransition }
             : { scale: 1 }
         };
-      case 'slide':
+      case 'slide': {
+        // Lấy hướng slide từ item nếu có
+        const item = items.find(i => i.animationDelay === delay && i.animationType === 'slide');
+        const direction = item?.slideDirection || 'left';
+        
+        let xMove = 0;
+        let yMove = 0;
+        
+        if (direction === 'left') xMove = -5;
+        else if (direction === 'right') xMove = 5;
+        else if (direction === 'up') yMove = -5;
+        else if (direction === 'down') yMove = 5;
+        
         return {
-          initial: { y: 0 },
+          initial: { x: 0, y: 0 },
           animate: triggerAnimation 
-            ? { y: [0, -5, 0], transition: baseTransition }
-            : { y: 0 }
+            ? { x: [0, xMove, 0], y: [0, yMove, 0], transition: baseTransition }
+            : { x: 0, y: 0 }
         };
+      }
       case 'rotate':
         return {
           initial: { rotate: 0 },
@@ -133,14 +144,15 @@ const GridGallery: React.FC<GridGalleryProps> = ({
           animate: triggerAnimation 
             ? { opacity: [1, 0.8, 1], transition: baseTransition }
             : { opacity: 1 }
-        };
-      default:
+        };      default:
         return {
           initial: {},
           animate: {}
         };
     }
-  };  return (
+  };
+  
+  return (
     <div className="relative w-full h-full">
       <motion.div
         variants={containerVariants}
@@ -208,8 +220,7 @@ const GridGallery: React.FC<GridGalleryProps> = ({
                 },
               }}              style={gridAreaStyle}
               className={`rounded-md md:rounded-lg overflow-hidden shadow-sm md:shadow-md will-change-transform zoom-hover ${item.className || ""}`}
-            >
-              <motion.div
+            >              <motion.div
                 className={`w-full h-full overflow-hidden ${filterClass}`}
                 initial={animationProps.initial}
                 animate={animationProps.animate}
@@ -219,6 +230,7 @@ const GridGallery: React.FC<GridGalleryProps> = ({
                   backgroundPosition,
                   backgroundOrigin: "border-box",
                   padding: "2px",
+                  backgroundColor: item.backgroundColor || 'transparent',
                 }}
               />
             </motion.div>
