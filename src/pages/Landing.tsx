@@ -3,6 +3,7 @@ import HeroSection from '../components/HeroSection';
 import AboutSection from '../components/AboutSection';
 import ServiceSection from '../components/ServiceSection';
 import ExploreSection from '../components/ExploreSection';
+import PricingSection from '../components/PricingSection';
 import Navbar from '../components/Navbar';
 
 const Home: React.FC = () => {
@@ -13,6 +14,7 @@ const Home: React.FC = () => {
       <AboutSection />
       <ServiceSection />
       <ExploreSection />
+      <PricingSection />
     </div>
   );
 };
