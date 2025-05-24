@@ -6,6 +6,7 @@ import ExploreSection from '../components/ExploreSection';
 import PricingSection from '../components/PricingSection';
 import FAQSection from '../components/Landing/FAQSection';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 const Home: React.FC = () => {
   return (
@@ -17,6 +18,7 @@ const Home: React.FC = () => {
       <ExploreSection />
       <PricingSection />
       <FAQSection />
+      <Footer />
     </div>
   );
 };
