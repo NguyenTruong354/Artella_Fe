@@ -1,20 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, useAnimation, useInView } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Bell, TrendingUp, Eye, Heart, Clock, Users, ChevronRight, Star, Activity } from 'lucide-react';
 
-// Extend Window interface for MetaMask
-declare global {
-  interface Window {
-    ethereum?: any;
-  }
-}
-
-const HomeSection = () => {
+const Dashboard = () => {
   const controls = useAnimation();
   const sectionRef = useRef(null);
   const inView = useInView(sectionRef, { once: false, amount: 0.1 });
-  const [connectedWallet, setConnectedWallet] = useState(false);
-  const [walletAddress, setWalletAddress] = useState('');
+  const [activeTab, setActiveTab] = useState('trending');
 
   useEffect(() => {
     if (inView) {
@@ -22,297 +14,378 @@ const HomeSection = () => {
     }
   }, [controls, inView]);
 
-  // Featured artworks data
-  const featuredArtworks = [
+  // Mock user data
+  const userData = {
+    name: "Minh Nguyen",
+    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+    balance: "12.47 ETH",
+    totalValue: "$24,892",
+    ownedNFTs: 23,
+    notifications: 5
+  };
+
+  // Live auctions data
+  const liveAuctions = [
     {
       id: 1,
-      title: "Digital Dreams",
-      artist: "Artist NFT",
-      price: "2.5 ETH",
-      image: "/src/assets/background_1.jpg",
-      isLive: true
+      title: "Cosmic Dreams #142",
+      artist: "Luna Art",
+      currentBid: "5.2 ETH",
+      timeLeft: "2h 45m",
+      image: "https://images.unsplash.com/photo-1634973357973-f2ed2657db3c?w=300&h=300&fit=crop",
+      bidders: 12,
+      isHot: true
     },
     {
       id: 2,
-      title: "Abstract Reality",
-      artist: "CryptoArt Master",
-      price: "1.8 ETH", 
-      image: "/src/assets/background_2.jpg",
-      isLive: false
+      title: "Digital Metamorphosis",
+      artist: "CyberVision",
+      currentBid: "3.8 ETH", 
+      timeLeft: "1h 23m",
+      image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300&h=300&fit=crop",
+      bidders: 8,
+      isHot: false
     },
     {
       id: 3,
-      title: "Starry Blockchain",
-      artist: "Digital Picasso",
-      price: "3.2 ETH",
-      image: "/src/assets/background_3.jpg",
-      isLive: true
+      title: "Neon Genesis",
+      artist: "PixelMaster",
+      currentBid: "7.1 ETH",
+      timeLeft: "4h 12m", 
+      image: "https://images.unsplash.com/photo-1635322966219-b75ed372eb01?w=300&h=300&fit=crop",
+      bidders: 19,
+      isHot: true
     }
   ];
 
-  // Animation variants
+  // Trending collections
+  const trendingCollections = [
+    {
+      id: 1,
+      name: "Abstract Futures",
+      floorPrice: "2.1 ETH",
+      change: "+24.5%",
+      volume: "126.3 ETH",
+      image: "https://images.unsplash.com/photo-1634973357973-f2ed2657db3c?w=100&h=100&fit=crop",
+      isUp: true
+    },
+    {
+      id: 2,
+      name: "Digital Portraits",
+      floorPrice: "1.8 ETH", 
+      change: "-8.2%",
+      volume: "89.7 ETH",
+      image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&h=100&fit=crop",
+      isUp: false
+    },
+    {
+      id: 3,
+      name: "Cyber Landscapes",
+      floorPrice: "3.4 ETH",
+      change: "+12.8%",
+      volume: "203.1 ETH", 
+      image: "https://images.unsplash.com/photo-1635322966219-b75ed372eb01?w=100&h=100&fit=crop",
+      isUp: true
+    }
+  ];
+
+  // Recent activities
+  const recentActivities = [
+    {
+      id: 1,
+      type: "bid",
+      title: "Bạn đã đặt giá 4.2 ETH",
+      artwork: "Starry Night Redux",
+      time: "15 phút trước",
+      status: "leading"
+    },
+    {
+      id: 2,
+      type: "outbid",
+      title: "Ai đó đã vượt giá của bạn",
+      artwork: "Digital Dreams #89",
+      time: "1 giờ trước", 
+      status: "outbid"
+    },
+    {
+      id: 3,
+      type: "sold",
+      title: "NFT của bạn đã được bán",
+      artwork: "Abstract Reality",
+      time: "3 giờ trước",
+      status: "completed"
+    }
+  ];
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.2,
-        delayChildren: 0.3
+        staggerChildren: 0.1,
+        delayChildren: 0.2
       }
     }
   };
 
   const itemVariants = {
-    hidden: { y: 50, opacity: 0 },
+    hidden: { y: 30, opacity: 0 },
     visible: {
       y: 0,
       opacity: 1,
       transition: {
         type: "spring",
         stiffness: 100,
-        damping: 15
+        damping: 12
       }
     }
   };
 
-  const cardVariants = {
-    hidden: { scale: 0.8, opacity: 0 },
-    visible: {
-      scale: 1,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        stiffness: 100,
-        damping: 15
-      }
-    }
-  };
-
-  // MetaMask connection
-  const connectWallet = async () => {
-    if (typeof window.ethereum !== 'undefined') {
-      try {
-        const accounts = await window.ethereum.request({
-          method: 'eth_requestAccounts'
-        });
-        setConnectedWallet(true);
-        setWalletAddress(accounts[0]);
-      } catch (error) {
-        console.error('Error connecting wallet:', error);
-      }
-    } else {
-      alert('Please install MetaMask to connect your wallet');
-    }
-  };
   return (
-    <section
+    <div
       ref={sectionRef}
-      className="min-h-screen bg-[#F8F1E9] relative overflow-hidden"
+      className="min-h-screen bg-gradient-to-br from-slate-50 via-amber-50/30 to-orange-50/40 p-6"
     >
-      {/* Background Elements */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[url('/src/assets/textxure_1.png')] bg-repeat opacity-10"></div>
+      <motion.div
+        className="max-w-7xl mx-auto space-y-8"
+        variants={containerVariants}
+        initial="hidden"
+        animate={controls}
+      >
+        {/* Header Section */}
         <motion.div 
-          className="absolute top-20 left-20 w-72 h-72 rounded-full bg-gradient-to-r from-amber-200/30 to-orange-200/30 blur-3xl"
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3]
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-        <motion.div 
-          className="absolute bottom-20 right-20 w-96 h-96 rounded-full bg-gradient-to-l from-yellow-200/30 to-amber-200/30 blur-3xl"
-          animate={{
-            scale: [1.2, 1, 1.2],
-            opacity: [0.2, 0.4, 0.2]
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-      </div>
-
-      <div className="container mx-auto px-6 py-20 relative z-10">
-        <motion.div
-          className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center"
-          variants={containerVariants}
-          initial="hidden"
-          animate={controls}
+          className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0"
+          variants={itemVariants}
         >
-          {/* Left Content */}
-          <motion.div className="space-y-8" variants={itemVariants}>
-            <motion.div className="space-y-4">              <motion.div 
-                className="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-amber-100/50 to-orange-100/50 border border-amber-300/30"
-                variants={itemVariants}
-              >
-                <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-                <span className="text-amber-700 text-sm font-medium">Live Blockchain Network</span>
-              </motion.div>
-                <motion.h1 
-                className="text-5xl lg:text-7xl font-bold text-gray-800 leading-tight"
-                variants={itemVariants}
-              >
-                Digital Art
-                <br />
-                <span className="bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 bg-clip-text text-transparent">
-                  Marketplace
+          <div className="flex items-center space-x-4">
+            <img 
+              src={userData.avatar}
+              alt="Avatar"
+              className="w-16 h-16 rounded-full border-3 border-white shadow-lg"
+            />
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800">
+                Chào {userData.name}! 👋
+              </h1>
+              <p className="text-gray-600">Chào mừng trở lại với bộ sưu tập của bạn</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            <motion.div 
+              className="relative cursor-pointer"
+              whileHover={{ scale: 1.05 }}
+            >
+              <Bell className="w-6 h-6 text-gray-600" />
+              {userData.notifications > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {userData.notifications}
                 </span>
-              </motion.h1>
-              
-              <motion.p 
-                className="text-xl text-gray-600 leading-relaxed max-w-lg"
-                variants={itemVariants}
-              >
-                Discover, collect, and trade unique digital artworks on the blockchain. 
-                Connect your wallet and join the future of art ownership.
-              </motion.p>
+              )}
             </motion.div>
+            <div className="text-right">
+              <div className="text-2xl font-bold text-gray-800">{userData.balance}</div>
+              <div className="text-sm text-gray-600">{userData.totalValue}</div>
+            </div>
+          </div>
+        </motion.div>
 
-            {/* Action Buttons */}
-            <motion.div 
-              className="flex flex-col sm:flex-row gap-4"
+        {/* Stats Cards */}
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-4 gap-6"
+          variants={containerVariants}
+        >
+          {[
+            { title: "Tổng NFTs", value: userData.ownedNFTs, icon: Eye, color: "bg-blue-500" },
+            { title: "Đang đấu giá", value: "7", icon: Activity, color: "bg-green-500" },
+            { title: "Yêu thích", value: "45", icon: Heart, color: "bg-red-500" },
+            { title: "Theo dõi", value: "128", icon: Users, color: "bg-purple-500" }
+          ].map((stat, index) => (
+            <motion.div
+              key={index}
+              className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-white/50 shadow-lg"
               variants={itemVariants}
-            >              <motion.button
-                onClick={connectWallet}
-                className="px-8 py-4 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-semibold rounded-xl hover:from-amber-700 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-amber-500/25"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {connectedWallet ? (
-                  <span className="flex items-center">
-                    <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                    Connected: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
-                  </span>
-                ) : (
-                  "Connect Wallet"
-                )}
-              </motion.button>
-              
-              <Link to="/gallery">
-                <motion.button
-                  className="px-8 py-4 border-2 border-amber-600 text-amber-700 font-semibold rounded-xl hover:bg-amber-100/20 transition-all duration-300"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Explore Gallery
-                </motion.button>
-              </Link>
-            </motion.div>
-
-            {/* Stats */}            <motion.div 
-              className="grid grid-cols-3 gap-8 pt-8 border-t border-gray-400"
-              variants={itemVariants}
+              whileHover={{ scale: 1.02, y: -2 }}
             >
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-800">12.5K+</div>
-                <div className="text-gray-600 text-sm">Artworks</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-800">8.2K+</div>
-                <div className="text-gray-600 text-sm">Artists</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-800">95.6K+</div>
-                <div className="text-gray-600 text-sm">Collectors</div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm">{stat.title}</p>
+                  <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
+                </div>
+                <div className={`${stat.color} p-3 rounded-xl`}>
+                  <stat.icon className="w-6 h-6 text-white" />
+                </div>
               </div>
             </motion.div>
-          </motion.div>
+          ))}
+        </motion.div>
 
-          {/* Right Content - Featured Artworks */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          {/* Live Auctions */}
           <motion.div 
-            className="space-y-6"
+            className="xl:col-span-2 space-y-6"
             variants={itemVariants}
-          >            <motion.h2 
-              className="text-3xl font-bold text-gray-800 mb-8"
-              variants={itemVariants}
-            >
-              Featured Collections
-            </motion.h2>
-            
-            <motion.div 
-              className="space-y-4"
-              variants={containerVariants}
-            >              {featuredArtworks.map((artwork) => (                <motion.div
-                  key={artwork.id}
-                  className="group relative bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-amber-200/50 hover:border-orange-400/50 transition-all duration-300 shadow-lg"
-                  variants={cardVariants}
-                  whileHover={{ scale: 1.02, y: -5 }}
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+                <Activity className="w-6 h-6 mr-2 text-red-500" />
+                Đấu giá đang diễn ra
+              </h2>
+              <button className="text-amber-600 hover:text-amber-700 flex items-center font-medium">
+                Xem tất cả <ChevronRight className="w-4 h-4 ml-1" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {liveAuctions.map((auction) => (
+                <motion.div
+                  key={auction.id}
+                  className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300"
+                  variants={itemVariants}
+                  whileHover={{ scale: 1.01 }}
                 >
                   <div className="flex items-center space-x-4">
                     <div className="relative">
                       <img 
-                        src={artwork.image} 
-                        alt={artwork.title}
-                        className="w-16 h-16 rounded-xl object-cover"
+                        src={auction.image}
+                        alt={auction.title}
+                        className="w-20 h-20 rounded-xl object-cover"
                       />
-                      {artwork.isLive && (
-                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white animate-pulse"></div>
+                      {auction.isHot && (
+                        <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold animate-pulse">
+                          HOT
+                        </div>
                       )}
                     </div>
-                      <div className="flex-1">
-                      <h3 className="text-gray-800 font-semibold">{artwork.title}</h3>
-                      <p className="text-gray-600 text-sm">{artwork.artist}</p>
+                    
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-800">{auction.title}</h3>
+                      <p className="text-gray-600">bởi {auction.artist}</p>
+                      <div className="flex items-center space-x-4 mt-2">
+                        <span className="flex items-center text-sm text-gray-600">
+                          <Users className="w-4 h-4 mr-1" />
+                          {auction.bidders} người đặt giá
+                        </span>
+                        <span className="flex items-center text-sm text-red-600">
+                          <Clock className="w-4 h-4 mr-1" />
+                          {auction.timeLeft}
+                        </span>
+                      </div>
                     </div>
                     
                     <div className="text-right">
-                      <div className="text-amber-600 font-bold">{artwork.price}</div>
-                      {artwork.isLive && (
-                        <div className="text-red-500 text-xs font-medium">LIVE AUCTION</div>
-                      )}
+                      <div className="text-xl font-bold text-green-600">{auction.currentBid}</div>
+                      <motion.button
+                        className="mt-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg font-medium hover:from-amber-600 hover:to-orange-600 transition-colors"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        Đặt giá
+                      </motion.button>
                     </div>
                   </div>
                 </motion.div>
               ))}
-            </motion.div>
-
-            <motion.div 
-              className="text-center pt-6"
-              variants={itemVariants}
-            >              <Link to="/gallery">
-                <motion.button
-                  className="text-amber-600 font-medium hover:text-orange-600 transition-colors duration-300"
-                  whileHover={{ x: 10 }}
-                >
-                  View All Collections →
-                </motion.button>
-              </Link>
-            </motion.div>
+            </div>
           </motion.div>
+
+          {/* Sidebar */}
+          <motion.div 
+            className="space-y-6"
+            variants={itemVariants}
+          >
+            {/* Trending Collections */}
+            <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-white/50 shadow-lg">
+              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <TrendingUp className="w-5 h-5 mr-2 text-green-500" />
+                Bộ sưu tập thịnh hành
+              </h3>
+              
+              <div className="space-y-4">
+                {trendingCollections.map((collection, index) => (
+                  <div key={collection.id} className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-3 flex-1">
+                      <span className="text-sm font-bold text-gray-500 w-4">#{index + 1}</span>
+                      <img 
+                        src={collection.image}
+                        alt={collection.name}
+                        className="w-10 h-10 rounded-lg object-cover"
+                      />
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-800 text-sm">{collection.name}</p>
+                        <p className="text-xs text-gray-600">{collection.floorPrice}</p>
+                      </div>
+                    </div>
+                    <div className={`text-sm font-bold ${collection.isUp ? 'text-green-500' : 'text-red-500'}`}>
+                      {collection.change}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Recent Activity */}
+            <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-white/50 shadow-lg">
+              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <Bell className="w-5 h-5 mr-2 text-blue-500" />
+                Hoạt động gần đây
+              </h3>
+              
+              <div className="space-y-4">
+                {recentActivities.map((activity) => (
+                  <div key={activity.id} className="flex items-start space-x-3">
+                    <div className={`w-2 h-2 rounded-full mt-2 ${
+                      activity.status === 'leading' ? 'bg-green-500' :
+                      activity.status === 'outbid' ? 'bg-yellow-500' : 'bg-blue-500'
+                    }`}></div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-800">{activity.title}</p>
+                      <p className="text-xs text-gray-600">{activity.artwork}</p>
+                      <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <button className="w-full mt-4 text-center text-sm text-amber-600 hover:text-amber-700 font-medium">
+                Xem tất cả hoạt động
+              </button>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Quick Actions */}
+        <motion.div 
+          className="bg-gradient-to-r from-amber-100/50 to-orange-100/50 backdrop-blur-sm rounded-2xl p-8 border border-amber-200/50"
+          variants={itemVariants}
+        >
+          <div className="text-center space-y-4">
+            <h3 className="text-2xl font-bold text-gray-800">Bạn muốn làm gì hôm nay?</h3>
+            <div className="flex flex-wrap justify-center gap-4">
+              {[
+                { title: "Tạo NFT mới", desc: "Mint tác phẩm của bạn", color: "from-blue-500 to-blue-600" },
+                { title: "Khám phá", desc: "Tìm tác phẩm mới", color: "from-green-500 to-green-600" },
+                { title: "Bán NFT", desc: "Đưa ra đấu giá", color: "from-purple-500 to-purple-600" },
+                { title: "Ví của tôi", desc: "Quản lý tài sản", color: "from-orange-500 to-orange-600" }
+              ].map((action, index) => (
+                <motion.button
+                  key={index}
+                  className={`px-6 py-4 bg-gradient-to-r ${action.color} text-white rounded-xl font-medium hover:scale-105 transition-transform shadow-lg`}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <div className="text-center">
+                    <div className="font-bold">{action.title}</div>
+                    <div className="text-sm opacity-90">{action.desc}</div>
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+          </div>
         </motion.div>
-      </div>      {/* Floating Elements */}
-      <motion.div
-        className="absolute top-1/4 right-1/4 w-4 h-4 bg-amber-400 rounded-full opacity-60"
-        animate={{
-          y: [-20, 20, -20],
-          opacity: [0.6, 1, 0.6]
-        }}
-        transition={{
-          duration: 4,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-      <motion.div
-        className="absolute bottom-1/3 left-1/4 w-6 h-6 bg-orange-400 rounded-full opacity-40"
-        animate={{
-          y: [20, -20, 20],
-          x: [-10, 10, -10],
-          opacity: [0.4, 0.8, 0.4]
-        }}
-        transition={{
-          duration: 6,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-    </section>
+      </motion.div>
+    </div>
   );
 };
 
-export default HomeSection;
+export default Dashboard;
