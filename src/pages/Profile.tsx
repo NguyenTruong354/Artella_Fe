@@ -34,7 +34,7 @@ const Profile: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen text-white p-8">
+    <div className="min-h-screen text-gray-800 p-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -43,50 +43,50 @@ const Profile: React.FC = () => {
       >
         {/* Profile Header */}
         <motion.div 
-          className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 mb-8"
+          className="bg-white/70 backdrop-blur-sm rounded-2xl p-8 border border-amber-200/50 mb-8 shadow-lg"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
           <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
-            <div className="w-32 h-32 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-3xl font-bold">
+            <div className="w-32 h-32 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full flex items-center justify-center text-3xl font-bold text-white">
               JD
             </div>
             
             <div className="flex-1 text-center md:text-left">
               <h1 className="text-3xl font-bold mb-2">John Doe</h1>
-              <p className="text-gray-400 mb-4">Digital Art Collector & Creator</p>
+              <p className="text-gray-600 mb-4">Digital Art Collector & Creator</p>
               <div className="flex items-center justify-center md:justify-start space-x-2 mb-4">
-                <span className="text-green-400 text-sm">●</span>
-                <span className="text-sm text-gray-300">0x742d35Cc6643C59532F3D8f...</span>
-                <button className="text-purple-400 hover:text-purple-300 text-sm">Copy</button>
+                <span className="text-green-500 text-sm">●</span>
+                <span className="text-sm text-gray-600">0x742d35Cc6643C59532F3D8f...</span>
+                <button className="text-amber-600 hover:text-amber-700 text-sm">Copy</button>
               </div>
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-400">{userStats.ownedNFTs}</div>
-                  <div className="text-gray-400 text-sm">Owned</div>
+                  <div className="text-2xl font-bold text-amber-600">{userStats.ownedNFTs}</div>
+                  <div className="text-gray-600 text-sm">Owned</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-400">{userStats.totalValue}</div>
-                  <div className="text-gray-400 text-sm">Portfolio</div>
+                  <div className="text-2xl font-bold text-green-600">{userStats.totalValue}</div>
+                  <div className="text-gray-600 text-sm">Portfolio</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-400">{userStats.sold}</div>
-                  <div className="text-gray-400 text-sm">Sold</div>
+                  <div className="text-2xl font-bold text-blue-600">{userStats.sold}</div>
+                  <div className="text-gray-600 text-sm">Sold</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-400">{userStats.created}</div>
-                  <div className="text-gray-400 text-sm">Created</div>
+                  <div className="text-2xl font-bold text-orange-600">{userStats.created}</div>
+                  <div className="text-gray-600 text-sm">Created</div>
                 </div>
               </div>
             </div>
 
             <div className="flex flex-col space-y-3">
-              <button className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-300">
+              <button className="px-6 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl hover:from-amber-600 hover:to-orange-600 transition-all duration-300">
                 Edit Profile
               </button>
-              <button className="px-6 py-2 border border-white/20 rounded-xl hover:bg-white/10 transition-all duration-300">
+              <button className="px-6 py-2 border border-amber-200 rounded-xl hover:bg-white/50 transition-all duration-300">
                 Share Profile
               </button>
             </div>
@@ -95,21 +95,21 @@ const Profile: React.FC = () => {
 
         {/* Navigation Tabs */}
         <motion.div 
-          className="flex space-x-6 mb-8 border-b border-white/20"
+          className="flex space-x-6 mb-8 border-b border-amber-200/50"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          <button className="pb-4 border-b-2 border-purple-500 text-purple-400 font-medium">
+          <button className="pb-4 border-b-2 border-amber-500 text-amber-600 font-medium">
             Owned NFTs
           </button>
-          <button className="pb-4 text-gray-400 hover:text-white transition-colors">
+          <button className="pb-4 text-gray-600 hover:text-gray-800 transition-colors">
             Created
           </button>
-          <button className="pb-4 text-gray-400 hover:text-white transition-colors">
+          <button className="pb-4 text-gray-600 hover:text-gray-800 transition-colors">
             Activity
           </button>
-          <button className="pb-4 text-gray-400 hover:text-white transition-colors">
+          <button className="pb-4 text-gray-600 hover:text-gray-800 transition-colors">
             Favorites
           </button>
         </motion.div>
@@ -124,7 +124,7 @@ const Profile: React.FC = () => {
           {ownedNFTs.map((nft) => (
             <motion.div
               key={nft.id}
-              className="bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/20 hover:border-purple-500/50 transition-all duration-300"
+              className="bg-white/70 backdrop-blur-sm rounded-2xl overflow-hidden border border-amber-200/50 hover:border-amber-400/50 transition-all duration-300 shadow-lg"
               whileHover={{ scale: 1.02, y: -5 }}
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -138,11 +138,11 @@ const Profile: React.FC = () => {
               
               <div className="p-4">
                 <h3 className="font-semibold mb-1">{nft.title}</h3>
-                <p className="text-gray-400 text-sm mb-3">{nft.collection}</p>
+                <p className="text-gray-600 text-sm mb-3">{nft.collection}</p>
                 
                 <div className="flex justify-between items-center">
-                  <span className="text-purple-400 font-bold">{nft.price}</span>
-                  <button className="text-sm text-gray-400 hover:text-white transition-colors">
+                  <span className="text-amber-600 font-bold">{nft.price}</span>
+                  <button className="text-sm text-gray-600 hover:text-gray-800 transition-colors">
                     Sell
                   </button>
                 </div>
@@ -158,7 +158,7 @@ const Profile: React.FC = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
-          <button className="bg-white/10 backdrop-blur-sm border border-white/20 text-white px-8 py-3 rounded-xl hover:bg-white/20 transition-all duration-300">
+          <button className="bg-white/50 backdrop-blur-sm border border-amber-200/50 text-gray-800 px-8 py-3 rounded-xl hover:bg-white/70 transition-all duration-300">
             Load More NFTs
           </button>
         </motion.div>

@@ -1,410 +1,207 @@
-import { motion, useAnimation } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 const NotFound = () => {
-  const controls = useAnimation();
-  const navigate = useNavigate();
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [time, setTime] = useState(new Date());
+  const [brushStrokes, setBrushStrokes] = useState([]);
+  const [currentBid, setCurrentBid] = useState(4.04);
 
   useEffect(() => {
-    // Trigger animations when component mounts
-    setIsVisible(true);
-    controls.start("visible");
-
-    // Mouse tracking for interactive effects
-    const handleMouseMove = (e: MouseEvent) => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        setMousePosition({
-          x: (e.clientX - rect.left) / rect.width,
-          y: (e.clientY - rect.top) / rect.height,
-        });
-      }
+    const handleMouseMove = (e) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+      
+      // Tạo brush stroke effect khi di chuột
+      const newStroke = {
+        id: Date.now(),
+        x: e.clientX,
+        y: e.clientY,
+        opacity: 0.3
+      };
+      setBrushStrokes(prev => [...prev.slice(-5), newStroke]);
     };
-
+    
+    const timer = setInterval(() => {
+      setTime(new Date());
+      // Fake bidding animation
+      setCurrentBid(prev => prev + (Math.random() - 0.5) * 0.01);
+    }, 2000);
+    
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [controls]);
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      clearInterval(timer);
+    };
+  }, []);
 
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2,
-        delayChildren: 0.1,
-        duration: 0.8,
-      },
-    },
-  };
+  const artQuotes = [
+    "\"Every masterpiece tells its own story...\"",
+    "\"Art is the language of the soul\"",
+    "\"In every brushstroke lies a universe\"",
+    "\"This page is being reimagined...\"",
+    "\"Perhaps this artwork has found its collector\""
+  ];
 
-  const itemVariants = {
-    hidden: { 
-      opacity: 0, 
-      y: 50,
-      scale: 0.8,
-    },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: {
-        type: "spring",
-        stiffness: 80,
-        damping: 15,
-        duration: 0.8,
-      },
-    },
-  };
-
-  const floatingVariants = {
-    animate: {
-      y: [-10, 10, -10],
-      x: [-5, 5, -5],
-      rotate: [-2, 2, -2],
-      transition: {
-        duration: 6,
-        repeat: Infinity,
-        ease: "easeInOut",
-      },
-    },
-  };
-
-  const paintBrushVariants = {
-    animate: {
-      rotate: [0, 5, -5, 0],
-      scale: [1, 1.1, 0.9, 1],
-      transition: {
-        duration: 4,
-        repeat: Infinity,
-        ease: "easeInOut",
-      },
-    },
-  };
+  const randomQuote = artQuotes[Math.floor(Math.random() * artQuotes.length)];
 
   return (
-    <div 
-      ref={containerRef}
-      className="min-h-screen bg-gradient-to-br from-[#f8ede3] via-[#f0e6d8] to-[#e8ddd0] 
-                 relative overflow-hidden flex items-center justify-center p-6"
-    >
-      {/* Enhanced Background Elements */}
-      <div className="absolute inset-0 opacity-30">
-        <div className="absolute inset-0 bg-[url('/src/assets/textxure_1.png')] bg-repeat opacity-20"></div>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-stone-50 to-zinc-50 relative overflow-hidden">
+      {/* Artist's palette colors following cursor */}
+      {brushStrokes.map((stroke, i) => (
+        <div
+          key={stroke.id}
+          className="fixed pointer-events-none transition-all duration-1000 ease-out"
+          style={{
+            left: stroke.x - 6,
+            top: stroke.y - 6,
+            width: 12 - i * 2,
+            height: 12 - i * 2,
+            background: `hsl(${(time.getSeconds() * 6 + i * 60) % 360}, 45%, 65%)`,
+            borderRadius: '50%',
+            opacity: stroke.opacity - i * 0.05,
+            filter: 'blur(1px)'
+          }}
+        />
+      ))}
 
-      {/* Floating Art Elements */}
-      <motion.div
-        className="absolute -left-20 top-20 w-96 h-96 rounded-full bg-gradient-to-r 
-                   from-[#e8d0b3] to-[#f2e4c7] opacity-20 blur-3xl"
-        animate={{
-          x: mousePosition.x * 30,
-          y: mousePosition.y * 20,
-          scale: [1, 1.2, 1],
-        }}
-        transition={{
-          type: "spring",
-          stiffness: 50,
-          damping: 15,
-        }}
-      />
+      {/* Canvas texture background */}
+      <div className="absolute inset-0 opacity-[0.03]"
+           style={{
+             backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(0,0,0,0.15) 1px, transparent 0)',
+             backgroundSize: '20px 20px'
+           }} />
 
-      <motion.div
-        className="absolute right-16 top-32 w-80 h-80 rounded-full bg-gradient-to-l 
-                   from-[#d4e1f7] to-[#e8f2ff] opacity-25 blur-3xl"
-        animate={{
-          x: -mousePosition.x * 25,
-          y: mousePosition.y * 15,
-          scale: [1, 1.15, 1],
-        }}
-        transition={{
-          type: "spring",
-          stiffness: 40,
-          damping: 20,
-        }}
-      />
+      {/* Gallery frames on walls */}
+      <div className="absolute top-20 left-12 w-32 h-24 border-4 border-amber-800/20 bg-gradient-to-br from-amber-50 to-amber-100 opacity-30 transform rotate-3" />
+      <div className="absolute top-32 right-16 w-28 h-36 border-4 border-stone-700/20 bg-gradient-to-br from-stone-50 to-stone-100 opacity-25 transform -rotate-2" />
+      <div className="absolute bottom-40 left-20 w-40 h-28 border-4 border-slate-600/20 bg-gradient-to-br from-slate-50 to-slate-100 opacity-20 transform rotate-1" />
 
-      {/* Artistic Paint Splatters */}
-      <motion.div
-        className="absolute top-1/4 left-1/4 w-32 h-32 bg-gradient-to-br from-[#c2a792] 
-                   to-[#d8bca6] rounded-full opacity-30 blur-2xl"
-        variants={floatingVariants}
-        animate="animate"
-        style={{
-          clipPath: "polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)",
-        }}
-      />
+      <div className="flex items-center justify-center min-h-screen p-8 pb-24">
+        <div className="text-center max-w-3xl">
+          {/* 404 as art piece */}
+          <div className="relative mb-12">
+            <div className="relative inline-block">
+              <h1 
+                className="text-9xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-amber-900 via-stone-700 to-slate-800 select-none relative"
+                style={{
+                  fontFamily: 'Playfair Display, serif',
+                  letterSpacing: '0.1em',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.1)',
+                  transform: `rotate(${Math.sin(time.getSeconds() / 10) * 1}deg)`
+                }}
+              >
+                404
+                {/* Artist signature */}
+                <div className="absolute -bottom-6 -right-8 text-xs text-slate-400 font-light tracking-wider transform rotate-12">
+                  ~404 artist
+                </div>
+              </h1>
+              
+              {/* Frame around 404 */}
+              <div className="absolute -inset-8 border-2 border-amber-200/30 bg-gradient-to-br from-white/40 to-stone-100/40 backdrop-blur-sm transform rotate-1" 
+                   style={{borderRadius: '2px'}} />
+            </div>
+            
+            {/* Gallery lighting effect */}
+            <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 w-64 h-8 bg-gradient-to-b from-yellow-100/60 to-transparent blur-sm" />
+          </div>
 
-      <motion.div
-        className="absolute bottom-1/3 right-1/3 w-24 h-24 bg-gradient-to-tl from-[#8a9690] 
-                   to-[#a8b5ab] rounded-full opacity-25 blur-xl"
-        variants={floatingVariants}
-        animate="animate"
-        style={{
-          animationDelay: "2s",
-        }}
-      />
+          {/* Elegant description */}
+          <div className="mb-10 space-y-6">
+            <div className="relative">
+              <p className="text-2xl font-light text-slate-700 italic mb-2" style={{fontFamily: 'Playfair Display, serif'}}>
+                {randomQuote}
+              </p>
+              <div className="w-16 h-0.5 bg-gradient-to-r from-amber-400 to-transparent mx-auto" />
+            </div>
+            
+            <div className="bg-white/60 backdrop-blur-sm rounded-lg p-6 border border-stone-200/50 shadow-sm">
+              <p className="text-slate-600 leading-relaxed mb-4">
+                The page you're looking for might have been moved to another gallery wing, 
+                or this artwork is currently undergoing authentication and curation.
+              </p>
+              
+              {/* Mock auction info */}
+              <div className="flex items-center justify-center gap-6 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                  <span className="text-slate-500">Live Auction</span>
+                </div>
+                <div className="text-slate-400">|</div>
+                <div className="font-mono text-slate-600">
+                  Current: {currentBid.toFixed(2)} ETH
+                </div>
+              </div>
+            </div>
+          </div>
 
-      {/* Main Content Container */}
-      <motion.div
-        className="relative z-10 text-center max-w-2xl"
-        variants={containerVariants}
-        initial="hidden"
-        animate={controls}
-      >
-        {/* Artistic 404 Number */}
-        <motion.div
-          className="relative mb-8"
-          variants={itemVariants}
-        >
-          <motion.h1
-            className="text-8xl md:text-9xl font-bold text-transparent bg-clip-text 
-                       bg-gradient-to-r from-[#c2a792] via-[#d0b5a0] to-[#d8bca6] 
-                       relative z-10 font-serif tracking-wider"
-            style={{
-              fontFamily: "'Playfair Display', serif",
-              textShadow: "4px 4px 8px rgba(0,0,0,0.1)",
-            }}
-            animate={{
-              backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-            }}
-            transition={{
-              duration: 8,
-              repeat: Infinity,
-              ease: "linear",
-            }}
-          >
-            404
-          </motion.h1>
-
-          {/* Paint Brush Stroke Behind 404 */}
-          <motion.div
-            className="absolute inset-0 -z-10"
-            variants={paintBrushVariants}
-            animate="animate"
-          >
-            <svg
-              width="100%"
-              height="100%"
-              viewBox="0 0 400 200"
-              className="absolute inset-0 text-[#c2a792] opacity-20"
-            >
-              <motion.path
-                d="M50,100 Q200,50 350,100 Q200,150 50,100"
-                stroke="currentColor"
-                strokeWidth="20"
-                fill="none"
-                strokeLinecap="round"
-                initial={{ pathLength: 0, opacity: 0 }}
-                animate={{ pathLength: 1, opacity: 0.3 }}
-                transition={{ duration: 2, ease: "easeInOut" }}
-              />
-            </svg>
-          </motion.div>
-        </motion.div>
-
-        {/* Artistic Title */}
-        <motion.div
-          className="mb-6"
-          variants={itemVariants}
-        >
-          <h2 className="text-2xl md:text-3xl font-serif text-[#46594f] mb-4 tracking-wide">
-            🎨 Oops! This Masterpiece Doesn't Exist
-          </h2>
-          <motion.div
-            className="w-32 h-1 bg-gradient-to-r from-[#c2a792] to-[#d8bca6] 
-                       rounded-full mx-auto mb-6"
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: isVisible ? 1 : 0 }}
-            transition={{ duration: 1.2, delay: 0.8 }}
-          />
-        </motion.div>
-
-        {/* Creative Message */}
-        <motion.div
-          className="mb-8 space-y-4"
-          variants={itemVariants}
-        >
-          <p className="text-lg text-[#6d7f75] font-light leading-relaxed">
-            It seems like the page you're looking for has been moved to another gallery, 
-            or perhaps it was just a beautiful sketch that never made it to the final canvas.
-          </p>
-          
-          <motion.div
-            className="flex items-center justify-center space-x-4 text-2xl"
-            animate={{
-              scale: [1, 1.1, 1],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          >
-            <span>🎨</span>
-            <span>✨</span>
-            <span>🖼️</span>
-          </motion.div>
-        </motion.div>
-
-        {/* Navigation Buttons */}
-        <motion.div
-          className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6"
-          variants={itemVariants}
-        >
-          {/* Go Home Button */}
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Link
-              to="/"
-              className="group relative overflow-hidden px-8 py-4 bg-gradient-to-r 
-                         from-[#c2a792] via-[#d0b5a0] to-[#d8bca6] text-white 
-                         rounded-full font-medium shadow-lg transition-all duration-300 
-                         border border-white/20 flex items-center space-x-2"
-            >
-              <span className="absolute inset-0 bg-gradient-to-r from-[#b8956f] to-[#c2a792] 
-                             opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <span className="relative z-10 flex items-center space-x-2">
-                <span>🏠</span>
-                <span>Return to Gallery</span>
-              </span>
-            </Link>
-          </motion.div>
-
-          {/* Go Back Button */}
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
+          {/* Elegant navigation */}
+          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-10">
             <button
-              onClick={() => navigate(-1)}
-              className="group relative overflow-hidden px-8 py-4 bg-white/60 backdrop-blur-sm 
-                         border-2 border-[#e2d6c3] text-[#46594f] rounded-full font-medium 
-                         shadow-lg hover:bg-white/80 hover:border-[#c2a792] transition-all 
-                         duration-300 flex items-center space-x-2"
+              onClick={() => window.history.back()}
+              className="group px-8 py-4 bg-white border border-stone-300 text-slate-700 rounded-sm
+                         hover:bg-stone-50 hover:border-stone-400 transition-all duration-300
+                         shadow-sm hover:shadow-md relative overflow-hidden"
             >
-              <span className="flex items-center space-x-2">
-                <span>↩️</span>
-                <span>Go Back</span>
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-stone-100 to-transparent 
+                             translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+              <span className="relative flex items-center gap-3">
+                <span>←</span>
+                <span>Return to Previous Gallery</span>
               </span>
             </button>
-          </motion.div>
-        </motion.div>
+            
+            <button
+              onClick={() => window.location.href = '/'}
+              className="px-8 py-4 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-sm
+                         hover:from-amber-700 hover:to-amber-800 transition-all duration-300
+                         shadow-sm hover:shadow-md relative overflow-hidden"
+            >
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent 
+                             translate-x-[-100%] hover:translate-x-[100%] transition-transform duration-700" />
+              <span className="relative flex items-center gap-3">
+                <span>🎨</span>
+                <span>Browse Main Collection</span>
+              </span>
+            </button>
+          </div>
 
-        {/* Decorative Elements */}
-        <motion.div
-          className="mt-12 flex items-center justify-center space-x-8"
-          variants={itemVariants}
-        >
-          {/* Floating Art Tools */}
-          <motion.div
-            className="text-4xl"
-            animate={{
-              rotate: [0, 10, -10, 0],
-              y: [-5, 5, -5],
-            }}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          >
-            🖌️
-          </motion.div>
+          {/* Art market info */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+            <div className="bg-white/40 backdrop-blur-sm rounded p-4 border border-stone-200/30">
+              <div className="text-2xl font-bold text-slate-700">{Math.floor(Math.random() * 100 + 200)}</div>
+              <div className="text-xs text-slate-500 uppercase tracking-wide">Active Auctions</div>
+            </div>
+            <div className="bg-white/40 backdrop-blur-sm rounded p-4 border border-stone-200/30">
+              <div className="text-2xl font-bold text-slate-700">{(Math.random() * 50 + 100).toFixed(1)}K</div>
+              <div className="text-xs text-slate-500 uppercase tracking-wide">NFTs Sold</div>
+            </div>
+            <div className="bg-white/40 backdrop-blur-sm rounded p-4 border border-stone-200/30">
+              <div className="text-2xl font-bold text-slate-700">{(Math.random() * 10 + 15).toFixed(1)}M $</div>
+              <div className="text-xs text-slate-500 uppercase tracking-wide">Total Volume</div>
+            </div>
+          </div>
 
-          <motion.div
-            className="text-3xl"
-            animate={{
-              rotate: [0, -15, 15, 0],
-              y: [5, -5, 5],
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 1,
-            }}
-          >
-            🎭
-          </motion.div>
+          {/* Floating art elements */}
+          <div className="absolute top-1/4 left-8 opacity-20">
+            <div className="w-3 h-12 bg-gradient-to-b from-amber-400 to-amber-600 transform rotate-45 animate-pulse" />
+          </div>
+          <div className="absolute top-1/3 right-12 opacity-15">
+            <div className="w-8 h-8 border-2 border-slate-400 rounded-full animate-spin" style={{animationDuration: '8s'}} />
+          </div>
+          <div className="absolute bottom-1/4 left-16 opacity-10">
+            <div className="w-6 h-6 bg-gradient-to-br from-stone-400 to-stone-600 transform rotate-12" />
+          </div>
+        </div>
+      </div>
 
-          <motion.div
-            className="text-4xl"
-            animate={{
-              rotate: [0, 20, -20, 0],
-              y: [-3, 3, -3],
-            }}
-            transition={{
-              duration: 5,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 2,
-            }}
-          >
-            🖼️
-          </motion.div>
-        </motion.div>
-      </motion.div>
-
-      {/* Additional Floating Elements */}
-      <motion.div
-        className="absolute bottom-20 left-16 text-6xl opacity-30"
-        animate={{
-          rotate: [0, 360],
-          scale: [1, 1.2, 1],
-        }}
-        transition={{
-          duration: 20,
-          repeat: Infinity,
-          ease: "linear",
-        }}
-      >
-        🎨
-      </motion.div>
-
-      <motion.div
-        className="absolute top-16 right-24 text-5xl opacity-25"
-        animate={{
-          rotate: [360, 0],
-          y: [-10, 10, -10],
-        }}
-        transition={{
-          duration: 15,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      >
-        ✨
-      </motion.div>
-
-      {/* Bottom Decorative Wave */}
-      <motion.div
-        className="absolute bottom-0 left-0 w-full h-32 opacity-20"
-        initial={{ y: 100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 1.5, ease: "easeOut" }}
-      >
-        <svg
-          width="100%"
-          height="100%"
-          viewBox="0 0 1200 120"
-          className="text-[#c2a792]"
-        >
-          <motion.path
-            d="M0,60 Q300,20 600,60 T1200,60 L1200,120 L0,120 Z"
-            fill="currentColor"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 2, ease: "easeInOut", delay: 1 }}
-          />
-        </svg>
-      </motion.div>
+      {/* Gallery footer */}
+      <div className="absolute -bottom-2 left-0 right-0 bg-gradient-to-t from-white/80 to-transparent backdrop-blur-sm py-6">
+        <div className="text-center text-xs text-slate-400">
+          <p className="mb-1">Curated Digital Art Gallery & NFT Marketplace</p>
+          <p className="opacity-60">Where blockchain meets fine art</p>
+        </div>
+      </div>
     </div>
   );
 };

@@ -36,7 +36,7 @@ const Collections: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen text-white p-8">
+    <div className="min-h-screen text-gray-800 p-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -44,10 +44,10 @@ const Collections: React.FC = () => {
         className="max-w-7xl mx-auto"
       >
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
             NFT Collections
           </h1>
-          <p className="text-xl text-gray-300">
+          <p className="text-xl text-gray-600">
             Explore curated collections from top artists and creators
           </p>
         </div>
@@ -56,7 +56,7 @@ const Collections: React.FC = () => {
           {collections.map((collection) => (
             <motion.div
               key={collection.id}
-              className="bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/20 hover:border-purple-500/50 transition-all duration-300"
+              className="bg-white/70 backdrop-blur-sm rounded-2xl overflow-hidden border border-amber-200/50 hover:border-amber-400/50 transition-all duration-300 shadow-lg"
               whileHover={{ scale: 1.02, y: -5 }}
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -81,28 +81,28 @@ const Collections: React.FC = () => {
                 <div className="flex items-center mb-2">
                   <h3 className="text-xl font-bold">{collection.name}</h3>
                   {collection.verified && (
-                    <span className="ml-2 text-blue-400 text-sm">✓ Verified</span>
+                    <span className="ml-2 text-blue-500 text-sm">✓ Verified</span>
                   )}
                 </div>
-                <p className="text-gray-400 mb-4 text-sm">{collection.description}</p>
+                <p className="text-gray-600 mb-4 text-sm">{collection.description}</p>
                 
                 <div className="grid grid-cols-3 gap-4 mb-4 text-center">
                   <div>
-                    <p className="text-gray-400 text-xs">Items</p>
+                    <p className="text-gray-600 text-xs">Items</p>
                     <p className="font-semibold">{collection.items}</p>
                   </div>
                   <div>
-                    <p className="text-gray-400 text-xs">Floor</p>
-                    <p className="font-semibold text-purple-400">{collection.floorPrice}</p>
+                    <p className="text-gray-600 text-xs">Floor</p>
+                    <p className="font-semibold text-amber-600">{collection.floorPrice}</p>
                   </div>
                   <div>
-                    <p className="text-gray-400 text-xs">Volume</p>
-                    <p className="font-semibold text-green-400">{collection.volume}</p>
+                    <p className="text-gray-600 text-xs">Volume</p>
+                    <p className="font-semibold text-green-600">{collection.volume}</p>
                   </div>
                 </div>
                 
                 <motion.button
-                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold py-3 rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-300"
+                  className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold py-3 rounded-xl hover:from-amber-600 hover:to-orange-600 transition-all duration-300"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -119,7 +119,7 @@ const Collections: React.FC = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
-          <button className="bg-white/10 backdrop-blur-sm border border-white/20 text-white px-8 py-3 rounded-xl hover:bg-white/20 transition-all duration-300">
+          <button className="bg-white/50 backdrop-blur-sm border border-amber-200/50 text-gray-800 px-8 py-3 rounded-xl hover:bg-white/70 transition-all duration-300">
             Explore More Collections
           </button>
         </motion.div>

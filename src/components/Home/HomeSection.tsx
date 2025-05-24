@@ -104,17 +104,16 @@ const HomeSection = () => {
       alert('Please install MetaMask to connect your wallet');
     }
   };
-
   return (
     <section
       ref={sectionRef}
-      className="min-h-screen bg-gradient-to-br from-[#0f0f23] via-[#1a1a3e] to-[#2d1b69] relative overflow-hidden"
+      className="min-h-screen bg-[#F8F1E9] relative overflow-hidden"
     >
       {/* Background Elements */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[url('/src/assets/textxure_1.png')] bg-repeat opacity-5"></div>
+        <div className="absolute inset-0 bg-[url('/src/assets/textxure_1.png')] bg-repeat opacity-10"></div>
         <motion.div 
-          className="absolute top-20 left-20 w-72 h-72 rounded-full bg-gradient-to-r from-purple-500/20 to-blue-500/20 blur-3xl"
+          className="absolute top-20 left-20 w-72 h-72 rounded-full bg-gradient-to-r from-amber-200/30 to-orange-200/30 blur-3xl"
           animate={{
             scale: [1, 1.2, 1],
             opacity: [0.3, 0.5, 0.3]
@@ -126,7 +125,7 @@ const HomeSection = () => {
           }}
         />
         <motion.div 
-          className="absolute bottom-20 right-20 w-96 h-96 rounded-full bg-gradient-to-l from-pink-500/20 to-purple-500/20 blur-3xl"
+          className="absolute bottom-20 right-20 w-96 h-96 rounded-full bg-gradient-to-l from-yellow-200/30 to-amber-200/30 blur-3xl"
           animate={{
             scale: [1.2, 1, 1.2],
             opacity: [0.2, 0.4, 0.2]
@@ -148,28 +147,26 @@ const HomeSection = () => {
         >
           {/* Left Content */}
           <motion.div className="space-y-8" variants={itemVariants}>
-            <motion.div className="space-y-4">
-              <motion.div 
-                className="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/30"
+            <motion.div className="space-y-4">              <motion.div 
+                className="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-amber-100/50 to-orange-100/50 border border-amber-300/30"
                 variants={itemVariants}
               >
-                <span className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
-                <span className="text-purple-200 text-sm font-medium">Live Blockchain Network</span>
+                <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+                <span className="text-amber-700 text-sm font-medium">Live Blockchain Network</span>
               </motion.div>
-              
-              <motion.h1 
-                className="text-5xl lg:text-7xl font-bold text-white leading-tight"
+                <motion.h1 
+                className="text-5xl lg:text-7xl font-bold text-gray-800 leading-tight"
                 variants={itemVariants}
               >
                 Digital Art
                 <br />
-                <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 bg-clip-text text-transparent">
                   Marketplace
                 </span>
               </motion.h1>
               
               <motion.p 
-                className="text-xl text-gray-300 leading-relaxed max-w-lg"
+                className="text-xl text-gray-600 leading-relaxed max-w-lg"
                 variants={itemVariants}
               >
                 Discover, collect, and trade unique digital artworks on the blockchain. 
@@ -181,10 +178,9 @@ const HomeSection = () => {
             <motion.div 
               className="flex flex-col sm:flex-row gap-4"
               variants={itemVariants}
-            >
-              <motion.button
+            >              <motion.button
                 onClick={connectWallet}
-                className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-purple-500/25"
+                className="px-8 py-4 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-semibold rounded-xl hover:from-amber-700 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-amber-500/25"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -198,9 +194,9 @@ const HomeSection = () => {
                 )}
               </motion.button>
               
-              <Link to="/explore">
+              <Link to="/gallery">
                 <motion.button
-                  className="px-8 py-4 border-2 border-purple-500 text-purple-300 font-semibold rounded-xl hover:bg-purple-500/10 transition-all duration-300"
+                  className="px-8 py-4 border-2 border-amber-600 text-amber-700 font-semibold rounded-xl hover:bg-amber-100/20 transition-all duration-300"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -209,22 +205,21 @@ const HomeSection = () => {
               </Link>
             </motion.div>
 
-            {/* Stats */}
-            <motion.div 
-              className="grid grid-cols-3 gap-8 pt-8 border-t border-gray-700"
+            {/* Stats */}            <motion.div 
+              className="grid grid-cols-3 gap-8 pt-8 border-t border-gray-400"
               variants={itemVariants}
             >
               <div className="text-center">
-                <div className="text-2xl font-bold text-white">12.5K+</div>
-                <div className="text-gray-400 text-sm">Artworks</div>
+                <div className="text-2xl font-bold text-gray-800">12.5K+</div>
+                <div className="text-gray-600 text-sm">Artworks</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-white">8.2K+</div>
-                <div className="text-gray-400 text-sm">Artists</div>
+                <div className="text-2xl font-bold text-gray-800">8.2K+</div>
+                <div className="text-gray-600 text-sm">Artists</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-white">95.6K+</div>
-                <div className="text-gray-400 text-sm">Collectors</div>
+                <div className="text-2xl font-bold text-gray-800">95.6K+</div>
+                <div className="text-gray-600 text-sm">Collectors</div>
               </div>
             </motion.div>
           </motion.div>
@@ -233,9 +228,8 @@ const HomeSection = () => {
           <motion.div 
             className="space-y-6"
             variants={itemVariants}
-          >
-            <motion.h2 
-              className="text-3xl font-bold text-white mb-8"
+          >            <motion.h2 
+              className="text-3xl font-bold text-gray-800 mb-8"
               variants={itemVariants}
             >
               Featured Collections
@@ -244,10 +238,9 @@ const HomeSection = () => {
             <motion.div 
               className="space-y-4"
               variants={containerVariants}
-            >              {featuredArtworks.map((artwork) => (
-                <motion.div
+            >              {featuredArtworks.map((artwork) => (                <motion.div
                   key={artwork.id}
-                  className="group relative bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10 hover:border-purple-500/50 transition-all duration-300"
+                  className="group relative bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-amber-200/50 hover:border-orange-400/50 transition-all duration-300 shadow-lg"
                   variants={cardVariants}
                   whileHover={{ scale: 1.02, y: -5 }}
                 >
@@ -262,16 +255,15 @@ const HomeSection = () => {
                         <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white animate-pulse"></div>
                       )}
                     </div>
-                    
-                    <div className="flex-1">
-                      <h3 className="text-white font-semibold">{artwork.title}</h3>
-                      <p className="text-gray-400 text-sm">{artwork.artist}</p>
+                      <div className="flex-1">
+                      <h3 className="text-gray-800 font-semibold">{artwork.title}</h3>
+                      <p className="text-gray-600 text-sm">{artwork.artist}</p>
                     </div>
                     
                     <div className="text-right">
-                      <div className="text-purple-400 font-bold">{artwork.price}</div>
+                      <div className="text-amber-600 font-bold">{artwork.price}</div>
                       {artwork.isLive && (
-                        <div className="text-red-400 text-xs font-medium">LIVE AUCTION</div>
+                        <div className="text-red-500 text-xs font-medium">LIVE AUCTION</div>
                       )}
                     </div>
                   </div>
@@ -282,10 +274,9 @@ const HomeSection = () => {
             <motion.div 
               className="text-center pt-6"
               variants={itemVariants}
-            >
-              <Link to="/gallery">
+            >              <Link to="/gallery">
                 <motion.button
-                  className="text-purple-400 font-medium hover:text-purple-300 transition-colors duration-300"
+                  className="text-amber-600 font-medium hover:text-orange-600 transition-colors duration-300"
                   whileHover={{ x: 10 }}
                 >
                   View All Collections →
@@ -294,11 +285,9 @@ const HomeSection = () => {
             </motion.div>
           </motion.div>
         </motion.div>
-      </div>
-
-      {/* Floating Elements */}
+      </div>      {/* Floating Elements */}
       <motion.div
-        className="absolute top-1/4 right-1/4 w-4 h-4 bg-purple-400 rounded-full opacity-60"
+        className="absolute top-1/4 right-1/4 w-4 h-4 bg-amber-400 rounded-full opacity-60"
         animate={{
           y: [-20, 20, -20],
           opacity: [0.6, 1, 0.6]
@@ -310,7 +299,7 @@ const HomeSection = () => {
         }}
       />
       <motion.div
-        className="absolute bottom-1/3 left-1/4 w-6 h-6 bg-blue-400 rounded-full opacity-40"
+        className="absolute bottom-1/3 left-1/4 w-6 h-6 bg-orange-400 rounded-full opacity-40"
         animate={{
           y: [20, -20, 20],
           x: [-10, 10, -10],

@@ -33,7 +33,7 @@ const Auctions: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen text-white p-8">
+    <div className="min-h-screen text-gray-800 p-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -41,10 +41,10 @@ const Auctions: React.FC = () => {
         className="max-w-7xl mx-auto"
       >
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
             Live Auctions
           </h1>
-          <p className="text-xl text-gray-300">
+          <p className="text-xl text-gray-600">
             Participate in live bidding for exclusive digital artworks
           </p>
         </div>
@@ -53,7 +53,7 @@ const Auctions: React.FC = () => {
           {liveAuctions.map((auction) => (
             <motion.div
               key={auction.id}
-              className="bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/20 hover:border-purple-500/50 transition-all duration-300"
+              className="bg-white/70 backdrop-blur-sm rounded-2xl overflow-hidden border border-amber-200/50 hover:border-amber-400/50 transition-all duration-300 shadow-lg"
               whileHover={{ scale: 1.02, y: -5 }}
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -76,21 +76,21 @@ const Auctions: React.FC = () => {
               
               <div className="p-6">
                 <h3 className="text-xl font-bold mb-1">{auction.title}</h3>
-                <p className="text-gray-400 mb-4">by {auction.artist}</p>
+                <p className="text-gray-600 mb-4">by {auction.artist}</p>
                 
                 <div className="flex justify-between items-center mb-4">
                   <div>
-                    <p className="text-gray-400 text-sm">Current Bid</p>
-                    <p className="text-2xl font-bold text-purple-400">{auction.currentBid}</p>
+                    <p className="text-gray-600 text-sm">Current Bid</p>
+                    <p className="text-2xl font-bold text-amber-600">{auction.currentBid}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-gray-400 text-sm">Bidders</p>
+                    <p className="text-gray-600 text-sm">Bidders</p>
                     <p className="text-lg font-semibold">{auction.bidders}</p>
                   </div>
                 </div>
                 
                 <motion.button
-                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold py-3 rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-300"
+                  className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold py-3 rounded-xl hover:from-amber-600 hover:to-orange-600 transition-all duration-300"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -107,7 +107,7 @@ const Auctions: React.FC = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
-          <button className="bg-white/10 backdrop-blur-sm border border-white/20 text-white px-8 py-3 rounded-xl hover:bg-white/20 transition-all duration-300">
+          <button className="bg-white/50 backdrop-blur-sm border border-amber-200/50 text-gray-800 px-8 py-3 rounded-xl hover:bg-white/70 transition-all duration-300">
             View All Auctions
           </button>
         </motion.div>

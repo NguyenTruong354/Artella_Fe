@@ -8,14 +8,18 @@ const HomeLayout: React.FC = () => {
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0f0f23] via-[#1a1a3e] to-[#2d1b69] relative overflow-hidden">
+    <div className="min-h-screen bg-[#F8F1E9] relative overflow-hidden">
+      {/* Background texture */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute inset-0 bg-[url('/src/assets/textxure_1.png')] bg-repeat opacity-30"></div>
+      </div>
+      
       {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
       
       {/* Main Content */}
-      <div className={`transition-all duration-300 ${sidebarOpen ? 'lg:ml-80' : 'ml-0'}`}>
+      <div className={`transition-all duration-300 relative z-10 ${sidebarOpen ? 'lg:ml-80' : 'ml-0'}`}>
         <Outlet />
       </div>
     </div>
