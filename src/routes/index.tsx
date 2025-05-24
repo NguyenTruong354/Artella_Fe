@@ -1,5 +1,4 @@
 import { createBrowserRouter } from 'react-router-dom';
-import HelloWorld from '../pages/HelloWorld';
 import HomeSection from '../components/Home/HomeSection';
 import Landing from '../pages/Landing';
 import Gallery from '../pages/Gallery';
@@ -48,10 +47,6 @@ const router = createBrowserRouter([
         element: <Landing />,
       },
     ],
-  },
-  {
-    path: '/hello',
-    element: <HelloWorld />,
   },
   {
     path: '/login',
