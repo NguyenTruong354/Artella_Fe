@@ -476,8 +476,7 @@ const LoginForm = () => {
               </motion.button>
             </motion.div>
 
-            {/* Sign up link */}
-            <motion.div
+            {/* Sign up link */}            <motion.div
               className="text-center pt-4"
               variants={itemVariants}
               custom={10}
@@ -485,7 +484,7 @@ const LoginForm = () => {
               <span className="text-[#8a9690] text-sm font-light">
                 Don't have an account?{" "}
                 <motion.a
-                  href="#signup"
+                  href="/signup"
                   className="text-[#c2a792] font-medium hover:text-[#b8956f] transition-colors duration-200"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
