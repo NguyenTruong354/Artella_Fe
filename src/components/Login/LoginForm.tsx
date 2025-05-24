@@ -284,11 +284,12 @@ const LoginForm = () => {
                   }}
                   required
                 />                <motion.div
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#c2a792] text-lg flex items-center justify-center"
+                  className="absolute right-3 top-1/2 text-[#c2a792] text-lg flex items-center justify-center w-6 h-6"
                   animate={{
                     opacity: formData.email ? 1 : 0.5,
                   }}
                   transition={{ duration: 0.3 }}
+                  style={{ transform: 'translateY(-50%)' }}
                 >
                   📧
                 </motion.div>
@@ -316,14 +317,14 @@ const LoginForm = () => {
                     backgroundColor: "rgba(255,255,255,0.8)",
                     transition: { duration: 0.3 },
                   }}                  required
-                />
-                <button
+                />                <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#c2a792] text-lg 
+                  className="absolute right-3 top-1/2 text-[#c2a792] text-lg 
                             flex items-center justify-center w-6 h-6 rounded-full 
                             hover:bg-[#c2a792]/10 transition-colors duration-200 
                             focus:outline-none focus:ring-2 focus:ring-[#c2a792]/30"
+                  style={{ transform: 'translateY(-50%)' }}
                 >
                   {showPassword ? "🙈" : "👁️"}
                 </button>
