@@ -22,6 +22,8 @@ const GridGalleryRectangle: React.FC<GridGalleryRectangleProps> = ({
   const [triggerAnimation, setTriggerAnimation] = useState(false);
   const [rippleCenter, setRippleCenter] = useState<{x: number, y: number} | null>(null);
   const [rippleActive, setRippleActive] = useState(false);
+  const [autoRevealedItems, setAutoRevealedItems] = useState<Set<number>>(new Set());
+  const [isShowingFullImage, setIsShowingFullImage] = useState(false);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -34,6 +36,45 @@ const GridGalleryRectangle: React.FC<GridGalleryRectangleProps> = ({
   useEffect(() => {
     setTriggerAnimation(isTemplateChanging);
   }, [isTemplateChanging]);
+
+  // Auto reveal sequence - hiển thị và ẩn tất cả ô cùng lúc
+  useEffect(() => {
+    const startAutoReveal = () => {
+      const revealSequence = async () => {
+        // Phase 1: Hiển thị tất cả ô cùng lúc với hiệu ứng stagger nhẹ
+        setIsShowingFullImage(true);
+        
+        // Tạo hiệu ứng cascade nhẹ khi hiển thị (từ trái sang phải, trên xuống dưới)
+        for (let i = 0; i < 24; i++) {
+          setAutoRevealedItems(prev => new Set([...prev, i]));
+          await new Promise(resolve => setTimeout(resolve, 50)); // Rất nhanh để tạo hiệu ứng cascade
+        }
+        
+        // Phase 2: Giữ toàn bộ ảnh hiển thị trong 4 giây để người dùng ngắm nhìn
+        await new Promise(resolve => setTimeout(resolve, 4000));
+        
+        // Phase 3: Ẩn tất cả ô cùng lúc
+        setIsShowingFullImage(false);
+        setAutoRevealedItems(new Set());
+        
+        // Đợi 3s trước khi bắt đầu chu kỳ mới
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      };
+      
+      revealSequence();
+    };
+
+    // Bắt đầu sequence đầu tiên sau 2s
+    const initialTimeout = setTimeout(startAutoReveal, 2000);
+
+    // Lặp lại sequence mỗi 12s (ngắn hơn vì đã đơn giản hóa)
+    const interval = setInterval(startAutoReveal, 12000);
+
+    return () => {
+      clearTimeout(initialTimeout);
+      clearInterval(interval);
+    };
+  }, []);
 
   // Auto ripple effect every 5 seconds - starts immediately
   useEffect(() => {
@@ -156,7 +197,7 @@ const GridGalleryRectangle: React.FC<GridGalleryRectangleProps> = ({
   };
 
   // Item animation variants with ripple integration
-  const getItemVariants = (index: number) => {
+  const getItemVariants = () => {
     return {
       hidden: { y: 20, opacity: 0 },
       visible: {
@@ -216,7 +257,12 @@ const GridGalleryRectangle: React.FC<GridGalleryRectangleProps> = ({
 
   // Calculate background style for each grid item
   const getBackgroundStyle = (index: number) => {
-    if (imageUrl) {
+    // Kiểm tra xem item này có đang được auto reveal không
+    const isAutoRevealed = autoRevealedItems.has(index);
+    const isHovered = hoveredIndex === index;
+    
+    if (imageUrl && (isAutoRevealed || isHovered)) {
+      // Hiển thị ảnh thật khi được auto reveal hoặc hover
       const row = Math.floor(index / 6);
       const col = index % 6;
       
@@ -232,15 +278,22 @@ const GridGalleryRectangle: React.FC<GridGalleryRectangleProps> = ({
         backgroundPosition: `${backgroundPositionX}% ${backgroundPositionY}%`,
         backgroundRepeat: 'no-repeat',
         filter: getImageFilter(index),
+        opacity: 1,
+        transform: isAutoRevealed ? 'scale(1.02)' : 'scale(1)',
+        transition: 'all 0.3s ease-in-out'
       };
     }
     
+    // Mặc định hiển thị màu nền với hiệu ứng mượt mà
     const colors = [
       '#FADADD', '#ffd1d1', '#ffb3ba', '#ff9aa2',
       '#ffcccb', '#ffe4e6', '#f8d7da', '#fce4ec'
     ];
     return {
       backgroundColor: colors[index % colors.length],
+      opacity: 1,
+      transform: 'scale(1)',
+      transition: 'all 0.3s ease-in-out'
     };
   };
 
@@ -269,7 +322,10 @@ const GridGalleryRectangle: React.FC<GridGalleryRectangleProps> = ({
             const gridArea = `item-${index + 1}`;
             const animationProps = getAnimationProps(item.animationType, (item.animationDelay || 0) + index * 0.1);
             const rippleProps = getRippleAnimation(index);
-            const itemVariants = getItemVariants(index);
+            const itemVariants = getItemVariants();
+            
+            // Kiểm tra xem item này có đang được auto reveal không
+            const isAutoRevealed = autoRevealedItems.has(index);
             
             return (
               <motion.div
@@ -295,14 +351,51 @@ const GridGalleryRectangle: React.FC<GridGalleryRectangleProps> = ({
                   className="w-full h-full overflow-hidden"
                   initial={animationProps.initial}
                   animate={animationProps.animate}
+                  style={{
+                    // Đảm bảo wrapper không che phủ ảnh nền
+                    backgroundColor: 'transparent'
+                  }}
                 >
-                  {/* Content overlay */}
+                  {/* Content overlay - chỉ hiển thị nếu có item.id */}
                   {item.id && (
                     <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent flex items-center justify-center">
                       <span className="text-sm md:text-lg font-bold text-white drop-shadow-lg">
                         {item.id}
                       </span>
                     </div>
+                  )}
+                  
+                  {/* Auto reveal effect - hiển thị ảnh tự động */}
+                  {isAutoRevealed && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ 
+                        opacity: 1, 
+                        scale: 1,
+                        boxShadow: [
+                          "0px 4px 8px rgba(0, 0, 0, 0.1)",
+                          "0px 12px 30px rgba(194, 167, 146, 0.6)",
+                          "0px 8px 20px rgba(194, 167, 146, 0.4)"
+                        ]
+                      }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ 
+                        duration: 0.4,
+                        ease: "easeOut"
+                      }}
+                      className="absolute inset-0 bg-gradient-to-br from-[#c2a792]/20 via-transparent to-[#d8bca6]/20 border-2 border-[#c2a792] rounded-md"
+                    >
+                      {/* Hiệu ứng shimmer */}
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                        initial={{ x: "-100%" }}
+                        animate={{ x: "100%" }}
+                        transition={{ 
+                          duration: 0.8,
+                          ease: "easeInOut"
+                        }}
+                      />
+                    </motion.div>
                   )}
                   
                   {/* Hover effect overlay */}
@@ -345,6 +438,63 @@ const GridGalleryRectangle: React.FC<GridGalleryRectangleProps> = ({
           className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-3 py-1 rounded text-sm shadow-lg z-50"
         >
           {items[hoveredIndex].id}
+        </motion.div>
+      )}
+
+      {/* Auto Reveal Status Indicator */}
+      {autoRevealedItems.size > 0 && (
+        <motion.div
+          className="absolute top-4 left-4 text-xs text-[#c2a792] bg-white/90 px-3 py-2 rounded-lg shadow-md"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+        >
+          <div className="flex items-center gap-2">
+            <motion.div
+              className="w-2 h-2 bg-[#c2a792] rounded-full"
+              animate={{ scale: [1, 1.3, 1] }}
+              transition={{ duration: 0.8, repeat: Infinity }}
+            />
+            Auto Gallery ({autoRevealedItems.size}/24)
+          </div>
+        </motion.div>
+      )}
+
+      {/* Visual indicator khi đang hiển thị ảnh hoàn chỉnh */}
+      {isShowingFullImage && autoRevealedItems.size === 24 && (
+        <motion.div
+          className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white/20 backdrop-blur-md rounded-full px-4 py-2 z-50"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.5 }}
+        >
+          <motion.p 
+            className="text-white text-sm font-medium"
+            animate={{ 
+              scale: [1, 1.05, 1],
+            }}
+            transition={{ 
+              duration: 2, 
+              repeat: Infinity 
+            }}
+          >
+            🖼️ Đang hiển thị ảnh hoàn chỉnh
+          </motion.p>
+        </motion.div>
+      )}
+
+      {/* Progress indicator chỉ hiển thị khi đang load */}
+      {autoRevealedItems.size > 0 && autoRevealedItems.size < 24 && (
+        <motion.div
+          className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white/20 backdrop-blur-md rounded-full px-3 py-1 z-50"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+        >
+          <p className="text-white text-xs">
+            Đang tải... {autoRevealedItems.size}/24
+          </p>
         </motion.div>
       )}
 
