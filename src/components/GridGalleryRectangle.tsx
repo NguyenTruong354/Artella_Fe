@@ -20,6 +20,8 @@ const GridGalleryRectangle: React.FC<GridGalleryRectangleProps> = ({
   const [isVisible, setIsVisible] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [triggerAnimation, setTriggerAnimation] = useState(false);
+  const [rippleCenter, setRippleCenter] = useState<{x: number, y: number} | null>(null);
+  const [rippleActive, setRippleActive] = useState(false);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -33,7 +35,44 @@ const GridGalleryRectangle: React.FC<GridGalleryRectangleProps> = ({
     setTriggerAnimation(isTemplateChanging);
   }, [isTemplateChanging]);
 
-  // Default 4x6 grid template - tạo layout chữ nhật với 24 ô
+  // Auto ripple effect every 5 seconds - starts immediately
+  useEffect(() => {
+    // First ripple immediately when component mounts
+    const startFirstRipple = () => {
+      const centerX = Math.random() * 6;
+      const centerY = Math.random() * 4;
+      
+      setRippleCenter({ x: centerX, y: centerY });
+      setRippleActive(true);
+      
+      setTimeout(() => {
+        setRippleActive(false);
+      }, 3000);
+    };
+
+    // Start first ripple after component is visible
+    const initialTimeout = setTimeout(startFirstRipple, 1000);
+
+    // Then continue with regular intervals
+    const interval = setInterval(() => {
+      const centerX = Math.random() * 6;
+      const centerY = Math.random() * 4;
+      
+      setRippleCenter({ x: centerX, y: centerY });
+      setRippleActive(true);
+      
+      setTimeout(() => {
+        setRippleActive(false);
+      }, 3000);
+    }, 5000); // Every 5 seconds
+
+    return () => {
+      clearTimeout(initialTimeout);
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Default 4x6 grid template
   const defaultTemplate = `
     "item-1 item-2 item-3 item-4 item-5 item-6"
     "item-7 item-8 item-9 item-10 item-11 item-12"
@@ -53,43 +92,96 @@ const GridGalleryRectangle: React.FC<GridGalleryRectangleProps> = ({
 
     return { totalGridWidth, totalGridHeight };
   }, [template]);
-  // Simplified animation variants dựa trên GridGallery
+
+  // Calculate grid position for each item (row, col)
+  const getGridPosition = (index: number) => {
+    return {
+      row: Math.floor(index / 6),
+      col: index % 6
+    };
+  };
+
+  // Calculate distance from ripple center
+  const getDistanceFromCenter = (index: number, center: {x: number, y: number}) => {
+    const pos = getGridPosition(index);
+    const dx = pos.col - center.x;
+    const dy = pos.row - center.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  // Get ripple animation delay based on distance from center
+  const getRippleDelay = (index: number) => {
+    if (!rippleCenter || !rippleActive) return 0;
+    
+    const distance = getDistanceFromCenter(index, rippleCenter);
+    // Each "ring" of the ripple has 0.15s delay
+    return distance * 0.15;
+  };
+
+  // Get ripple animation props
+  const getRippleAnimation = (index: number) => {
+    if (!rippleActive) return {};
+
+    const delay = getRippleDelay(index);
+    
+    return {
+      animate: {
+        scale: [1, 1.1, 1],
+        rotateZ: [0, 2, 0],
+        boxShadow: [
+          "0px 4px 8px rgba(0, 0, 0, 0.1)",
+          "0px 8px 25px rgba(194, 167, 146, 0.4)",
+          "0px 4px 8px rgba(0, 0, 0, 0.1)"
+        ],
+      },
+      transition: {
+        duration: 0.8,
+        delay: delay,
+        ease: "easeOut",
+      }
+    };
+  };
+
+  // Container animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1,
+        staggerChildren: 0.05,
         delayChildren: 0.05,
         duration: 0.8
       },
     },
   };
 
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        duration: 0.6,
-        ease: "easeOut"
+  // Item animation variants with ripple integration
+  const getItemVariants = (index: number) => {
+    return {
+      hidden: { y: 20, opacity: 0 },
+      visible: {
+        y: 0,
+        opacity: 1,
+        transition: {
+          duration: 0.6,
+          ease: "easeOut"
+        },
       },
-    },
+    };
   };
 
-  // Get image filters giống GridGallery
+  // Get image filters
   const getImageFilter = (index: number) => {
     const filters = [
-      'sepia(20%) brightness(105%) saturate(110%)', // warm
-      'brightness(105%) saturate(90%) hue-rotate(5deg)', // cool
-      'sepia(30%) brightness(95%) contrast(110%)', // vintage
-      'contrast(110%) brightness(110%) saturate(110%)', // sharp
+      'sepia(20%) brightness(105%) saturate(110%)',
+      'brightness(105%) saturate(90%) hue-rotate(5deg)',
+      'sepia(30%) brightness(95%) contrast(110%)',
+      'contrast(110%) brightness(110%) saturate(110%)',
     ];
     return filters[index % filters.length];
   };
 
-  // Animation effects tương tự GridGallery
+  // Regular animation effects (zoom/fade)
   const getAnimationProps = (type?: string, delay: number = 0) => {
     const baseTransition = {
       duration: 3,
@@ -122,15 +214,14 @@ const GridGalleryRectangle: React.FC<GridGalleryRectangleProps> = ({
     }
   };
 
-  // Calculate background style cho từng grid item
+  // Calculate background style for each grid item
   const getBackgroundStyle = (index: number) => {
     if (imageUrl) {
-      // Chia ảnh thành 4x6 = 24 parts
       const row = Math.floor(index / 6);
       const col = index % 6;
       
-      const backgroundSizeX = 6 * 100; // 6 columns
-      const backgroundSizeY = 4 * 100; // 4 rows
+      const backgroundSizeX = 6 * 100;
+      const backgroundSizeY = 4 * 100;
       
       const backgroundPositionX = (col / (6 - 1)) * 100;
       const backgroundPositionY = (row / (4 - 1)) * 100;
@@ -144,7 +235,6 @@ const GridGalleryRectangle: React.FC<GridGalleryRectangleProps> = ({
       };
     }
     
-    // Fallback colors nếu không có ảnh
     const colors = [
       '#FADADD', '#ffd1d1', '#ffb3ba', '#ff9aa2',
       '#ffcccb', '#ffe4e6', '#f8d7da', '#fce4ec'
@@ -153,6 +243,7 @@ const GridGalleryRectangle: React.FC<GridGalleryRectangleProps> = ({
       backgroundColor: colors[index % colors.length],
     };
   };
+
   return (
     <motion.div
       initial="hidden"
@@ -175,13 +266,14 @@ const GridGalleryRectangle: React.FC<GridGalleryRectangleProps> = ({
           }}
         >
           {items.slice(0, 24).map((item, index) => {
-            // Tạo grid area cho từng item (item-1, item-2, ...)
             const gridArea = `item-${index + 1}`;
             const animationProps = getAnimationProps(item.animationType, (item.animationDelay || 0) + index * 0.1);
+            const rippleProps = getRippleAnimation(index);
+            const itemVariants = getItemVariants(index);
             
             return (
               <motion.div
-                key={item.id}
+                key={`${item.id}-${index}`}
                 variants={itemVariants}
                 className="relative w-full h-full cursor-pointer overflow-hidden rounded-md shadow-md will-change-transform"
                 style={{ 
@@ -196,13 +288,15 @@ const GridGalleryRectangle: React.FC<GridGalleryRectangleProps> = ({
                 }}
                 onHoverStart={() => setHoveredIndex(index)}
                 onHoverEnd={() => setHoveredIndex(null)}
+                {...rippleProps}
               >
-                {/* Animation wrapper giống GridGallery */}
+                {/* Animation wrapper for regular animations */}
                 <motion.div
                   className="w-full h-full overflow-hidden"
                   initial={animationProps.initial}
                   animate={animationProps.animate}
-                >                  {/* Content overlay - chỉ hiển thị khi có text */}
+                >
+                  {/* Content overlay */}
                   {item.id && (
                     <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent flex items-center justify-center">
                       <span className="text-sm md:text-lg font-bold text-white drop-shadow-lg">
@@ -217,6 +311,23 @@ const GridGalleryRectangle: React.FC<GridGalleryRectangleProps> = ({
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       className="absolute inset-0 bg-white/10"
+                    />
+                  )}
+
+                  {/* Ripple indicator */}
+                  {rippleActive && getRippleDelay(index) < 1.5 && (
+                    <motion.div
+                      className="absolute inset-0 border-2 border-[#c2a792] rounded-md"
+                      initial={{ opacity: 0 }}
+                      animate={{ 
+                        opacity: [0, 0.6, 0],
+                        scale: [0.8, 1.05, 0.8]
+                      }}
+                      transition={{ 
+                        duration: 0.8, 
+                        delay: getRippleDelay(index),
+                        ease: "easeOut"
+                      }}
                     />
                   )}
                 </motion.div>
@@ -234,6 +345,18 @@ const GridGalleryRectangle: React.FC<GridGalleryRectangleProps> = ({
           className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-3 py-1 rounded text-sm shadow-lg z-50"
         >
           {items[hoveredIndex].id}
+        </motion.div>
+      )}
+
+      {/* Ripple Status Indicator (optional - for debugging) */}
+      {rippleActive && (
+        <motion.div
+          className="absolute top-4 right-4 text-xs text-[#c2a792] bg-white/80 px-2 py-1 rounded"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          Ripple Wave Active
         </motion.div>
       )}
     </motion.div>

@@ -75,6 +75,7 @@ const PricingSection: React.FC = () => {
       },
     },
   };
+
   return (
     <section className="relative min-h-screen bg-gradient-to-br from-[#F8F1E9] via-[#F5EDE3] to-[#F2E8DC] flex flex-col justify-center py-4 px-4 overflow-hidden">
       {/* Decorative background elements */}
@@ -121,7 +122,8 @@ const PricingSection: React.FC = () => {
             delay: 1,
           }}
         />
-      </div>{" "}
+      </div>
+
       <motion.div
         className="relative z-10 max-w-6xl mx-auto w-full flex flex-col items-center justify-center"
         variants={sectionVariants}
@@ -165,19 +167,20 @@ const PricingSection: React.FC = () => {
 
           {/* Countdown Timer */}
           <CountdownTimer />
-        </motion.div>{" "}
+        </motion.div>
+
         {/* GridGalleryRectangle Component - Positioned at the bottom */}
         <motion.div
-          className="flex justify-center items-center relative z-10 mt-4"
-          initial={{ opacity: 0, scale: 0.4 }}
-          whileInView={{ opacity: 1, scale: 0.5 }}
+          className="flex justify-center items-center relative z-10 mt-4 w-full max-w-4xl"
+          initial={{ opacity: 0, scale: 0.7 }}
+          whileInView={{ opacity: 1, scale: 0.85 }}
           transition={{ duration: 0.8, delay: 0.4 }}
           viewport={{ once: true, amount: 0.1 }}
         >
           <GridGalleryRectangle
             items={pricingItems}
             backgroundColor="#F8F1E9"
-            imageUrl="/src/assets/background_9.JPG"
+            imageUrl="/src/assets/Room.PNG"
             isTemplateChanging={false}
           />
         </motion.div>
