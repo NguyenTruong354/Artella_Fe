@@ -84,7 +84,7 @@ const PricingSection: React.FC = () => {
         <motion.div
           className="absolute top-0 left-0 w-full h-full opacity-5"
           style={{
-            backgroundImage: "url('/src/assets/textxure_1.png')",
+            backgroundImage: "url('/public/assets/textxure_1.png')",
             backgroundRepeat: "repeat",
             backgroundSize: "200px 200px",
           }}
@@ -180,7 +180,7 @@ const PricingSection: React.FC = () => {
           <GridGalleryRectangle
             items={pricingItems}
             backgroundColor="#F8F1E9"
-            imageUrl="/src/assets/Room.PNG"
+            imageUrl="/public/assets/Room.PNG"
             isTemplateChanging={false}
           />
         </motion.div>

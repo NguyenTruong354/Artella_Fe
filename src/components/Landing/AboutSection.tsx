@@ -26,13 +26,13 @@ const AboutSection: React.FC = () => {
       </div>
       {/* Hình trang trí góc dưới bên trái */}
       <img
-        src="/src/assets/textxure_1.png"
+        src="/public/assets/textxure_1.png"
         alt="decoration"
         className="absolute bottom-0 left-0 w-[700px] h-[450px] object-cover opacity-70 pointer-events-none select-none z-0 -translate-y-5 -translate-x-40"
         draggable="false"
       />
       <img
-        src="/src/assets/Tuong_1.png"
+        src="/public/assets/Tuong_1.png"
         alt="overlay decoration"
         className="absolute bottom-0 left-0 w-[300px] md:w-[400px] object-cover opacity-80 pointer-events-none select-none z-10 -translate-y-28 translate-x-20"
         draggable="false"

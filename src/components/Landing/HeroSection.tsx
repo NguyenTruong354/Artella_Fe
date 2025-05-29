@@ -8,32 +8,32 @@ const artworks = [
     id: 1,
     title: "Abstract Emotions",
     quote: '"Art is not what you see, but what you make others see."',
-    imageUrl: "/src/assets/background_3.jpg",
+    imageUrl: "/public/assets/background_3.jpg",
   },
   {
     id: 2,
     title: "Autumn Landscape",
     quote: '"Nature always wears the colors of the spirit."',
-    imageUrl: "/src/assets/background_2.jpg",
+    imageUrl: "/public/assets/background_2.jpg",
   },
   {
     id: 3,
     title: "The Starry Night",
     quote:
       '"I look at the stars and with all my being feel that I am part of one of these stars."',
-    imageUrl: "/src/assets/background_1.jpg",
+    imageUrl: "/public/assets/background_1.jpg",
   },
   {
     id: 4,
     title: "Peaceful Mountains",
     quote: '"The mountains are calling and I must go."',
-    imageUrl: "/src/assets/background_4.jpg",
+    imageUrl: "/public/assets/background_4.jpg",
   },
   {
     id: 5,
     title: "Museum Masterpiece",
     quote: '"Every artist was first an amateur."',
-    imageUrl: "/src/assets/background_5.jpg",
+    imageUrl: "/public/assets/background_5.jpg",
   },
 ];
 

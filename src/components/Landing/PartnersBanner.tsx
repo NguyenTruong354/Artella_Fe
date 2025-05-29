@@ -5,19 +5,19 @@ import React from 'react';
 const partners = [
   {
     name: "Hardhat",
-    logo: "/src/assets/Logo.PNG" // Thay thế bằng logo thật sau
+    logo: "/public/assets/Logo.PNG" // Thay thế bằng logo thật sau
   },
   {
     name: "MetaMask",
-    logo: "/src/assets/Logo.PNG" // Thay thế bằng logo thật sau
+    logo: "/public/assets/Logo.PNG" // Thay thế bằng logo thật sau
   },
   {
     name: "Artella",
-    logo: "/src/assets/Logo.PNG" // Thay thế bằng logo thật sau
+    logo: "/public/assets/Logo.PNG" // Thay thế bằng logo thật sau
   },
   {
     name: "Binance",
-    logo: "/src/assets/Logo.PNG" // Thay thế bằng logo thật sau
+    logo: "/public/assets/Logo.PNG" // Thay thế bằng logo thật sau
   }
 ];
 

@@ -14,7 +14,7 @@ const ExploreSection = () => {
   }, []);
 
   // Single image URL for the entire grid
-  const mainImageUrl = "/src/assets/background_9.JPG";
+  const mainImageUrl = "/public/assets/background_9.JPG";
 
   // Framer Motion variants - we'll use these for the text animation only
   const textVariants = {
@@ -46,7 +46,7 @@ const ExploreSection = () => {
             {" "}
             {/* Texture background image */}{" "}
             <motion.img
-              src="/src/assets/textxure_3.png"
+              src="/public/assets/textxure_3.png"
               alt="Texture"
               className="absolute -left-27 md:-left-56 -top-[13%] h-32 md:h-48 object-contain opacity-70"
               initial={{ opacity: 0, x: -20 }}
@@ -95,7 +95,7 @@ const ExploreSection = () => {
           <div className="md:w-3/5 order-1 md:order-2 h-auto md:h-[60vh] max-h-[500px] relative -mt-2 md:mt-0">
             {/* Texture background - moved outside visible area */}
             <motion.img
-              src="/src/assets/textxure_1.png"
+              src="/public/assets/textxure_1.png"
               alt="Texture"
               className="absolute right-0 bottom-0 w-1/4 h-1/4 object-contain opacity-20 z-0 -rotate-12 translate-x-8 translate-y-8"
               initial={{ opacity: 0 }}

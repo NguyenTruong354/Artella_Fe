@@ -138,7 +138,7 @@ const Footer = () => {  const controls = useAnimation();
     >
       {/* Enhanced atmospheric background */}
       <div className="absolute inset-0 opacity-5">
-        <div className="absolute inset-0 bg-[url('/src/assets/textxure_1.png')] bg-repeat opacity-40"></div>
+        <div className="absolute inset-0 bg-[url('/public/assets/textxure_1.png')] bg-repeat opacity-40"></div>
       </div>
 
       {/* Floating artistic elements */}
@@ -208,7 +208,7 @@ const Footer = () => {  const controls = useAnimation();
                 }}
               >
                 <img 
-                  src="/src/assets/Logo.PNG" 
+                  src="/public/assets/Logo.PNG" 
                   alt="Smart Market"
                   className="h-12 md:h-16 w-auto brightness-0 invert opacity-90"
                 />

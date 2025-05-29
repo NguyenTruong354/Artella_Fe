@@ -100,7 +100,7 @@ const ServiceSection = () => {  const controls = useAnimation();
   };
   const services = [
     {
-      icon: "/src/assets/icon_1.png",
+      icon: "/public/assets/icon_1.png",
       title: "Atelier Collection",
       subtitle: "Curated Masterpieces",
       description: "Discover authentic artworks with NFT provenance — each piece a window into the artist's soul, preserved eternally on blockchain.",
@@ -112,7 +112,7 @@ const ServiceSection = () => {  const controls = useAnimation();
       rotation: "rotate-45"
     },
     {
-      icon: "/src/assets/icon_2.png", 
+      icon: "/public/assets/icon_2.png", 
       title: "Auction House",
       subtitle: "Live Auction Experience",
       description: "Immerse in the theatrical dance of live bidding — where passion meets art in moments of breathtaking anticipation.",
@@ -124,7 +124,7 @@ const ServiceSection = () => {  const controls = useAnimation();
       rotation: "rotate-[30deg]"
     },
     {
-      icon: "/src/assets/icon_3.png",
+      icon: "/public/assets/icon_3.png",
       title: "Heritage Exchange",
       subtitle: "Provenance & Legacy",
       description: "Transfer art with its complete story — each transaction a new chapter in the artwork's immortal journey through time.",
@@ -144,7 +144,7 @@ const ServiceSection = () => {  const controls = useAnimation();
     >
       {/* Enhanced atmospheric background */}
       <div className="absolute inset-0 opacity-10">
-        <div className="absolute inset-0 bg-[url('/src/assets/textxure_1.png')] bg-repeat opacity-40"></div>
+        <div className="absolute inset-0 bg-[url('/public/assets/textxure_1.png')] bg-repeat opacity-40"></div>
       </div>
 
       {/* Floating artistic elements */}
@@ -269,7 +269,7 @@ const ServiceSection = () => {  const controls = useAnimation();
               }}
             >
               {/* Canvas texture background */}
-              <div className="absolute inset-0 bg-[url('/src/assets/textxure_1.png')] bg-repeat opacity-5"></div>
+              <div className="absolute inset-0 bg-[url('/public/assets/textxure_1.png')] bg-repeat opacity-5"></div>
               
               {/* Dynamic background blend */}
               <motion.div
@@ -290,7 +290,7 @@ const ServiceSection = () => {  const controls = useAnimation();
                 }}
               >
                 <img 
-                  src="/src/assets/textxure_2.png" 
+                  src="/public/assets/textxure_2.png" 
                   alt="Brush texture" 
                   className="w-full h-full object-cover" 
                   style={{ filter: `${service.hue} saturate(0.8) brightness(1.1)` }}
