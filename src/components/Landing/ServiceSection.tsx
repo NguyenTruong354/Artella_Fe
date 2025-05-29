@@ -1,10 +1,9 @@
 import { motion, useAnimation, useInView } from "framer-motion";
 import { useRef, useEffect } from "react";
 
-const ServiceSection = () => {
-  const controls = useAnimation();
+const ServiceSection = () => {  const controls = useAnimation();
   const sectionRef = useRef(null);
-  const inView = useInView(sectionRef, { once: false, threshold: 0.1 });
+  const inView = useInView(sectionRef, { once: false, amount: 0.1 });
   
   useEffect(() => {
     if (inView) {
@@ -26,7 +25,6 @@ const ServiceSection = () => {
       },
     },
   };
-
   const itemVariants = {
     hidden: { 
       y: 60, 
@@ -34,7 +32,7 @@ const ServiceSection = () => {
       scale: 0.9,
       rotateX: 15
     },
-    visible: (i) => ({
+    visible: (i: number) => ({
       y: 0,
       opacity: 1,
       scale: 1,

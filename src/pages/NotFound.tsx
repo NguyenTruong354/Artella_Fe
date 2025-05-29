@@ -1,17 +1,24 @@
 import { useState, useEffect } from 'react';
 
-const NotFound = () => {
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [time, setTime] = useState(new Date());
-  const [brushStrokes, setBrushStrokes] = useState([]);
-  const [currentBid, setCurrentBid] = useState(4.04);
+// Định nghĩa interface cho brush stroke
+interface BrushStroke {
+  id: number;
+  x: number;
+  y: number;
+  opacity: number;
+}
 
+const NotFound = () => {
+  // Removed unused state: const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [time, setTime] = useState(new Date());
+  const [brushStrokes, setBrushStrokes] = useState<BrushStroke[]>([]);
+  const [currentBid, setCurrentBid] = useState(4.04);
   useEffect(() => {
-    const handleMouseMove = (e) => {
-      setMousePos({ x: e.clientX, y: e.clientY });
+    const handleMouseMove = (e: MouseEvent) => {
+      // Removed: setMousePos({ x: e.clientX, y: e.clientY });
       
       // Tạo brush stroke effect khi di chuột
-      const newStroke = {
+      const newStroke: BrushStroke = {
         id: Date.now(),
         x: e.clientX,
         y: e.clientY,

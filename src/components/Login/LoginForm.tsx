@@ -30,14 +30,13 @@ const LoginForm = () => {
       },
     },
   };
-
   const itemVariants = {
     hidden: {
       y: 40,
       opacity: 0,
       scale: 0.95,
     },
-    visible: (i) => ({
+    visible: (i: number) => ({
       y: 0,
       opacity: 1,
       scale: 1,
@@ -102,16 +101,14 @@ const LoginForm = () => {
       },
     },
   };
-
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
   };
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
 
