@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, useAnimation, useMotionValue, AnimatePresence } from "framer-motion";
 import ArtCard from "./ArtCard";
 
@@ -78,14 +78,11 @@ export default function EnhancedHeroSection() {
   // State để lưu trữ hướng chuyển động (trái hoặc phải)
   const [direction, setDirection] = useState<number>(0);
   // State để theo dõi kích thước màn hình cho responsive
-  const [isMobile, setIsMobile] = useState<boolean>(false);
-  // State để lưu trữ kích thước màn hình
+  const [isMobile, setIsMobile] = useState<boolean>(false);  // State để lưu trữ kích thước màn hình
   const [windowSize, setWindowSize] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
   });
-  // State cho auto-slide
-  const [isAutoSliding, setIsAutoSliding] = useState<boolean>(true);
   // State để theo dõi khi người dùng tương tác với slide
   const [userInteracted, setUserInteracted] = useState<boolean>(false);
   // Animation controls
@@ -134,23 +131,30 @@ export default function EnhancedHeroSection() {
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
     };
-  }, [mouseX, mouseY, windowSize]);
-
-  // Effect để xử lý auto-sliding
+  }, [mouseX, mouseY, windowSize]);  // Effect để xử lý auto-sliding
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
     
-    // Chỉ auto-slide khi người dùng không tương tác với slider
-    if (isAutoSliding && !userInteracted) {
+    // Auto-slide khi người dùng không tương tác với slider
+    if (!userInteracted) {
       intervalId = setInterval(() => {
-        handleNextClick(false);
+        setDirection(1);
+        setActiveIndex((prevIndex) => {
+          if (prevIndex >= artworks.length - 1) {
+            return 0;
+          } else {
+            return prevIndex + 1;
+          }
+        });
+        controls.start("visible");
       }, 5000); // Chuyển slide sau mỗi 5 giây
     }
     
     return () => {
       clearInterval(intervalId);
     };
-  }, [isAutoSliding, activeIndex, userInteracted]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeIndex, userInteracted]);
 
   // Effect tạm dừng auto-slide nếu người dùng tương tác, và khôi phục sau 10 giây
   useEffect(() => {
@@ -215,9 +219,8 @@ export default function EnhancedHeroSection() {
     // Animate elements
     controls.start("visible");
   };
-
   // Xử lý khi nhấn nút điều hướng tiếp theo
-  const handleNextClick = (userInitiated: boolean = true) => {
+  const handleNextClick = useCallback((userInitiated: boolean = true) => {
     if(userInitiated) {
       setUserInteracted(true);
     }
@@ -233,7 +236,8 @@ export default function EnhancedHeroSection() {
     
     // Animate elements
     controls.start("visible");
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setUserInteracted, setDirection, setActiveIndex, controls, artworks.length]);
 
   // Tính toán vị trí và z-index cho mỗi card
   const getCardStyles = (index: number) => {

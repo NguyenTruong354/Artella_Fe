@@ -1,10 +1,9 @@
 import { motion, useAnimation, useInView } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 
-const FAQSection = () => {
-  const controls = useAnimation();
+const FAQSection = () => {  const controls = useAnimation();
   const sectionRef = useRef(null);
-  const inView = useInView(sectionRef, { once: false, threshold: 0.1 });
+  const inView = useInView(sectionRef, { once: false, amount: 0.1 });
   
   useEffect(() => {
     if (inView) {
@@ -26,7 +25,6 @@ const FAQSection = () => {
       },
     },
   };
-
   const itemVariants = {
     hidden: { 
       y: 40, 
@@ -34,7 +32,7 @@ const FAQSection = () => {
       scale: 0.95,
       rotateX: 10
     },
-    visible: (i) => ({
+    visible: (i: number) => ({
       y: 0,
       opacity: 1,
       scale: 1,
@@ -132,10 +130,9 @@ const FAQSection = () => {
       icon: "💳"
     }
   ];
+  const [openFAQ, setOpenFAQ] = useState<number | null>(null);
 
-  const [openFAQ, setOpenFAQ] = useState(null);
-
-  const toggleFAQ = (index) => {
+  const toggleFAQ = (index: number) => {
     setOpenFAQ(openFAQ === index ? null : index);
   };
 

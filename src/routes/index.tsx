@@ -11,9 +11,8 @@ import NotFound from '../pages/NotFound';
 import MainLayout from '../layouts/MainLayout';
 import HomeLayout from '../layouts/HomeLayout';
 
-const router = createBrowserRouter([
-  {
-    path: '/',
+const router = createBrowserRouter([  {
+    path: '/Home',
     element: <HomeLayout />,
     children: [
       {
@@ -21,25 +20,25 @@ const router = createBrowserRouter([
         element: <HomeSection />,
       },
       {
-        path: '/gallery',
+        path: 'gallery',
         element: <Gallery />,
       },
       {
-        path: '/auctions',
+        path: 'auctions',
         element: <Auctions />,
       },
       {
-        path: '/collections',
+        path: 'collections',
         element: <Collections />,
       },
       {
-        path: '/profile',
+        path: 'profile',
         element: <Profile />,
       },
     ],
   },
   {
-    path: '/landing',
+    path: '/',
     element: <MainLayout />,
     children: [
       {

@@ -1,12 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion, useAnimation, useInView } from 'framer-motion';
-import { Bell, TrendingUp, Eye, Heart, Clock, Users, ChevronRight, Star, Activity } from 'lucide-react';
+import { Bell, TrendingUp, Eye, Heart, Clock, Users, ChevronRight, Activity } from 'lucide-react';
 
-const Dashboard = () => {
+const HomeSection = () => {
   const controls = useAnimation();
   const sectionRef = useRef(null);
   const inView = useInView(sectionRef, { once: false, amount: 0.1 });
-  const [activeTab, setActiveTab] = useState('trending');
 
   useEffect(() => {
     if (inView) {
@@ -388,4 +387,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default HomeSection;

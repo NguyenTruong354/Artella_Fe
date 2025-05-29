@@ -1,10 +1,9 @@
 import { motion, useAnimation, useInView } from "framer-motion";
 import { useRef, useEffect } from "react";
 
-const Footer = () => {
-  const controls = useAnimation();
+const Footer = () => {  const controls = useAnimation();
   const footerRef = useRef(null);
-  const inView = useInView(footerRef, { once: false, threshold: 0.1 });
+  const inView = useInView(footerRef, { once: false, amount: 0.1 });
   
   useEffect(() => {
     if (inView) {
@@ -26,14 +25,13 @@ const Footer = () => {
       },
     },
   };
-
   const itemVariants = {
     hidden: { 
       y: 30, 
       opacity: 0,
       scale: 0.95
     },
-    visible: (i) => ({
+    visible: (i: number) => ({
       y: 0,
       opacity: 1,
       scale: 1,

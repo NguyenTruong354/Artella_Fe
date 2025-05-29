@@ -8,7 +8,7 @@ import FAQSection from '../components/Landing/FAQSection';
 import Navbar from '../components/Landing/Navbar';
 import Footer from '../components/Landing/Footer';
 
-const Home: React.FC = () => {
+const Landing: React.FC = () => {
   return (
     <div className="w-full overflow-x-hidden">
       <Navbar />
@@ -23,4 +23,4 @@ const Home: React.FC = () => {
   );
 };
 
-export default Home;
+export default Landing;

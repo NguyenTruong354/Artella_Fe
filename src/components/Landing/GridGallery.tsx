@@ -159,10 +159,9 @@ const GridGallery: React.FC<GridGalleryProps> = ({
           gridTemplateColumns: `repeat(${totalGridWidth}, 1fr)`,
           gridTemplateRows: `repeat(${totalGridHeight}, 1fr)`
         }}
-      >
-        {items
+      >        {items
           .filter(item => validAreas.has(item.area))
-          .map((item, index, filteredItems) => {
+          .map((item, _, filteredItems) => {
             // Chỉ render item cuối cùng nếu có nhiều item cho cùng một khu vực
             const isLastInArea = filteredItems
               .filter(i => i.area === item.area)

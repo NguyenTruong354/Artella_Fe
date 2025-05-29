@@ -109,11 +109,8 @@ const ArtCard = memo(({ title, quote, imageUrl, onPrev, onNext, index = 0 }: Art
   // Tạo hiệu ứng parallax cho ảnh - giảm biên độ xuống để mượt hơn
   const imgX = useTransform(x, [-100, 100], [2, -2]);
   const imgY = useTransform(y, [-100, 100], [2, -2]);
-  
-  // Sử dụng ref để lưu trữ ID của requestAnimationFrame
+    // Sử dụng ref để lưu trữ ID của requestAnimationFrame
   const rafId = useRef<number | null>(null);
-  // Sử dụng ref để lưu trữ thời gian của frame trước đó
-  const lastMouseMoveTime = useRef<number>(0);
   // Lưu trữ vị trí chuột hiện tại và mục tiêu
   const mousePosition = useRef({ currentX: 0, currentY: 0, targetX: 0, targetY: 0 });
 
