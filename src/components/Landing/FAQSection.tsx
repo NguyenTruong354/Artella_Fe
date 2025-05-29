@@ -143,7 +143,7 @@ const FAQSection = () => {  const controls = useAnimation();
     >
       {/* Enhanced atmospheric background */}
       <div className="absolute inset-0 opacity-8">
-        <div className="absolute inset-0 bg-[url('/public/assets/textxure_1.png')] bg-repeat opacity-30"></div>
+        <div className="absolute inset-0 bg-[url('https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527198/textxure_1-C7NG-XLf_atgy9c.png')] bg-repeat opacity-30"></div>
       </div>
 
       {/* Floating artistic elements */}
@@ -265,7 +265,7 @@ const FAQSection = () => {  const controls = useAnimation();
               }}
             >
               {/* Canvas texture background */}
-              <div className="absolute inset-0 bg-[url('/public/assets/textxure_1.png')] bg-repeat opacity-3"></div>
+              <div className="absolute inset-0 bg-[url('https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527198/textxure_1-C7NG-XLf_atgy9c.png')] bg-repeat opacity-3"></div>
               
               {/* Question section */}
               <motion.button
@@ -368,7 +368,7 @@ const FAQSection = () => {  const controls = useAnimation();
         >
           <div className="bg-white/60 backdrop-blur-md rounded-3xl p-8 border-2 border-[#e2d6c3] 
                          shadow-[0_8px_32px_rgba(0,0,0,0.06)] max-w-2xl mx-auto relative overflow-hidden">
-            <div className="absolute inset-0 bg-[url('/public/assets/textxure_1.png')] bg-repeat opacity-5"></div>
+            <div className="absolute inset-0 bg-[url('https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527198/textxure_1-C7NG-XLf_atgy9c.png')] bg-repeat opacity-5"></div>
               <div className="relative z-10">
               <h3 className="text-2xl md:text-3xl font-serif text-[#46594f] mb-4">
                 Have a specific question?

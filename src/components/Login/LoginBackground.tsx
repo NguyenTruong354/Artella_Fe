@@ -134,7 +134,7 @@ const LoginBackground = () => {
 
       {/* Texture overlay - Static */}
       <div 
-        className="absolute inset-0 bg-[url('/src/assets/textxure_1.png')] bg-repeat opacity-5"
+        className="absolute inset-0 bg-[url('https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527198/textxure_1-C7NG-XLf_atgy9c.png')] bg-repeat opacity-5"
         style={{ willChange: 'auto' }}
       />
 

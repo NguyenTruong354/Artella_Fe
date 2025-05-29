@@ -5,19 +5,19 @@ import React from 'react';
 const partners = [
   {
     name: "Hardhat",
-    logo: "/public/assets/Logo.PNG" // Thay thế bằng logo thật sau
+    logo: "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527095/Logo_uwp9ly.png" // Thay thế bằng logo thật sau
   },
   {
     name: "MetaMask",
-    logo: "/public/assets/Logo.PNG" // Thay thế bằng logo thật sau
+    logo: "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527095/Logo_uwp9ly.png" // Thay thế bằng logo thật sau
   },
   {
     name: "Artella",
-    logo: "/public/assets/Logo.PNG" // Thay thế bằng logo thật sau
+    logo: "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527095/Logo_uwp9ly.png" // Thay thế bằng logo thật sau
   },
   {
     name: "Binance",
-    logo: "/public/assets/Logo.PNG" // Thay thế bằng logo thật sau
+    logo: "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527095/Logo_uwp9ly.png" // Thay thế bằng logo thật sau
   }
 ];
 

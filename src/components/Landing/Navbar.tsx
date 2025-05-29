@@ -74,7 +74,7 @@ export default function Navbar() {
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
               <img
-                src="/public/assets/Logo.PNG"
+                src="https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527095/Logo_uwp9ly.png"
                 alt="Artella Logo"
                 className="w-8 h-8"
               />

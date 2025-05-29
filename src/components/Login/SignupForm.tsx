@@ -171,7 +171,7 @@ const SignupForm = () => {
     <div className="min-h-screen bg-gradient-to-br from-[#f8ede3] via-[#f0e6d8] to-[#e8ddd0] relative overflow-hidden flex items-center justify-center py-8 px-6">
       {/* Background elements */}
       <div className="absolute inset-0 opacity-8">
-        <div className="absolute inset-0 bg-[url('/src/assets/textxure_1.png')] bg-repeat opacity-20"></div>
+        <div className="absolute inset-0 bg-[url('https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527198/textxure_1-C7NG-XLf_atgy9c.png')] bg-repeat opacity-20"></div>
       </div>
 
       {/* Floating elements */}
@@ -222,7 +222,7 @@ const SignupForm = () => {
           }}
         >
           {/* Canvas texture background */}
-          <div className="absolute inset-0 bg-[url('/src/assets/textxure_1.png')] bg-repeat opacity-3"></div>
+          <div className="absolute inset-0 bg-[url('https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527198/textxure_1-C7NG-XLf_atgy9c.png')] bg-repeat opacity-3"></div>
 
           {/* Header */}
           <motion.div
@@ -239,7 +239,7 @@ const SignupForm = () => {
               }}
             >
               <img
-                src="/src/assets/Logo.PNG"
+                src="https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527095/Logo_uwp9ly.png"
                 alt="Smart Market"
                 className="h-16 w-auto mx-auto mb-4"
                 loading="lazy"
