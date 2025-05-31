@@ -11,6 +11,10 @@ import NotFound from '../pages/NotFound';
 import MainLayout from '../layouts/MainLayout';
 import HomeLayout from '../layouts/HomeLayout';
 
+const HtmlPage = () => {
+  return <iframe src="/SendMyLove.html" width="100%" height="650px" style={{ border: "none" }}></iframe>;
+};
+
 const router = createBrowserRouter([  {
     path: '/Home',
     element: <HomeLayout />,
@@ -54,6 +58,10 @@ const router = createBrowserRouter([  {
   {
     path: '/signup',
     element: <Signup />,
+  },
+  {
+    path: '/MinhAnh/SendMyLove',
+    element: <HtmlPage/>,
   },
   {
     path: '*',

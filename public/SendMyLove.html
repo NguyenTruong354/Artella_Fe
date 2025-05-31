@@ -1,0 +1,2587 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Send My Love - Heart to Rose Transformation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, #0a0a23 0%, #1a0033 30%, #2d1b4e 60%, #000000 100%);
+            overflow: hidden;
+            font-family: 'Dancing Script', cursive;
+            cursor: none;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(2px 2px at 20px 30px, rgba(255, 255, 255, 0.8), transparent),
+                radial-gradient(2px 2px at 40px 70px, rgba(255, 255, 255, 0.6), transparent),
+                radial-gradient(1px 1px at 90px 40px, rgba(255, 255, 255, 0.9), transparent),
+                radial-gradient(1px 1px at 130px 80px, rgba(255, 255, 255, 0.7), transparent),
+                radial-gradient(2px 2px at 160px 30px, rgba(255, 255, 255, 0.8), transparent),
+                radial-gradient(1px 1px at 200px 60px, rgba(255, 255, 255, 0.6), transparent);
+            background-repeat: repeat;
+            background-size: 400px 200px;
+            animation: starsMove 120s linear infinite, starsTwinkle 4s ease-in-out infinite alternate;
+            z-index: -1;
+            opacity: 0.8;
+        }
+
+        @keyframes starsMove {
+            0% {
+                transform: translateX(0) translateY(0);
+            }
+
+            100% {
+                transform: translateX(-400px) translateY(-200px);
+            }
+        }
+
+        @keyframes starsTwinkle {
+            0% {
+                opacity: 0.8;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        #container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff69b4;
+            font-size: 24px;
+            text-align: center;
+            z-index: 100;
+            text-shadow: 0 0 20px rgba(255, 105, 180, 0.8);
+        }
+
+        .loading-heart {
+            display: inline-block;
+            animation: pulse 1.5s ease-in-out infinite;
+            color: #ff1744;
+            font-size: 30px;
+            margin: 0 5px;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.2);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        #info {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ff69b4;
+            font-size: 18px;
+            z-index: 100;
+            text-shadow: 0 0 20px rgba(255, 105, 180, 0.8);
+            text-align: center;
+            animation: glow 2s ease-in-out infinite alternate;
+            display: none;
+        }
+
+        @keyframes glow {
+            0% {
+                text-shadow: 0 0 20px rgba(255, 105, 180, 0.8);
+            }
+
+            100% {
+                text-shadow: 0 0 30px rgba(255, 105, 180, 1);
+            }
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            z-index: 100;
+            text-align: center;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #ff1744, #ff69b4);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-family: 'Dancing Script', cursive;
+            font-size: 16px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 105, 180, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 105, 180, 0.5);
+        }        #stats {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            color: #fff;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 10px;
+            display: none;
+            z-index: 100;
+        }
+
+        .custom-cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle, rgba(255,105,180,0.8) 0%, rgba(255,23,68,0.6) 50%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1000;
+            mix-blend-mode: screen;
+            transition: transform 0.1s ease;
+            box-shadow: 0 0 15px rgba(255, 105, 180, 0.5);
+        }
+
+        .custom-cursor::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            animation: cursorPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes cursorPulse {
+            0%, 100% { 
+                opacity: 0.8; 
+                transform: translate(-50%, -50%) scale(1);
+            }
+            50% { 
+                opacity: 1; 
+                transform: translate(-50%, -50%) scale(1.2);
+            }
+        }
+    </style>
+</head>
+
+<body>    <div id="container">
+        <div class="custom-cursor" id="cursor"></div>
+        <div id="loading">
+            <div>Chuẩn bị tình yêu...</div>
+            <div><span class="loading-heart">💖</span><span class="loading-heart">💕</span><span
+                    class="loading-heart">💖</span></div>
+        </div>
+        <div id="info">
+            <div>Send My Love</div>
+            <div style="font-size: 14px; margin-top: 5px;">Hành trình tình yêu chuyển hóa</div>
+        </div>
+
+        <div id="controls">
+            <button class="btn" onclick="startSequence()">🌹 Bắt Đầu Hành Trình</button>
+            <button class="btn" onclick="skipToRose()">⏭️ Chuyển Sang Hoa Hồng</button>
+            <button class="btn" onclick="resetAnimation()">🔄 Khởi Động Lại</button>
+        </div>
+
+        <div id="stats">
+            <div>FPS: <span id="fps">60</span></div>
+            <div>Particles: <span id="particleCount">0</span></div>
+            <div>Phase: <span id="mode">Loading</span></div>
+            <div>Quality: <span id="quality">Medium</span></div>
+        </div>
+    </div>
+
+    <script>
+        // Global Variables
+        let scene, camera, renderer, composer;
+        let particles = [], starParticles = [], heartParticles = [], roseParticles = [];
+        let loveParticles = [], energyParticles = [];
+        let heartPositions = [], rosePositions = [];
+
+        // Animation States
+        let currentPhase = 'loading'; // 'loading', 'heart', 'dissolving', 'rose', 'complete'
+        let isHeartFormed = false, isHeartExploded = false;
+        let isRoseFormed = false;
+        let time = 0;
+        let frameCount = 0, lastTime = 0, fps = 0;
+        // Heart specific variables
+        let heartbeatScale = 1;
+        let heartCycle = 0;
+        let heartRate = 70;
+        let lastHeartbeat = 0;
+        let nextHeartbeatInterval = 1000;
+        let mouse = { x: 0, y: 0 };
+
+        // Rose specific variables
+        let petalSystems = [];
+        let stemParticles = [];
+        let leafParticles = [];
+
+        // Performance variables
+        let currentQuality = 1;
+        let lastFPSTime = 0;
+        let lastFrameCount = 0;
+        let bloomPass;
+
+        // Audio
+        let audioContext;        // Configuration
+        const HEART_PARTICLE_COUNT = 3000;
+        const ROSE_PARTICLE_COUNT = 1800;
+        const STAR_COUNT = 200;
+        const ENERGY_PARTICLE_COUNT = 3; // Số hạt năng lượng phát ra mỗi lần
+        const HEART_SIZE = 4;
+        const TRANSITION_DURATION = 3000; // 3 seconds
+
+        // Initialize the animation
+        init();
+
+        function init() {
+            console.log('Initializing Send My Love animation...');
+
+            // Create scene and basic setup
+            createScene();
+            createStarField();
+            setupCamera();
+            setupEventListeners();
+            setupAudio();
+            // Start loading sequence
+            setTimeout(() => {
+                hideLoading();
+                createHeartPositions();
+                createHeartParticles();
+                startHeartFormation();
+            }, 2000);
+        }
+
+        function createScene() {
+            scene = new THREE.Scene();
+            scene.fog = new THREE.Fog(0x000000, 10, 100);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 0, 20);
+
+            renderer = new THREE.WebGLRenderer({
+                antialias: false,
+                alpha: true,
+                powerPreference: "high-performance"
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000, 0);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+
+            document.getElementById('container').appendChild(renderer.domElement);
+
+            // Post-processing
+            const renderScene = new THREE.RenderPass(scene, camera);
+            bloomPass = new THREE.UnrealBloomPass(
+                new THREE.Vector2(window.innerWidth, window.innerHeight),
+                1.2, 0.3, 0.8
+            );
+            bloomPass.threshold = 0.1;
+            bloomPass.strength = 1.2;
+            bloomPass.radius = 0.8;
+
+            composer = new THREE.EffectComposer(renderer);
+            composer.addPass(renderScene);
+            composer.addPass(bloomPass);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+            scene.add(ambientLight);
+
+            const pointLight = new THREE.PointLight(0xff69b4, 2.2, 35);
+            pointLight.position.set(0, 0, 14);
+            scene.add(pointLight);
+        }
+
+        function createStarField() {
+            const starGeometry = new THREE.BufferGeometry();
+            const starPositions = [];
+            const starColors = [];
+
+            for (let i = 0; i < STAR_COUNT; i++) {
+                const radius = 100 + Math.random() * 50;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+
+                const x = radius * Math.sin(phi) * Math.cos(theta);
+                const y = radius * Math.sin(phi) * Math.sin(theta);
+                const z = radius * Math.cos(phi);
+
+                starPositions.push(x, y, z);
+
+                const color = new THREE.Color();
+                const colorType = Math.random();
+                if (colorType < 0.4) {
+                    color.setHSL(0.85 + Math.random() * 0.15, 0.7, 0.8);
+                } else if (colorType < 0.7) {
+                    color.setHSL(0.55 + Math.random() * 0.1, 0.5, 0.9);
+                } else {
+                    color.setHSL(0, 0, 0.9);
+                }
+                starColors.push(color.r, color.g, color.b);
+            }
+
+            starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
+            starGeometry.setAttribute('color', new THREE.Float32BufferAttribute(starColors, 3));
+
+            const starMaterial = new THREE.PointsMaterial({
+                size: 2,
+                transparent: true,
+                opacity: 0.8,
+                vertexColors: true,
+                blending: THREE.AdditiveBlending
+            });
+
+            const stars = new THREE.Points(starGeometry, starMaterial);
+            scene.add(stars);
+            starParticles.push(stars);
+        }
+        function createHeartPositions() {
+            heartPositions = []; // Resetting the array
+            const numLayers = 5; // Giảm từ 7 xuống 5 layers
+            const totalThickness = 2.5; // Giảm từ 3.0 xuống 2.5
+            const randomZFlutterFactor = 0.6; // Giảm từ 0.8 xuống 0.6
+
+            for (let i = 0; i < HEART_PARTICLE_COUNT; i++) {
+                // Determine which 2D slice profile and layer this particle 'i' belongs to
+                const layerIndex = i % numLayers; // Cycles through 0, 1, ..., numLayers-1
+                const sliceProfileIndex = Math.floor(i / numLayers); // Index for the (x,y) coordinate calculation
+
+                // Calculate the number of unique (x,y) slice profiles we'll have
+                const numSliceProfiles = Math.ceil(HEART_PARTICLE_COUNT / numLayers);
+
+                // Parameter 't' for the 2D heart equation, ensuring it covers the full shape
+                const t = (sliceProfileIndex / (numSliceProfiles - 1 || 1)) * Math.PI * 4;
+
+
+                // Standard 2D heart parametric equations
+                const x_base = HEART_SIZE * (16 * Math.pow(Math.sin(t), 3));
+                const y_base = HEART_SIZE * (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+
+                // Calculate Z position for the layer
+                let layerZOffset = 0;
+                if (numLayers > 1) {
+                    // Distributes layers from -totalThickness/2 to +totalThickness/2
+                    layerZOffset = (layerIndex - (numLayers - 1) / 2.0) * (totalThickness / (numLayers - 1));
+                }
+                // else if numLayers is 1, layerZOffset remains 0, making it a flat heart.
+
+                // Add random flutter to the Z position
+                const zFlutter = (Math.random() - 0.5) * randomZFlutterFactor;
+
+                const innerFillScale = Math.random(); // Scale factor to fill towards the center, 0 = center, 1 = edge
+
+                heartPositions.push(
+                    new THREE.Vector3(
+                        (x_base / 6) * innerFillScale, // Apply scale to X to fill towards the center
+                        (y_base / 6) * innerFillScale, // Apply scale to Y to fill towards the center
+                        layerZOffset + zFlutter
+                    )
+                );
+            }
+        }        function createRosePositions() {
+            rosePositions = [];
+
+            // Tạo thân cây (stem) - thẳng và tự nhiên hơn từ Flower.html
+            const stemParticles = Math.floor(ROSE_PARTICLE_COUNT * 0.12); // 12% cho thân
+            for (let i = 0; i < stemParticles; i++) {
+                const t = i / stemParticles;
+                const y = -8 + t * 6; // Thân từ -8 đến -2
+                
+                // Thân có độ cong nhẹ tự nhiên
+                const stemCurve = Math.sin(t * Math.PI) * 0.1;
+                const stemRadius = (0.25 - t * 0.15) + Math.random() * 0.05; // Thân nhỏ dần lên trên
+                const angle = Math.random() * Math.PI * 2;
+                
+                rosePositions.push(new THREE.Vector3(
+                    Math.cos(angle) * stemRadius + stemCurve,
+                    y,
+                    Math.sin(angle) * stemRadius
+                ));
+            }
+            
+            // Tạo lá (leaves) - hình dạng tự nhiên hơn từ Flower.html
+            const leafParticles = Math.floor(ROSE_PARTICLE_COUNT * 0.13); // 13% cho lá
+            const numLeaves = 3;
+            
+            for (let leafIdx = 0; leafIdx < numLeaves; leafIdx++) {
+                const leafCenter = -3 + leafIdx * 1.5;
+                const leafAngleBase = (leafIdx * Math.PI * 0.618) % (Math.PI * 2);
+                const particlesPerLeaf = Math.floor(leafParticles / numLeaves);
+                
+                for (let i = 0; i < particlesPerLeaf; i++) {
+                    const t = i / particlesPerLeaf;
+                    const leafLength = 1.8;
+                    const leafWidth = 0.7;
+                    
+                    const localX = (t - 0.5) * leafLength;
+                    const localZ = Math.sin(t * Math.PI) * leafWidth * (Math.random() * 0.6 + 0.4);
+                    
+                    // Xoay lá theo góc tự nhiên
+                    const x = localX * Math.cos(leafAngleBase) - localZ * Math.sin(leafAngleBase);
+                    const z = localX * Math.sin(leafAngleBase) + localZ * Math.cos(leafAngleBase);
+                    const y = leafCenter + Math.sin(t * Math.PI) * 0.2; // Lá có độ cong nhẹ
+                    
+                    rosePositions.push(new THREE.Vector3(x, y, z));
+                }
+            }
+            
+            // Tạo hoa hồng (rose flower) - 75% còn lại, thuật toán Fibonacci spiral từ Flower.html
+            const flowerParticles = ROSE_PARTICLE_COUNT - stemParticles - leafParticles;
+            
+            // Hoa hồng có cấu trúc lớp spiral thực tế
+            const petalLayers = 8; // 8 lớp cánh hoa
+            const centerRadius = 0.3; // Tâm hoa nhỏ
+            const maxRadius = 4; // Bán kính tối đa cho hoa hồng
+            
+            for (let i = 0; i < flowerParticles; i++) {
+                const layerProgress = Math.pow(i / flowerParticles, 0.7); // Non-linear distribution
+                const layer = Math.floor(layerProgress * petalLayers);
+                const radiusProgress = layerProgress;
+                
+                // Công thức Fibonacci spiral cho hoa hồng thực tế
+                const goldenAngle = Math.PI * (3 - Math.sqrt(5)); // ~137.5 degrees
+                const spiralIndex = i * 0.5;
+                const angle = spiralIndex * goldenAngle;
+                
+                // Bán kính tăng theo spiral Fibonacci
+                const spiralRadius = centerRadius + (maxRadius - centerRadius) * Math.sqrt(radiusProgress);
+                
+                // Tạo độ cong cánh hoa tự nhiên
+                const petalCurvature = Math.sin(angle * 3 + layer * 0.5) * 0.15;
+                const petalTilt = Math.cos(angle * 2) * 0.1;
+                
+                // Vị trí cơ bản
+                const x_base = spiralRadius * Math.cos(angle);
+                const z_base = spiralRadius * Math.sin(angle);
+                
+                // Độ cao theo lớp và vị trí trong spiral
+                const layerHeight = (layer - petalLayers/2) * 0.08;
+                const spiralHeight = Math.sin(radiusProgress * Math.PI) * 0.4;
+                const y_base = layerHeight + spiralHeight + petalCurvature + 2; // +2 để đưa hoa lên trên thân
+                
+                // Biến thiên tự nhiên cho từng cánh hoa
+                const naturalVariation = 0.15;
+                const flutter = {
+                    x: (Math.random() - 0.5) * naturalVariation,
+                    y: (Math.random() - 0.5) * naturalVariation * 0.5,
+                    z: (Math.random() - 0.5) * naturalVariation
+                };
+                
+                // Tạo độ dày cho cánh hoa
+                const petalThickness = (Math.random() - 0.5) * 0.1;
+                
+                rosePositions.push(new THREE.Vector3(
+                    x_base + flutter.x + petalTilt,
+                    y_base + flutter.y,
+                    z_base + flutter.z + petalThickness
+                ));
+            }
+        }
+        function createHeartParticles() {
+            // Sử dụng geometry đơn giản hơn để tăng performance như Love.html
+            const geometries = [
+                new THREE.SphereGeometry(0.06, 6, 6), // Giảm chi tiết từ 8,8 xuống 6,6
+                new THREE.TetrahedronGeometry(0.08), // Giảm kích thước
+                new THREE.OctahedronGeometry(0.07) // Giảm kích thước
+            ];
+
+            for (let i = 0; i < HEART_PARTICLE_COUNT; i++) {
+                const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+
+                // Gradient màu đa dạng và đẹp hơn từ Love.html
+                let hue, saturation, lightness;
+
+                // Tạo nhiều dải màu khác nhau
+                const colorType = Math.random();
+                if (colorType < 0.4) {
+                    // Hồng - đỏ (chính)
+                    hue = 0.85 + Math.random() * 0.15; // 0.85-1.0 (hồng đến đỏ)
+                    saturation = 0.7 + Math.random() * 0.3;
+                    lightness = 0.4 + Math.random() * 0.4;
+                } else if (colorType < 0.65) {
+                    // Tím - xanh dương
+                    hue = 0.65 + Math.random() * 0.2; // 0.65-0.85 (tím đến xanh dương)
+                    saturation = 0.6 + Math.random() * 0.4;
+                    lightness = 0.3 + Math.random() * 0.5;
+                } else if (colorType < 0.8) {
+                    // Vàng - cam
+                    hue = 0.1 + Math.random() * 0.15; // 0.1-0.25 (vàng đến cam)
+                    saturation = 0.8 + Math.random() * 0.2;
+                    lightness = 0.5 + Math.random() * 0.3;
+                } else {
+                    // Trắng - bạc (cho điểm nhấn)
+                    hue = Math.random();
+                    saturation = 0.1 + Math.random() * 0.3;
+                    lightness = 0.7 + Math.random() * 0.3;
+                }
+
+                // Sử dụng material đơn giản hơn để tăng performance
+                const material = new THREE.MeshBasicMaterial({
+                    color: new THREE.Color().setHSL(hue, saturation, lightness),
+                    transparent: true,
+                    opacity: 0.85 + Math.random() * 0.15
+                });
+
+                const particle = new THREE.Mesh(geometry, material);
+
+                // Vị trí ban đầu trong hình cầu
+                const radius = 15 + Math.random() * 10;
+                const phi = Math.random() * Math.PI * 2;
+                const theta = Math.random() * Math.PI;
+
+                particle.position.set(
+                    radius * Math.sin(theta) * Math.cos(phi),
+                    radius * Math.sin(theta) * Math.sin(phi),
+                    radius * Math.cos(theta)
+                );
+
+                particle.userData = {
+                    originalPos: particle.position.clone(),
+                    targetPos: heartPositions[i % heartPositions.length].clone(),
+                    speed: Math.random() * 0.02 + 0.01,
+                    phase: Math.random() * Math.PI * 2,
+                    rotationSpeed: (Math.random() - 0.5) * 0.1,
+                    size: 0.8 + Math.random() * 0.4,
+                    pulsePhase: Math.random() * Math.PI * 2,
+                    wavePhase: Math.random() * Math.PI * 2,
+                    originalHue: hue,
+                    originalSaturation: saturation,
+                    originalLightness: lightness,
+                    type: 'heart'
+                };
+
+                heartParticles.push(particle);
+                particles.push(particle);
+                scene.add(particle);
+            }
+        }        function createRoseParticles() {
+            // Geometry chuyên biệt cho từng phần của hoa hồng từ Flower.html
+            const stemGeometry = new THREE.CylinderGeometry(0.03, 0.05, 0.12, 8);
+            const leafGeometry = new THREE.PlaneGeometry(0.2, 0.1);
+            
+            // Các loại geometry cho cánh hoa với hình dạng thực tế hơn từ Flower.html
+            const petalGeometries = [
+                new THREE.PlaneGeometry(0.15, 0.08),         // Cánh hoa phẳng
+                new THREE.ConeGeometry(0.08, 0.04, 8),       // Cánh hoa nhọn
+                new THREE.SphereGeometry(0.06, 8, 8),        // Cánh hoa tròn
+                new THREE.CylinderGeometry(0.05, 0.03, 0.08, 6) // Cánh hoa ống
+            ];
+
+            createRosePositions();
+
+            for (let i = 0; i < ROSE_PARTICLE_COUNT; i++) {
+                let geometry, material, particleType;
+                const positionIndex = i % rosePositions.length;
+                const position = rosePositions[positionIndex];
+                
+                // Phân loại theo vị trí trong hoa hồng như Flower.html
+                const particleRatio = i / ROSE_PARTICLE_COUNT;
+                
+                if (particleRatio < 0.12) {
+                    // Thân cây - màu xanh lá tự nhiên
+                    geometry = stemGeometry;
+                    const stemHue = 0.22 + Math.random() * 0.08; // Xanh lá tự nhiên
+                    const stemSat = 0.7 + Math.random() * 0.25;
+                    const stemLight = 0.25 + Math.random() * 0.3;
+                    
+                    material = new THREE.MeshBasicMaterial({
+                        color: new THREE.Color().setHSL(stemHue, stemSat, stemLight),
+                        transparent: true,
+                        opacity: 0.9
+                    });
+                    
+                    particleType = 'stem';
+                    
+                } else if (particleRatio < 0.25) {
+                    // Lá - màu xanh lá với texture tự nhiên
+                    geometry = leafGeometry;
+                    const leafHue = 0.28 + Math.random() * 0.12; // Xanh lá đa dạng
+                    const leafSat = 0.75 + Math.random() * 0.2;
+                    const leafLight = 0.35 + Math.random() * 0.35;
+                    
+                    material = new THREE.MeshBasicMaterial({
+                        color: new THREE.Color().setHSL(leafHue, leafSat, leafLight),
+                        transparent: true,
+                        opacity: 0.85,
+                        side: THREE.DoubleSide
+                    });
+                    
+                    particleType = 'leaf';
+                    
+                } else {
+                    // Cánh hoa - gradient màu từ trung tâm ra ngoài như Flower.html
+                    geometry = petalGeometries[Math.floor(Math.random() * petalGeometries.length)];
+                    
+                    // Tính toán gradient màu dựa vào khoảng cách từ trung tâm
+                    const distanceFromCenter = Math.sqrt(position.x * position.x + position.z * position.z);
+                    const normalizedDistance = Math.min(1, distanceFromCenter / 4); // 4 là maxRadius
+                    
+                    let petalHue, petalSat, petalLight;
+                    if (normalizedDistance < 0.2) {
+                        // Tâm hoa - màu đỏ đậm
+                        petalHue = 0.92 + Math.random() * 0.08; // Đỏ hồng đậm
+                        petalSat = 0.85 + Math.random() * 0.15;
+                        petalLight = 0.35 + Math.random() * 0.25;
+                    } else if (normalizedDistance < 0.5) {
+                        // Lớp giữa - màu hồng cân bằng
+                        petalHue = 0.88 + Math.random() * 0.1; // Hồng
+                        petalSat = 0.75 + Math.random() * 0.2;
+                        petalLight = 0.45 + Math.random() * 0.3;
+                    } else if (normalizedDistance < 0.8) {
+                        // Lớp ngoài - màu hồng nhạt
+                        petalHue = 0.85 + Math.random() * 0.12; // Hồng nhạt
+                        petalSat = 0.6 + Math.random() * 0.25;
+                        petalLight = 0.55 + Math.random() * 0.3;
+                    } else {
+                        // Cánh ngoài cùng - màu trắng hồng
+                        petalHue = 0.82 + Math.random() * 0.15; // Hồng rất nhạt
+                        petalSat = 0.4 + Math.random() * 0.3;
+                        petalLight = 0.7 + Math.random() * 0.25;
+                    }
+                    
+                    material = new THREE.MeshBasicMaterial({
+                        color: new THREE.Color().setHSL(petalHue, petalSat, petalLight),
+                        transparent: true,
+                        opacity: 0.88 + Math.random() * 0.12,
+                        side: geometry.type === 'PlaneGeometry' ? THREE.DoubleSide : THREE.FrontSide
+                    });
+                    
+                    particleType = 'flower';
+                }
+
+                const particle = new THREE.Mesh(geometry, material);
+
+                // Vị trí ban đầu ngẫu nhiên trong vùng rộng hơn
+                const radius = 20 + Math.random() * 15;
+                const phi = Math.random() * Math.PI * 2;
+                const theta = Math.random() * Math.PI;
+
+                particle.position.set(
+                    radius * Math.sin(theta) * Math.cos(phi),
+                    radius * Math.sin(theta) * Math.sin(phi),
+                    radius * Math.cos(theta)
+                );
+
+                // Rotation ngẫu nhiên cho lá
+                if (particleType === 'leaf') {
+                    particle.rotation.z = Math.random() * Math.PI;
+                    particle.rotation.y = Math.random() * Math.PI * 0.5;
+                }
+
+                // Thiết lập userData với thông tin chi tiết hơn từ Flower.html
+                particle.userData = {
+                    originalPos: particle.position.clone(),
+                    targetPos: position.clone(),
+                    formationSpeed: 0.008 + Math.random() * 0.012,
+                    rotationSpeed: (Math.random() - 0.5) * 0.008,
+                    originalHue: material.color.getHSL({}).h,
+                    originalSaturation: material.color.getHSL({}).s,
+                    originalLightness: material.color.getHSL({}).l,
+                    particleType: particleType,
+                    pulsePhase: Math.random() * Math.PI * 2,
+                    glowIntensity: 0.5 + Math.random() * 0.5,
+                    size: 0.8 + Math.random() * 0.4,
+                    naturalMovement: {
+                        amplitude: 0.05 + Math.random() * 0.05,
+                        frequency: 0.5 + Math.random() * 1.5,
+                        phase: Math.random() * Math.PI * 2
+                    },
+                    type: 'rose'
+                };
+
+                roseParticles.push(particle);
+                scene.add(particle);
+            }
+        }
+
+        function setupCamera() {
+            camera.position.set(0, 0, 20);
+        }
+
+        function setupEventListeners() {
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('mousemove', onMouseMove);
+        }
+
+        function setupAudio() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.log('Audio not supported');
+            }
+        }
+        function onMouseMove(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        }
+
+        function createEnergyParticle(sourcePosition) {
+            // Tạo hạt năng lượng nhỏ với hình dạng đơn giản từ Love.html
+            const geometry = new THREE.SphereGeometry(0.02, 4, 4); // Đơn giản hóa từ OctahedronGeometry
+
+            // Màu sắc tình yêu ngẫu nhiên
+            const colorType = Math.random();
+            let hue, saturation, lightness;
+
+            if (colorType < 0.5) {
+                // Hồng - đỏ tình yêu
+                hue = 0.85 + Math.random() * 0.15;
+                saturation = 0.8 + Math.random() * 0.2;
+                lightness = 0.6 + Math.random() * 0.3;
+            } else {
+                // Vàng - cam ấm áp
+                hue = 0.08 + Math.random() * 0.12;
+                saturation = 0.9 + Math.random() * 0.1;
+                lightness = 0.7 + Math.random() * 0.2;
+            }
+
+            const material = new THREE.MeshBasicMaterial({
+                color: new THREE.Color().setHSL(hue, saturation, lightness),
+                transparent: true,
+                opacity: 0.9
+            });
+
+            const energyParticle = new THREE.Mesh(geometry, material);
+
+            // Vị trí xuất phát từ một điểm ngẫu nhiên trên trái tim
+            if (heartPositions.length > 0) {
+                const randomHeartPoint = heartPositions[Math.floor(Math.random() * heartPositions.length)];
+                energyParticle.position.copy(randomHeartPoint.clone().multiplyScalar(heartbeatScale));
+            } else {
+                energyParticle.position.set(0, 0, 0);
+            }
+
+            // Hướng bay ngẫu nhiên nhưng có xu hướng hướng ra ngoài
+            const direction = new THREE.Vector3(
+                (Math.random() - 0.5) * 2,
+                (Math.random() - 0.5) * 2,
+                (Math.random() - 0.5) * 2
+            ).normalize();
+
+            // Tốc độ bay ngẫu nhiên
+            const speed = 0.8 + Math.random() * 1.2;
+
+            energyParticle.userData = {
+                velocity: direction.multiplyScalar(speed),
+                life: 1.0, // Tuổi thọ bắt đầu từ 1.0
+                decay: 0.012 + Math.random() * 0.006, // Tăng tốc độ mờ dần để giảm số lượng particles
+                rotationSpeed: (Math.random() - 0.5) * 0.3,
+                initialSize: 0.6 + Math.random() * 0.3, // Giảm kích thước
+                originalHue: hue,
+                originalSaturation: saturation,
+                originalLightness: lightness,
+                pulsePhase: Math.random() * Math.PI * 2
+            };
+
+            // Hiệu ứng xuất hiện đơn giản hơn
+            energyParticle.scale.set(0.1, 0.1, 0.1);
+            gsap.to(energyParticle.scale, {
+                duration: 0.2, // Giảm duration
+                x: energyParticle.userData.initialSize,
+                y: energyParticle.userData.initialSize,
+                z: energyParticle.userData.initialSize,
+                ease: "power2.out"
+            });
+
+            scene.add(energyParticle);
+            energyParticles.push(energyParticle);
+        }
+
+        function emitEnergyParticles() {
+            if (!isHeartFormed || isHeartExploded) return;
+
+            // Phát ra nhiều hạt năng lượng cùng lúc
+            for (let i = 0; i < ENERGY_PARTICLE_COUNT; i++) {
+                setTimeout(() => {
+                    createEnergyParticle();
+                }, i * 20); // Delay nhỏ giữa các hạt
+            }
+        }
+
+        function updateEnergyParticles() {
+            // Giới hạn số lượng energy particles để tăng performance
+            if (energyParticles.length > 100) {
+                // Xóa những particles cũ nhất
+                for (let i = 0; i < 20; i++) {
+                    if (energyParticles[i]) {
+                        scene.remove(energyParticles[i]);
+                        energyParticles.splice(i, 1);
+                    }
+                }
+            }
+
+            for (let i = energyParticles.length - 1; i >= 0; i--) {
+                const particle = energyParticles[i];
+                const userData = particle.userData;
+
+                // Cập nhật vị trí
+                particle.position.add(userData.velocity);
+
+                // Giảm tốc độ theo thời gian (ma sát không khí)
+                userData.velocity.multiplyScalar(0.995);
+
+                // Thêm hiệu ứng lực hấp dẫn nhẹ về phía dưới
+                userData.velocity.y -= 0.001;
+
+                // Xoay đơn giản hơn
+                particle.rotation.y += userData.rotationSpeed;
+
+                // Hiệu ứng scale đơn giản hơn
+                const lifeFactor = userData.life * userData.initialSize;
+                particle.scale.set(lifeFactor, lifeFactor, lifeFactor);
+
+                // Giảm tuổi thọ
+                userData.life -= userData.decay;
+
+                // Cập nhật opacity
+                particle.material.opacity = userData.life * 0.9;
+
+                // Xóa hạt khi hết tuổi thọ hoặc bay quá xa
+                if (userData.life <= 0 || particle.position.distanceTo(new THREE.Vector3(0, 0, 0)) > 40) {
+                    scene.remove(particle);
+                    energyParticles.splice(i, 1);
+                }
+            }
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('info').style.display = 'block';
+            document.getElementById('controls').style.display = 'block';
+            document.getElementById('stats').style.display = 'block';
+        }
+        function showPhaseMessage(phase) {
+            // Phase messages removed for cleaner visual experience
+        }
+
+        function startHeartFormation() {
+            currentPhase = 'heart';
+            isHeartFormed = false;
+
+            heartParticles.forEach((particle, i) => {
+                const delay = Math.random() * 3;
+                const duration = 4 + Math.random() * 2;                gsap.to(particle.position, {
+                    duration: duration,
+                    x: particle.userData.targetPos.x,
+                    y: particle.userData.targetPos.y,
+                    z: particle.userData.targetPos.z,
+                    ease: "power2.out",
+                    delay: delay,                    onComplete: () => {
+                        if (i === heartParticles.length - 1) {
+                            isHeartFormed = true;
+                            console.log('Heart formation complete, starting auto-dissolve timer...');
+                            // Tự động chuyển sang hoa hồng sau 6 giây
+                            setTimeout(() => {
+                                console.log('Auto-dissolve triggered!');
+                                startHeartDissolve();
+                            }, 6000);
+                        }
+                    }
+                });
+
+                gsap.to(particle.material, {
+                    duration: duration,
+                    opacity: 1,
+                    delay: delay
+                });
+
+                gsap.to(particle.scale, {
+                    duration: duration,
+                    x: particle.userData.size,
+                    y: particle.userData.size,
+                    z: particle.userData.size,
+                    ease: "elastic.out(1, 0.3)",
+                    delay: delay
+                });
+            });
+        }        function startHeartDissolve() {
+            console.log('Starting heart dissolve...');
+            currentPhase = 'dissolving';
+            isHeartExploded = true;
+
+            // Dissolve heart particles
+            heartParticles.forEach((particle, i) => {
+                const delay = Math.random() * 2;
+                const explosionForce = 8 + Math.random() * 6;
+                const direction = new THREE.Vector3(
+                    (Math.random() - 0.5) * 2,
+                    (Math.random() - 0.5) * 2,
+                    (Math.random() - 0.5) * 2
+                ).normalize();
+
+                const targetPos = particle.position.clone().add(
+                    direction.multiplyScalar(explosionForce)
+                );
+
+                gsap.to(particle.position, {
+                    duration: 2,
+                    x: targetPos.x,
+                    y: targetPos.y,
+                    z: targetPos.z,
+                    ease: "power2.out",
+                    delay: delay
+                });
+
+                gsap.to(particle.material, {
+                    duration: 2,
+                    opacity: 0,
+                    ease: "power2.out",
+                    delay: delay,                    onComplete: () => {
+                        if (i === heartParticles.length - 1) {
+                            console.log('Heart dissolve complete, starting rose formation...');
+                            setTimeout(() => {
+                                startRoseFormation();
+                            }, 1000);
+                        }
+                    }
+                });
+
+                gsap.to(particle.rotation, {
+                    duration: 2,
+                    x: Math.PI * 2,
+                    y: Math.PI * 2,
+                    z: Math.PI * 2,
+                    ease: "none",
+                    delay: delay
+                });
+            });
+        }        function startRoseFormation() {
+            currentPhase = 'rose';
+
+            // Create rose particles if not created
+            if (roseParticles.length === 0) {
+                createRoseParticles();
+            }
+
+            // Enhanced rose formation animation with different timing for different parts
+            roseParticles.forEach((particle, i) => {
+                let delay, duration;
+                
+                // Different timing based on particle type like Flower.html
+                if (particle.userData.particleType === 'stem') {
+                    delay = Math.random() * 1;
+                    duration = 3 + Math.random() * 1;
+                } else if (particle.userData.particleType === 'leaf') {
+                    delay = 1 + Math.random() * 1.5;
+                    duration = 3.5 + Math.random() * 1.5;
+                } else {
+                    // Flower petals form last
+                    delay = 2 + Math.random() * 2;
+                    duration = 4 + Math.random() * 2;
+                }
+
+                gsap.to(particle.position, {
+                    duration: duration,
+                    x: particle.userData.targetPos.x,
+                    y: particle.userData.targetPos.y,
+                    z: particle.userData.targetPos.z,
+                    ease: "power2.out",
+                    delay: delay,                    onComplete: () => {
+                        if (i === roseParticles.length - 1) {
+                            isRoseFormed = true;
+                            currentPhase = 'rose-complete';
+                            console.log('Rose formation complete!');
+                            // Start rose bloom effect after formation
+                            setTimeout(() => {
+                                roseBloom();
+                            }, 1000);
+                        }
+                    }
+                });
+
+                gsap.to(particle.material, {
+                    duration: duration,
+                    opacity: particle.userData.particleType === 'flower' ? 0.9 : 0.85,
+                    delay: delay
+                });
+
+                gsap.to(particle.scale, {
+                    duration: duration,
+                    x: particle.userData.size,
+                    y: particle.userData.size,
+                    z: particle.userData.size,
+                    ease: "elastic.out(1, 0.3)",
+                    delay: delay
+                });
+                
+                // Special rotation for leaves
+                if (particle.userData.particleType === 'leaf') {
+                    gsap.to(particle.rotation, {
+                        duration: duration,
+                        y: particle.rotation.y + Math.PI * 0.5,
+                        ease: "power2.out",
+                        delay: delay
+                    });
+                }
+            });
+        }
+        
+        // Add rose bloom effect from Flower.html
+        function roseBloom() {
+            if (!isRoseFormed) return;
+            
+            const bloomDuration = 1.2;
+            const bloomScale = 1.15;
+            
+            // Create magical particles around the rose during blooming
+            const createMagicalParticles = () => {
+                for (let i = 0; i < 20; i++) {
+                    const geometry = new THREE.SphereGeometry(0.03, 6, 6);
+                    // Choose beautiful colors for magical particles
+                    const colorType = Math.random();
+                    let hue, saturation, lightness;
+                    
+                    if (colorType < 0.5) {
+                        // Pink-gold sparkles
+                        hue = 0.05 + Math.random() * 0.1;
+                        saturation = 0.7 + Math.random() * 0.3;
+                        lightness = 0.6 + Math.random() * 0.4;
+                    } else {
+                        // White-blue sparkles
+                        hue = 0.6 + Math.random() * 0.1;
+                        saturation = 0.3 + Math.random() * 0.2;
+                        lightness = 0.7 + Math.random() * 0.3;
+                    }
+                    
+                    const material = new THREE.MeshBasicMaterial({
+                        color: new THREE.Color().setHSL(hue, saturation, lightness),
+                        transparent: true,
+                        opacity: 0.8
+                    });
+                    
+                    const sparkle = new THREE.Mesh(geometry, material);
+                    
+                    // Position around the rose, mostly in the upper area
+                    const angle = Math.random() * Math.PI * 2;
+                    const radius = 3 + Math.random() * 2;
+                    sparkle.position.set(
+                        Math.cos(angle) * radius * 0.7,
+                        1 + Math.random() * 3, // Higher position
+                        Math.sin(angle) * radius * 0.7
+                    );
+                    
+                    scene.add(sparkle);
+                    
+                    // Gentle floating animation
+                    gsap.to(sparkle.position, {
+                        duration: 2 + Math.random() * 1.5,
+                        y: sparkle.position.y + 3 + Math.random() * 2,
+                        x: sparkle.position.x + (Math.random() - 0.5) * 3,
+                        z: sparkle.position.z + (Math.random() - 0.5) * 3,
+                        ease: "power1.out"
+                    });
+                    
+                    // Fade out
+                    gsap.to(sparkle.material, {
+                        duration: 2 + Math.random() * 1.5,
+                        opacity: 0,
+                        delay: Math.random() * 0.5,
+                        ease: "power2.in",
+                        onComplete: () => scene.remove(sparkle)
+                    });
+                }
+            };
+            
+            // Create magical particles periodically
+            const magicalInterval = setInterval(createMagicalParticles, 500);
+            setTimeout(() => clearInterval(magicalInterval), 4000);
+            
+            roseParticles.forEach((particle, i) => {
+                const particleDelay = (i / roseParticles.length) * 0.1;
+                
+                if (particle.userData.particleType === 'flower') {
+                    // Enhanced bloom effect for flower petals
+                    const intensity = 0.8 + Math.random() * 0.2;
+                    
+                    gsap.to(particle.material, {
+                        duration: bloomDuration * 0.6,
+                        opacity: Math.min(1.0, intensity),
+                        delay: particleDelay,
+                        ease: "power2.out"
+                    });
+                    
+                    // Vibration effect
+                    const vibrationAmplitude = 0.05;
+                    gsap.to(particle.position, {
+                        duration: bloomDuration * 0.4,
+                        x: particle.position.x + (Math.random() - 0.5) * vibrationAmplitude,
+                        y: particle.position.y + (Math.random() - 0.5) * vibrationAmplitude,
+                        z: particle.position.z + (Math.random() - 0.5) * vibrationAmplitude * 0.3,
+                        delay: particleDelay * 0.5,
+                        ease: "power2.inOut",
+                        yoyo: true,
+                        repeat: 1,
+                        onComplete: () => {
+                            // Add special bloom effect to some petals
+                            if (Math.random() < 0.1) {
+                                const originalScale = particle.scale.x;
+                                gsap.to(particle.scale, {
+                                    duration: 0.3,
+                                    x: originalScale * 1.2,
+                                    y: originalScale * 1.2,
+                                    z: originalScale * 1.2,
+                                    ease: "power2.out",
+                                    yoyo: true,
+                                    repeat: 1
+                                });
+                            }
+                        }
+                    });
+                    
+                    // Color enhancement
+                    const originalColor = particle.material.color.clone();
+                    gsap.to(particle.material.color, {
+                        duration: bloomDuration * 0.3,
+                        r: Math.min(1, originalColor.r * 1.2),
+                        g: Math.min(1, originalColor.g * 1.1),
+                        b: Math.min(1, originalColor.b * 1.1),
+                        delay: particleDelay,
+                        ease: "power2.out",
+                        yoyo: true,
+                        repeat: 1
+                    });
+                    
+                    // Rotation effect
+                    gsap.to(particle.rotation, {
+                        duration: bloomDuration,
+                        x: particle.rotation.x + (Math.random() - 0.5) * 0.2,
+                        y: particle.rotation.y + (Math.random() - 0.5) * 0.2,
+                        z: particle.rotation.z + (Math.random() - 0.5) * 0.3,
+                        delay: particleDelay * 0.5,
+                        ease: "power2.inOut",
+                        yoyo: true,
+                        repeat: 1
+                    });
+                } else if (particle.userData.particleType === 'stem') {
+                    // Stem gentle sway
+                    const stemSway = 0.03;
+                    gsap.to(particle.position, {
+                        duration: bloomDuration,
+                        x: particle.position.x + (Math.random() - 0.5) * stemSway,
+                        delay: particleDelay * 0.3,
+                        ease: "power1.inOut",
+                        yoyo: true,
+                        repeat: 1
+                    });
+                }
+            });
+            
+            console.log('Rose blooming, will transition to text in 5 seconds...');
+            // Sau khi hoa hồng nở, đợi 5 giây rồi tạo chữ "Minh Anh"
+            setTimeout(() => {
+                console.log('Rose bloom completed, starting transition to Minh Anh text...');
+                startRoseDissolve();
+            }, 5000);
+        }
+        
+        // Hàm để chuyển đổi từ hoa hồng sang chữ "Minh Anh"
+        function startRoseDissolve() {
+            console.log('Starting rose dissolve animation...');
+            
+            // Tạo hiệu ứng hoa rơi rồi tạo chữ
+            roseParticles.forEach((particle, i) => {
+                const delay = Math.random() * 2;
+                
+                if (particle.userData.particleType === 'flower') {
+                    // Các cánh hoa bay nhẹ nhàng xuống dưới
+                    const direction = new THREE.Vector3(
+                        (Math.random() - 0.5) * 0.8,
+                        -1 - Math.random() * 2,
+                        (Math.random() - 0.5) * 0.8
+                    ).normalize();
+                    
+                    const fallDistance = 10 + Math.random() * 5;
+                    const targetPos = particle.position.clone().add(
+                        direction.multiplyScalar(fallDistance)
+                    );
+                    
+                    gsap.to(particle.position, {
+                        duration: 3.5,
+                        x: targetPos.x,
+                        y: targetPos.y,
+                        z: targetPos.z,
+                        ease: "power2.in",
+                        delay: delay
+                    });
+                    
+                    gsap.to(particle.rotation, {
+                        duration: 3.5,
+                        x: particle.rotation.x + Math.PI * (Math.random() * 2),
+                        y: particle.rotation.y + Math.PI * (Math.random() * 2),
+                        z: particle.rotation.z + Math.PI * (Math.random() * 2),
+                        ease: "power1.in",
+                        delay: delay
+                    });
+                    
+                    gsap.to(particle.material, {
+                        duration: 2,
+                        opacity: 0,
+                        ease: "power2.in",
+                        delay: delay + 1.5,
+                        onComplete: () => {
+                            if (i === roseParticles.length - 1) {
+                                setTimeout(() => {
+                                    // Xóa tất cả hạt của hoa hồng khỏi scene
+                                    roseParticles.forEach(p => {
+                                        scene.remove(p);
+                                    });
+                                    roseParticles = [];
+                                    
+                                    // Tạo chữ "Minh Anh"
+                                    startTextFormation();
+                                }, 1000);
+                            }
+                        }
+                    });
+                } else {
+                    // Thân và lá mờ đi chậm hơn
+                    gsap.to(particle.material, {
+                        duration: 3,
+                        opacity: 0,
+                        ease: "power2.in",
+                        delay: delay + 2
+                    });
+                }
+            });
+        }
+        
+        // Hàm tạo vị trí cho các hạt tạo thành chữ "Minh Anh"
+        function createTextPositions() {
+            const textPositions = [];
+            
+            // Tạo chữ "Minh Anh" bằng cách định vị các điểm
+            // Khoảng cách giữa các chữ
+            const letterSpacing = 3;
+            
+            // --- Chữ M ---
+            const mPoints = [];
+            // Trục đứng bên trái
+            for (let y = -2; y <= 2; y += 0.1) {
+                mPoints.push(new THREE.Vector3(-6, y, 0));
+            }
+            // Đường chéo từ trái xuống giữa
+            for (let t = 0; t <= 1; t += 0.1) {
+                mPoints.push(new THREE.Vector3(-6 + t * 1.5, 2 - t * 4, 0));
+            }
+            // Đường chéo từ giữa lên phải
+            for (let t = 0; t <= 1; t += 0.1) {
+                mPoints.push(new THREE.Vector3(-4.5 + t * 1.5, -2 + t * 4, 0));
+            }
+            // Trục đứng bên phải
+            for (let y = -2; y <= 2; y += 0.1) {
+                mPoints.push(new THREE.Vector3(-3, y, 0));
+            }
+            
+            // --- Chữ I ---
+            const iPoints = [];
+            // Đường ngang trên
+            for (let x = -2; x <= -1; x += 0.1) {
+                iPoints.push(new THREE.Vector3(x, 2, 0));
+            }
+            // Trục đứng
+            for (let y = -2; y <= 2; y += 0.1) {
+                iPoints.push(new THREE.Vector3(-1.5, y, 0));
+            }
+            // Đường ngang dưới
+            for (let x = -2; x <= -1; x += 0.1) {
+                iPoints.push(new THREE.Vector3(x, -2, 0));
+            }
+            
+            // --- Chữ N ---
+            const nPoints = [];
+            // Trục đứng bên trái
+            for (let y = -2; y <= 2; y += 0.1) {
+                nPoints.push(new THREE.Vector3(0, y, 0));
+            }
+            // Đường chéo
+            for (let t = 0; t <= 1; t += 0.05) {
+                nPoints.push(new THREE.Vector3(0 + t * 2, 2 - t * 4, 0));
+            }
+            // Trục đứng bên phải
+            for (let y = -2; y <= 2; y += 0.1) {
+                nPoints.push(new THREE.Vector3(2, y, 0));
+            }
+            
+            // --- Chữ H ---
+            const hPoints = [];
+            // Trục đứng bên trái
+            for (let y = -2; y <= 2; y += 0.1) {
+                hPoints.push(new THREE.Vector3(3.5, y, 0));
+            }
+            // Thanh ngang giữa
+            for (let x = 3.5; x <= 5.5; x += 0.1) {
+                hPoints.push(new THREE.Vector3(x, 0, 0));
+            }
+            // Trục đứng bên phải
+            for (let y = -2; y <= 2; y += 0.1) {
+                hPoints.push(new THREE.Vector3(5.5, y, 0));
+            }
+            
+            // --- Chữ A ---
+            const aPoints = [];
+            // Đường chéo từ trái lên đỉnh
+            for (let t = 0; t <= 1; t += 0.05) {
+                aPoints.push(new THREE.Vector3(7 + t * 1, -2 + t * 4, 0));
+            }
+            // Đường chéo từ đỉnh xuống phải
+            for (let t = 0; t <= 1; t += 0.05) {
+                aPoints.push(new THREE.Vector3(8 + t * 1, 2 - t * 4, 0));
+            }
+            // Thanh ngang giữa
+            for (let x = 7.3; x <= 8.7; x += 0.1) {
+                aPoints.push(new THREE.Vector3(x, 0, 0));
+            }
+            
+            // --- Chữ N ---
+            const n2Points = [];
+            // Trục đứng bên trái
+            for (let y = -2; y <= 2; y += 0.1) {
+                n2Points.push(new THREE.Vector3(10, y, 0));
+            }
+            // Đường chéo
+            for (let t = 0; t <= 1; t += 0.05) {
+                n2Points.push(new THREE.Vector3(10 + t * 2, 2 - t * 4, 0));
+            }
+            // Trục đứng bên phải
+            for (let y = -2; y <= 2; y += 0.1) {
+                n2Points.push(new THREE.Vector3(12, y, 0));
+            }
+            
+            // --- Chữ H ---
+            const h2Points = [];
+            // Trục đứng bên trái
+            for (let y = -2; y <= 2; y += 0.1) {
+                h2Points.push(new THREE.Vector3(13.5, y, 0));
+            }
+            // Thanh ngang giữa
+            for (let x = 13.5; x <= 15.5; x += 0.1) {
+                h2Points.push(new THREE.Vector3(x, 0, 0));
+            }
+            // Trục đứng bên phải
+            for (let y = -2; y <= 2; y += 0.1) {
+                h2Points.push(new THREE.Vector3(15.5, y, 0));
+            }
+            
+            // Kết hợp tất cả các điểm và dịch chuyển toàn bộ chữ vào giữa
+            const allPoints = [...mPoints, ...iPoints, ...nPoints, ...hPoints, ...aPoints, ...n2Points, ...h2Points];
+            
+            // Dịch chuyển toàn bộ chữ để căn giữa
+            const offsetX = 4.75; // Điều chỉnh để căn giữa
+            
+            allPoints.forEach(point => {
+                // Dịch chuyển sang trái để căn giữa
+                point.x -= offsetX;
+                // Thêm độ sâu ngẫu nhiên nhẹ để tạo hiệu ứng 3D
+                point.z += (Math.random() - 0.5) * 0.3;
+                textPositions.push(point);
+            });
+            
+            return textPositions;
+        }
+        
+        // Mảng chứa các hạt tạo thành chữ
+        let textParticles = [];
+        
+        // Hàm tạo các hạt cho chữ "Minh Anh"
+        function createTextParticles() {
+            const textPositions = createTextPositions();
+            const TEXT_PARTICLE_COUNT = 1500; // Điều chỉnh số lượng hạt
+            
+            const geometries = [
+                new THREE.SphereGeometry(0.05, 8, 8),
+                new THREE.TetrahedronGeometry(0.06),
+                new THREE.OctahedronGeometry(0.05)
+            ];
+            
+            for (let i = 0; i < TEXT_PARTICLE_COUNT; i++) {
+                const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+                
+                // Gradient màu đẹp mắt cho chữ
+                let hue, saturation, lightness;
+                
+                // Phân bố màu giữa hồng và tím
+                if (Math.random() < 0.7) {
+                    // Màu hồng-tím chủ đạo
+                    hue = 0.75 + Math.random() * 0.2;
+                    saturation = 0.7 + Math.random() * 0.3;
+                    lightness = 0.5 + Math.random() * 0.3;
+                } else if (Math.random() < 0.9) {
+                    // Một ít ánh vàng
+                    hue = 0.12 + Math.random() * 0.08;
+                    saturation = 0.8 + Math.random() * 0.2;
+                    lightness = 0.6 + Math.random() * 0.3;
+                } else {
+                    // Một ít điểm trắng lấp lánh
+                    hue = Math.random();
+                    saturation = 0.1 + Math.random() * 0.2;
+                    lightness = 0.8 + Math.random() * 0.2;
+                }
+                
+                const material = new THREE.MeshBasicMaterial({
+                    color: new THREE.Color().setHSL(hue, saturation, lightness),
+                    transparent: true,
+                    opacity: 0
+                });
+                
+                const particle = new THREE.Mesh(geometry, material);
+                
+                // Vị trí ban đầu: phân bố ngẫu nhiên xung quanh
+                const radius = 30 + Math.random() * 10;
+                const phi = Math.random() * Math.PI * 2;
+                const theta = Math.random() * Math.PI;
+                
+                particle.position.set(
+                    radius * Math.sin(theta) * Math.cos(phi),
+                    radius * Math.sin(theta) * Math.sin(phi),
+                    radius * Math.cos(theta)
+                );
+                
+                // Vị trí đích là một điểm trong mảng vị trí chữ
+                const targetPos = textPositions[i % textPositions.length].clone();
+                
+                particle.userData = {
+                    originalPos: particle.position.clone(),
+                    targetPos: targetPos,
+                    speed: 0.01 + Math.random() * 0.02,
+                    rotationSpeed: (Math.random() - 0.5) * 0.1,
+                    size: 0.6 + Math.random() * 0.4,
+                    pulsePhase: Math.random() * Math.PI * 2,
+                    originalHue: hue,
+                    originalSaturation: saturation,
+                    originalLightness: lightness,
+                    type: 'text'
+                };
+                
+                textParticles.push(particle);
+                scene.add(particle);
+            }
+        }
+        
+        // Hàm bắt đầu hiệu ứng hình thành chữ "Minh Anh"
+        function startTextFormation() {
+            console.log('Starting "Minh Anh" text formation...');
+            currentPhase = 'text';
+            
+            // Tạo các hạt chữ nếu chưa có
+            if (textParticles.length === 0) {
+                createTextParticles();
+            }
+            
+            // Animation cho từng hạt
+            textParticles.forEach((particle, i) => {
+                const delay = Math.random() * 3;
+                const duration = 3 + Math.random() * 2;
+                
+                gsap.to(particle.position, {
+                    duration: duration,
+                    x: particle.userData.targetPos.x,
+                    y: particle.userData.targetPos.y,
+                    z: particle.userData.targetPos.z,
+                    ease: "power2.out",
+                    delay: delay,
+                    onComplete: () => {
+                        if (i === textParticles.length - 1) {
+                            // Khi tất cả các hạt đã di chuyển đến vị trí
+                            setTimeout(() => {
+                                // Bắt đầu hiệu ứng lấp lánh cho chữ
+                                startTextGlitter();
+                            }, 1000);
+                        }
+                    }
+                });
+                
+                // Hiệu ứng xuất hiện
+                gsap.to(particle.material, {
+                    duration: duration * 0.7,
+                    opacity: 0.9,
+                    delay: delay
+                });
+                
+                gsap.to(particle.scale, {
+                    duration: duration,
+                    x: particle.userData.size,
+                    y: particle.userData.size,
+                    z: particle.userData.size,
+                    ease: "elastic.out(1, 0.3)",
+                    delay: delay
+                });
+            });
+        }
+        
+        // Hiệu ứng lấp lánh cho chữ "Minh Anh"
+        function startTextGlitter() {
+            console.log('Starting text glitter effect...');
+            
+            // Hiệu ứng lấp lánh cho một số hạt ngẫu nhiên
+            setInterval(() => {
+                if (currentPhase !== 'text' && currentPhase !== 'love-text') return; // Dừng hiệu ứng nếu đã chuyển phase
+                
+                // Chọn một số hạt ngẫu nhiên để lấp lánh
+                let particles = currentPhase === 'text' ? textParticles : loveTextParticles;
+                const glitterCount = Math.floor(particles.length * 0.02); // 2% số hạt
+                
+                for (let i = 0; i < glitterCount; i++) {
+                    const particle = particles[Math.floor(Math.random() * particles.length)];
+                    
+                    // Lưu màu gốc
+                    const originalColor = particle.material.color.clone();
+                    
+                    // Đổi sang màu trắng sáng
+                    gsap.to(particle.material.color, {
+                        r: 1, g: 1, b: 1,
+                        duration: 0.3,
+                        ease: "power2.out",
+                        onComplete: () => {
+                            // Quay trở lại màu ban đầu
+                            gsap.to(particle.material.color, {
+                                r: originalColor.r,
+                                g: originalColor.g,
+                                b: originalColor.b,
+                                duration: 0.5,
+                                ease: "power2.in"
+                            });
+                        }
+                    });
+                    
+                    // Đồng thời tăng kích thước hơn một chút
+                    const originalScale = particle.scale.x;
+                    gsap.to(particle.scale, {
+                        x: originalScale * 1.3,
+                        y: originalScale * 1.3,
+                        z: originalScale * 1.3,
+                        duration: 0.3,
+                        ease: "power2.out",
+                        onComplete: () => {
+                            gsap.to(particle.scale, {
+                                x: originalScale,
+                                y: originalScale,
+                                z: originalScale,
+                                duration: 0.5,
+                                ease: "power2.in"
+                            });
+                        }
+                    });
+                }
+            }, 100); // Mỗi 100ms
+            
+            // Sau 8 giây, chuyển sang hiệu ứng "I Love You"
+            if (currentPhase === 'text') {
+                setTimeout(() => {
+                    startTextDissolve();
+                }, 8000);
+            }
+        }
+        
+        // Mảng chứa các hạt tạo thành chữ "I Love You"
+        let loveTextParticles = [];
+          // Hàm để chuyển đổi từ chữ "Minh Anh" sang chữ "I Love You"
+        function startTextDissolve() {
+            console.log('Starting text dissolve animation...');
+            
+            // Create spectacular transitional effects before the text dissolves
+            const createTransitionEffects = () => {
+                // Create a shockwave effect
+                const shockwaveGeometry = new THREE.RingGeometry(0.1, 0.3, 32);
+                const shockwaveMaterial = new THREE.MeshBasicMaterial({
+                    color: 0xffffff,
+                    transparent: true,
+                    opacity: 0.7,
+                    side: THREE.DoubleSide
+                });
+                
+                const shockwave = new THREE.Mesh(shockwaveGeometry, shockwaveMaterial);
+                shockwave.position.set(0, 0, 0);
+                shockwave.rotation.x = Math.PI / 2;
+                scene.add(shockwave);
+                
+                // Animate the shockwave
+                gsap.to(shockwave.scale, {
+                    x: 30,
+                    y: 30,
+                    z: 1,
+                    duration: 2,
+                    ease: "power2.out"
+                });
+                
+                gsap.to(shockwave.material, {
+                    opacity: 0,
+                    duration: 2,
+                    ease: "power1.out",
+                    onComplete: () => {
+                        scene.remove(shockwave);
+                    }
+                });
+                
+                // Create sparkles that flow between the words
+                const sparkleCount = 100;
+                for (let i = 0; i < sparkleCount; i++) {
+                    const sparkleGeometry = new THREE.SphereGeometry(0.04, 8, 8);
+                    
+                    // Beautiful color palette for transition sparkles
+                    const hue = Math.random();
+                    const saturation = 0.7 + Math.random() * 0.3;
+                    const lightness = 0.6 + Math.random() * 0.4;
+                    
+                    const sparkleMaterial = new THREE.MeshBasicMaterial({
+                        color: new THREE.Color().setHSL(hue, saturation, lightness),
+                        transparent: true,
+                        opacity: 0.8
+                    });
+                    
+                    const sparkle = new THREE.Mesh(sparkleGeometry, sparkleMaterial);
+                    
+                    // Start from random positions around "Minh Anh"
+                    const textParticle = textParticles[Math.floor(Math.random() * textParticles.length)];
+                    if (textParticle) {
+                        sparkle.position.copy(textParticle.position.clone());
+                    } else {
+                        sparkle.position.set(
+                            (Math.random() - 0.5) * 10,
+                            (Math.random() - 0.5) * 5,
+                            (Math.random() - 0.5) * 3
+                        );
+                    }
+                    
+                    scene.add(sparkle);
+                    
+                    // Arc motion toward bottom of screen (where "I Love You" will form)
+                    const delay = Math.random() * 1.5;
+                    const duration = 2 + Math.random() * 1.5;
+                    
+                    // Create arc path
+                    gsap.to(sparkle.position, {
+                        duration: duration,
+                        x: (Math.random() - 0.5) * 20,
+                        y: -10 - Math.random() * 5,
+                        z: (Math.random() - 0.5) * 5,
+                        ease: "power2.in",
+                        delay: delay,
+                        onComplete: () => {
+                            scene.remove(sparkle);
+                        }
+                    });
+                    
+                    // Scale and fade effect
+                    gsap.to(sparkle.scale, {
+                        duration: duration * 0.7,
+                        x: 2 + Math.random() * 2,
+                        y: 2 + Math.random() * 2,
+                        z: 2 + Math.random() * 2,
+                        delay: delay,
+                        ease: "power1.out",
+                        yoyo: true,
+                        repeat: 1
+                    });
+                    
+                    gsap.to(sparkle.material, {
+                        duration: duration,
+                        opacity: 0,
+                        delay: delay + duration * 0.7,
+                        ease: "power2.in"
+                    });
+                }
+            };
+            
+            // Start transition effects
+            createTransitionEffects();
+            
+            // Tạo hiệu ứng chữ "Minh Anh" tan ra
+            textParticles.forEach((particle, i) => {
+                const delay = Math.random() * 2;
+                
+                // Các hạt bay lên phía trên và tạo hiệu ứng tuyệt đẹp 
+                // Some particles spiral upward
+                const pattern = Math.random();
+                let targetPos;
+                
+                if (pattern < 0.3) {
+                    // Pattern 1: Spiral upward
+                    const angle = Math.random() * Math.PI * 2;
+                    const radius = 5 + Math.random() * 10;
+                    targetPos = new THREE.Vector3(
+                        Math.cos(angle) * radius,
+                        10 + Math.random() * 15,
+                        Math.sin(angle) * radius
+                    );
+                } else if (pattern < 0.6) {
+                    // Pattern 2: Shower to the sides
+                    const sideDir = Math.random() > 0.5 ? 1 : -1;
+                    targetPos = new THREE.Vector3(
+                        sideDir * (10 + Math.random() * 15),
+                        -5 + Math.random() * 20,
+                        (Math.random() - 0.5) * 10
+                    );
+                } else {
+                    // Pattern 3: Classic upward dispersion
+                    const direction = new THREE.Vector3(
+                        (Math.random() - 0.5) * 2,
+                        1 + Math.random() * 2,
+                        (Math.random() - 0.5) * 2
+                    ).normalize();
+                    
+                    const flyDistance = 15 + Math.random() * 10;
+                    targetPos = particle.position.clone().add(
+                        direction.multiplyScalar(flyDistance)
+                    );
+                }
+                
+                // Enhanced motion paths with different easing for more dynamic effect
+                gsap.to(particle.position, {
+                    duration: 2.5,
+                    x: targetPos.x,
+                    y: targetPos.y,
+                    z: targetPos.z,
+                    ease: i % 2 === 0 ? "power3.in" : "back.in(1.7)",
+                    delay: delay
+                });
+                
+                // More complex rotation
+                gsap.to(particle.rotation, {
+                    duration: 2.5,
+                    x: particle.rotation.x + Math.PI * (Math.random() * 3),
+                    y: particle.rotation.y + Math.PI * (Math.random() * 3),
+                    z: particle.rotation.z + Math.PI * (Math.random() * 3),
+                    ease: "power1.in",
+                    delay: delay
+                });
+                
+                // Enhanced color change and fade out
+                if (Math.random() < 0.3) {
+                    // Some particles change color before disappearing
+                    const hue = Math.random();
+                    gsap.to(particle.material.color, {
+                        r: Math.random(),
+                        g: Math.random(),
+                        b: Math.random(),
+                        duration: 1,
+                        delay: delay,
+                        ease: "power1.inOut"
+                    });
+                }
+                
+                gsap.to(particle.material, {
+                    duration: 2,
+                    opacity: 0,
+                    ease: "power2.in",
+                    delay: delay + 0.5,
+                    onComplete: () => {
+                        if (i === textParticles.length - 1) {
+                            setTimeout(() => {
+                                // Xóa tất cả hạt chữ "Minh Anh" khỏi scene
+                                textParticles.forEach(p => {
+                                    scene.remove(p);
+                                });
+                                textParticles = [];
+                                
+                                // Tạo chữ "I Love You"
+                                startLoveTextFormation();
+                            }, 500);
+                        }
+                    }
+                });
+            });
+        }
+        
+        // Hàm tạo vị trí cho các hạt tạo thành chữ "I Love You"
+        function createLoveTextPositions() {
+            const loveTextPositions = [];
+            
+            // --- Chữ I ---
+            const iPoints = [];
+            // Đường ngang trên
+            for (let x = -8; x <= -5; x += 0.1) {
+                iPoints.push(new THREE.Vector3(x, 2, 0));
+            }
+            // Trục đứng
+            for (let y = -2; y <= 2; y += 0.1) {
+                iPoints.push(new THREE.Vector3(-6.5, y, 0));
+            }
+            // Đường ngang dưới
+            for (let x = -8; x <= -5; x += 0.1) {
+                iPoints.push(new THREE.Vector3(x, -2, 0));
+            }
+            
+            // Khoảng cách
+            
+            // --- Chữ L ---
+            const lPoints = [];
+            // Trục đứng
+            for (let y = -2; y <= 2; y += 0.1) {
+                lPoints.push(new THREE.Vector3(-4, y, 0));
+            }
+            // Đường ngang dưới
+            for (let x = -4; x <= -1; x += 0.1) {
+                lPoints.push(new THREE.Vector3(x, -2, 0));
+            }
+            
+            // --- Chữ O ---
+            const oPoints = [];
+            // Hình tròn
+            for (let angle = 0; angle <= Math.PI * 2; angle += 0.1) {
+                const radius = 1.5;
+                oPoints.push(new THREE.Vector3(
+                    0 + Math.cos(angle) * radius,
+                    0 + Math.sin(angle) * radius,
+                    0
+                ));
+            }
+            
+            // --- Chữ V ---
+            const vPoints = [];
+            // Đường chéo từ trên trái xuống dưới giữa
+            for (let t = 0; t <= 1; t += 0.05) {
+                vPoints.push(new THREE.Vector3(3 + t * 1.5, 2 - t * 4, 0));
+            }
+            // Đường chéo từ dưới giữa lên trên phải
+            for (let t = 0; t <= 1; t += 0.05) {
+                vPoints.push(new THREE.Vector3(4.5 + t * 1.5, -2 + t * 4, 0));
+            }
+            
+            // --- Chữ E ---
+            const ePoints = [];
+            // Trục đứng
+            for (let y = -2; y <= 2; y += 0.1) {
+                ePoints.push(new THREE.Vector3(8, y, 0));
+            }
+            // Đường ngang trên
+            for (let x = 8; x <= 11; x += 0.1) {
+                ePoints.push(new THREE.Vector3(x, 2, 0));
+            }
+            // Đường ngang giữa
+            for (let x = 8; x <= 10.5; x += 0.1) {
+                ePoints.push(new THREE.Vector3(x, 0, 0));
+            }
+            // Đường ngang dưới
+            for (let x = 8; x <= 11; x += 0.1) {
+                ePoints.push(new THREE.Vector3(x, -2, 0));
+            }
+            
+            // --- Chữ Y ---
+            const yPoints = [];
+            // Đường chéo từ trên trái xuống giữa
+            for (let t = 0; t <= 1; t += 0.05) {
+                yPoints.push(new THREE.Vector3(12 + t * 1.5, 2 - t * 2, 0));
+            }
+            // Đường chéo từ trên phải xuống giữa
+            for (let t = 0; t <= 1; t += 0.05) {
+                yPoints.push(new THREE.Vector3(15 - t * 1.5, 2 - t * 2, 0));
+            }
+            // Trục đứng từ giữa xuống dưới
+            for (let y = 0; y >= -2; y -= 0.1) {
+                yPoints.push(new THREE.Vector3(13.5, y, 0));
+            }
+            
+            // --- Chữ O (kí hiệu trái tim) ---
+            const heartPoints = [];
+            // Tạo hình trái tim nhỏ
+            const heartSize = 0.8;
+            for (let t = 0; t <= Math.PI * 2; t += 0.1) {
+                const x = heartSize * 16 * Math.pow(Math.sin(t), 3);
+                const y = heartSize * (13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+                
+                // Đặt trái tim ở vị trí của chữ O trong "YOU"
+                heartPoints.push(new THREE.Vector3(17 + x/10, y/6, 0));
+            }
+            
+            // Đường viền trái tim để thêm điểm
+            for (let i = 0; i < 20; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const radius = 0.8 + Math.random() * 0.3;
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+                
+                heartPoints.push(new THREE.Vector3(17 + x, y, 0));
+            }
+            
+            // Dấu chấm trên chữ I
+            const dotPoints = [];
+            for (let angle = 0; angle <= Math.PI * 2; angle += 0.2) {
+                dotPoints.push(new THREE.Vector3(
+                    -6.5 + Math.cos(angle) * 0.4,
+                    2.8 + Math.sin(angle) * 0.4,
+                    0
+                ));
+            }
+            
+            // Kết hợp tất cả các điểm và dịch chuyển toàn bộ chữ vào giữa
+            const allPoints = [
+                ...iPoints, ...lPoints, ...oPoints, 
+                ...vPoints, ...ePoints, ...yPoints, 
+                ...heartPoints, ...dotPoints
+            ];
+            
+            // Điều chỉnh vị trí của toàn bộ chữ
+            allPoints.forEach(point => {
+                // Thêm độ sâu ngẫu nhiên nhẹ để tạo hiệu ứng 3D
+                point.z += (Math.random() - 0.5) * 0.3;
+                loveTextPositions.push(point);
+            });
+            
+            return loveTextPositions;
+        }
+        
+        // Hàm tạo các hạt cho chữ "I Love You"
+        function createLoveTextParticles() {
+            const loveTextPositions = createLoveTextPositions();
+            const LOVE_TEXT_PARTICLE_COUNT = 1500; // Điều chỉnh số lượng hạt
+            
+            const geometries = [
+                new THREE.SphereGeometry(0.05, 8, 8),
+                new THREE.TetrahedronGeometry(0.06),
+                new THREE.OctahedronGeometry(0.05)
+            ];
+            
+            for (let i = 0; i < LOVE_TEXT_PARTICLE_COUNT; i++) {
+                const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+                
+                // Gradient màu đẹp mắt cho chữ
+                let hue, saturation, lightness;
+                
+                // Phối màu đỏ-hồng-tím cho chữ "I Love You"
+                if (Math.random() < 0.6) {
+                    // Màu đỏ-hồng chủ đạo
+                    hue = 0.95 + Math.random() * 0.15; // Đỏ hơn
+                    saturation = 0.8 + Math.random() * 0.2;
+                    lightness = 0.5 + Math.random() * 0.3;
+                } else if (Math.random() < 0.9) {
+                    // Một ít ánh vàng-cam
+                    hue = 0.08 + Math.random() * 0.08;
+                    saturation = 0.85 + Math.random() * 0.15;
+                    lightness = 0.65 + Math.random() * 0.2;
+                } else {
+                    // Một ít điểm trắng lấp lánh
+                    hue = Math.random();
+                    saturation = 0.1 + Math.random() * 0.2;
+                    lightness = 0.8 + Math.random() * 0.2;
+                }
+                
+                const material = new THREE.MeshBasicMaterial({
+                    color: new THREE.Color().setHSL(hue, saturation, lightness),
+                    transparent: true,
+                    opacity: 0
+                });
+                
+                const particle = new THREE.Mesh(geometry, material);
+                
+                // Vị trí ban đầu: phân bố ngẫu nhiên ở phía dưới mờ dần lên
+                const radius = 25 + Math.random() * 10;
+                const phi = Math.random() * Math.PI * 2;
+                const theta = Math.random() * Math.PI / 2 + Math.PI / 2; // Chủ yếu ở nửa dưới
+                
+                particle.position.set(
+                    radius * Math.sin(theta) * Math.cos(phi),
+                    radius * Math.sin(theta) * Math.sin(phi) - 10, // Bắt đầu từ dưới
+                    radius * Math.cos(theta)
+                );
+                
+                // Vị trí đích là một điểm trong mảng vị trí chữ
+                const targetPos = loveTextPositions[i % loveTextPositions.length].clone();
+                
+                particle.userData = {
+                    originalPos: particle.position.clone(),
+                    targetPos: targetPos,
+                    speed: 0.01 + Math.random() * 0.02,
+                    rotationSpeed: (Math.random() - 0.5) * 0.1,
+                    size: 0.6 + Math.random() * 0.4,
+                    pulsePhase: Math.random() * Math.PI * 2,
+                    originalHue: hue,
+                    originalSaturation: saturation,
+                    originalLightness: lightness,
+                    type: 'love-text'
+                };
+                
+                loveTextParticles.push(particle);
+                scene.add(particle);
+            }
+        }
+        
+        // Hàm bắt đầu hiệu ứng hình thành chữ "I Love You"
+        function startLoveTextFormation() {
+            console.log('Starting "I Love You" text formation...');
+            currentPhase = 'love-text';
+            
+            // Tạo các hạt chữ nếu chưa có
+            if (loveTextParticles.length === 0) {
+                createLoveTextParticles();
+            }
+            
+            // Animation cho từng hạt
+            loveTextParticles.forEach((particle, i) => {
+                const delay = Math.random() * 3;
+                const duration = 3 + Math.random() * 2;
+                
+                gsap.to(particle.position, {
+                    duration: duration,
+                    x: particle.userData.targetPos.x,
+                    y: particle.userData.targetPos.y,
+                    z: particle.userData.targetPos.z,
+                    ease: "power2.out",
+                    delay: delay,
+                    onComplete: () => {
+                        if (i === loveTextParticles.length - 1) {
+                            // Khi tất cả các hạt đã di chuyển đến vị trí
+                            setTimeout(() => {
+                                // Bắt đầu hiệu ứng lấp lánh cho chữ "I Love You"
+                                startLoveTextGlitter();
+                            }, 1000);
+                        }
+                    }
+                });
+                
+                // Hiệu ứng xuất hiện
+                gsap.to(particle.material, {
+                    duration: duration * 0.7,
+                    opacity: 0.9,
+                    delay: delay
+                });
+                
+                gsap.to(particle.scale, {
+                    duration: duration,
+                    x: particle.userData.size,
+                    y: particle.userData.size,
+                    z: particle.userData.size,
+                    ease: "elastic.out(1, 0.3)",
+                    delay: delay
+                });
+            });
+        }
+        
+        // Hiệu ứng lấp lánh đặc biệt cho chữ "I Love You"
+        function startLoveTextGlitter() {
+            console.log('Starting I Love You glitter effect...');
+            
+            // Hiệu ứng trái tim đập
+            setInterval(() => {
+                if (currentPhase !== 'love-text') return;
+                
+                // Tìm các hạt thuộc hình trái tim nhỏ (phần "O" trong "YOU")
+                loveTextParticles.forEach(particle => {
+                    if (particle.position.x >= 16 && particle.position.x <= 18) {
+                        // Tạo hiệu ứng đập nhịp cho trái tim
+                        const originalScale = particle.userData.size;
+                        const heartbeatScale = originalScale * 1.3;
+                        
+                        gsap.to(particle.scale, {
+                            duration: 0.15,
+                            x: heartbeatScale,
+                            y: heartbeatScale,
+                            z: heartbeatScale,
+                            ease: "power2.out",
+                            yoyo: true,
+                            repeat: 1
+                        });
+                        
+                        // Đổi sang màu đỏ đậm
+                        const originalColor = particle.material.color.clone();
+                        gsap.to(particle.material.color, {
+                            r: 1, g: 0.1, b: 0.3,
+                            duration: 0.3,
+                            ease: "power2.out",
+                            yoyo: true,
+                            repeat: 1
+                        });
+                    }
+                });
+            }, 1000); // Mỗi 1 giây
+            
+            // Tiếp tục hiệu ứng lấp lánh thông thường
+            startTextGlitter();
+        }
+
+        // Control functions
+        function startSequence() {
+            resetAnimation();
+            setTimeout(() => {
+                startHeartFormation();
+            }, 1000);
+        }
+
+
+        function skipToRose() {
+            // Clear heart particles
+            heartParticles.forEach(particle => {
+                gsap.to(particle.material, {
+                    duration: 0.5,
+                    opacity: 0,
+                    onComplete: () => {
+                        scene.remove(particle);
+                    }
+                });
+            });
+
+            setTimeout(() => {
+                startRoseFormation();
+            }, 500);
+        }
+        function resetAnimation() {
+            currentPhase = 'loading';
+            isHeartFormed = false;
+            isHeartExploded = false;
+            isRoseFormed = false;            // Clear all particles including energy particles and text
+            [...heartParticles, ...roseParticles, ...energyParticles, ...textParticles].forEach(particle => {
+                scene.remove(particle);
+            });
+
+            heartParticles = [];
+            roseParticles = [];
+            energyParticles = [];
+            textParticles = [];
+            particles = [];
+
+            // Reset heartbeat variables
+            lastHeartbeat = 0;
+            nextHeartbeatInterval = 1000;
+            heartbeatScale = 1;            // Recreate heart particles
+            setTimeout(() => {
+                createHeartPositions();
+                createHeartParticles();
+            }, 500);
+        }
+
+        function heartbeat() {
+            if (!isHeartFormed || isHeartExploded) return;
+
+            const beatScale = 1.15;
+            const duration = 0.15;
+
+            heartParticles.forEach(particle => {
+                gsap.to(particle.scale, {
+                    duration: duration,
+                    x: particle.userData.size * beatScale,
+                    y: particle.userData.size * beatScale,
+                    z: particle.userData.size * beatScale,
+                    ease: "power2.out",
+                    yoyo: true,
+                    repeat: 1
+                });
+            });
+
+            // Play heartbeat sound
+            playHeartbeatSound();
+        }
+
+        function playHeartbeatSound() {
+            if (!audioContext) return;
+
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.setValueAtTime(120, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(80, audioContext.currentTime + 0.15);
+
+            gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.18);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.18);
+        }
+
+        function updateStats() {
+            frameCount++;
+            const currentTime = performance.now();
+
+            if (currentTime >= lastTime + 500) {
+                fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
+                frameCount = 0;
+                lastTime = currentTime;
+                document.getElementById('fps').textContent = fps;
+                document.getElementById('particleCount').textContent =
+                    heartParticles.length + roseParticles.length + starParticles.length + energyParticles.length;
+                document.getElementById('mode').textContent = currentPhase;
+
+                // Auto quality adjustment
+                if (fps < 30 && currentQuality > 0) {
+                    currentQuality--;
+                    adjustQuality();
+                } else if (fps > 50 && currentQuality < 2) {
+                    currentQuality++;
+                    adjustQuality();
+                }
+            }
+        }
+
+        function adjustQuality() {
+            const qualityNames = ['Low', 'Medium', 'High'];
+            document.getElementById('quality').textContent = qualityNames[currentQuality];
+
+            switch (currentQuality) {
+                case 0:
+                    bloomPass.strength = 0.8;
+                    bloomPass.radius = 0.5;
+                    break;
+                case 1:
+                    bloomPass.strength = 1.2;
+                    bloomPass.radius = 0.8;
+                    break;
+                case 2:
+                    bloomPass.strength = 1.5;
+                    bloomPass.radius = 1.0;
+                    break;
+            }
+        } function animate() {
+            requestAnimationFrame(animate);
+            time = Date.now() * 0.001;
+            const now = Date.now();
+
+            updateStats();
+
+            // Heartbeat animation tự nhiên như Love.html
+            if (isHeartFormed && !isHeartExploded && currentPhase === 'heart') {
+                // Kiểm tra nếu đã đến lúc nhịp tim tiếp theo
+                if (now - lastHeartbeat >= nextHeartbeatInterval) {
+                    heartbeat();
+                    lastHeartbeat = now;
+                    // Tạo biến thiên tự nhiên cho nhịp tim tiếp theo (±10%)
+                    const beatInterval = (60 / heartRate) * 1000; // ms
+                    nextHeartbeatInterval = beatInterval * (0.9 + Math.random() * 0.2);
+                }
+
+                // Hiệu ứng nhịp tim liên tục và nhẹ nhàng
+                const timeSinceLastBeat = (now - lastHeartbeat) / nextHeartbeatInterval;
+                const naturalPulse = 1 + Math.sin(timeSinceLastBeat * Math.PI * 2) * 0.02; // Pulse nhẹ 2%
+                heartbeatScale = heartbeatScale * 0.98 + naturalPulse * 0.02; // Smooth transition
+            }
+
+            // Tạo energy particles khi trái tim đã hình thành (như Love.html)
+            if (isHeartFormed && !isHeartExploded && currentPhase === 'heart' && Math.random() < 0.008) {
+                createEnergyParticle();
+            }
+
+            // Cập nhật hạt năng lượng
+            updateEnergyParticles();            // Enhanced particle animations using Love.html movement system
+            const allParticles = [...heartParticles, ...roseParticles];
+            allParticles.forEach((particle, i) => {
+                if (particle.userData) {
+                    // Enhanced heart particles movement when formed (from Love.html)
+                    if (particle.userData.type === 'heart' && isHeartFormed && !isHeartExploded) {
+                        const basePos = particle.userData.targetPos.clone();
+                        basePos.multiplyScalar(heartbeatScale);
+
+                        // Enhanced wave-based movement with multiple frequencies
+                        const waveAmplitude = 0.15;
+                        const timeScaled = time * 2.5;
+                        const waveX = Math.sin(timeScaled + i * 0.1) * waveAmplitude;
+                        const waveY = Math.cos(timeScaled * 0.8 + i * 0.15) * (waveAmplitude * 0.8);
+                        const waveZ = Math.sin(timeScaled * 1.2 + i * 0.2) * (waveAmplitude * 0.6);
+
+                        // Spiral effects for natural circular motion
+                        const spiralRadius = 0.08;
+                        const spiralX = Math.cos(time + i * 0.08) * spiralRadius;
+                        const spiralY = Math.sin(time + i * 0.08) * spiralRadius;
+
+                        // Life vibrations for organic feel
+                        const lifeVibration = 0.004;
+                        const vibrateX = (Math.random() - 0.5) * lifeVibration;
+                        const vibrateY = (Math.random() - 0.5) * lifeVibration;
+
+                        // Apply all movements combined
+                        particle.position.x = basePos.x + waveX + spiralX + vibrateX;
+                        particle.position.y = basePos.y + waveY + spiralY + vibrateY;
+                        particle.position.z = basePos.z + waveZ;
+
+                        // Mouse interaction effects
+                        const mouseInfluence = 2;
+                        const mouseRange = 5;
+                        const mousePos = new THREE.Vector3(mouse.x * 3, mouse.y * 3, 0);
+                        const distance = particle.position.distanceTo(mousePos);
+                        
+                        if (distance < mouseRange) {
+                            const influence = Math.max(0, 1 - distance / mouseRange);
+                            const attractionForce = Math.sin(time * 3 + i * 0.08) * 0.2 + 0.2;
+                            const mouseEffect = mouseInfluence * influence * 0.3;
+                            
+                            particle.position.x += mouse.x * mouseEffect * attractionForce;
+                            particle.position.y += mouse.y * mouseEffect * attractionForce;
+                        }
+
+                        // Enhanced pulsing effect
+                        const pulseFactor = Math.sin(time * 4 + particle.userData.pulsePhase) * 0.2 + 1.0;
+                        particle.scale.set(
+                            particle.userData.size * pulseFactor, 
+                            particle.userData.size * pulseFactor, 
+                            particle.userData.size * pulseFactor
+                        );
+
+                        // Dynamic opacity pulsing
+                        const opacityBase = 0.7 + Math.sin(time * 3 + particle.userData.pulsePhase) * 0.25;
+                        particle.material.opacity = Math.max(0.4, opacityBase);
+
+                        // Color shifting for visual appeal (apply to some particles)
+                        if (i % 5 === 0) {
+                            const hueShift = (particle.userData.originalHue + Math.sin(time * 0.1 + i * 0.05) * 0.1) % 1;
+                            particle.material.color.setHSL(
+                                hueShift, 
+                                particle.userData.originalSaturation, 
+                                particle.userData.originalLightness
+                            );
+                        }
+
+                        // Sparkle effects for magical feel
+                        if (Math.random() < 0.0005) {
+                            const originalColor = particle.material.color.clone();
+                            particle.material.color.setRGB(1, 1, 1);
+                            setTimeout(() => {
+                                particle.material.color.copy(originalColor);
+                            }, 30);
+                        }
+                    }                    // Enhanced rose particles movement - natural animation like Flower.html
+                    else if (particle.userData.type === 'rose' && isRoseFormed) {
+                        const basePos = particle.userData.targetPos.clone();
+                        
+                        // Natural movement with different patterns for different parts
+                        const naturalMovement = particle.userData.naturalMovement;
+                        const timeOffset = time * naturalMovement.frequency + naturalMovement.phase;
+                        const naturalX = Math.sin(timeOffset) * naturalMovement.amplitude;
+                        const naturalY = Math.cos(timeOffset * 0.7) * (naturalMovement.amplitude * 0.6);
+                        const naturalZ = Math.sin(timeOffset * 1.2) * (naturalMovement.amplitude * 0.4);
+                        
+                        // Special effects based on particle type
+                        let specialX = 0, specialY = 0, specialZ = 0;
+                        
+                        if (particle.userData.particleType === 'flower') {
+                            // Flower spiral effect and breathing
+                            const spiralRadius = 0.08;
+                            const spiralSpeed = time * 0.6;
+                            specialX = Math.cos(spiralSpeed + i * 0.1) * spiralRadius * Math.sin(time * 2 + i * 0.05);
+                            specialY = Math.sin(spiralSpeed + i * 0.1) * spiralRadius * 0.5;
+                            
+                            // Breathing effect
+                            const breathe = Math.sin(time * 1.5 + i * 0.02) * 0.03;
+                            specialZ = breathe;
+                            
+                        } else if (particle.userData.particleType === 'leaf') {
+                            // Leaf wind effect
+                            const windStrength = 0.15;
+                            const windSpeed = time * 1.2;
+                            specialX = Math.sin(windSpeed + i * 0.3) * windStrength * 0.7;
+                            specialY = Math.cos(windSpeed * 0.8 + i * 0.2) * windStrength * 0.3;
+                            
+                            // Leaf rotation
+                            particle.rotation.z = Math.sin(time * 0.8 + i * 0.1) * 0.2;
+                            
+                        } else if (particle.userData.particleType === 'stem') {
+                            // Stem sway
+                            const stemSway = 0.05;
+                            specialX = Math.sin(time * 0.5 + i * 0.1) * stemSway;
+                            specialY = Math.cos(time * 0.3 + i * 0.05) * stemSway * 0.5;
+                        }
+                        
+                        // Apply movements
+                        particle.position.x = basePos.x + naturalX + specialX;
+                        particle.position.y = basePos.y + naturalY + specialY;
+                        particle.position.z = basePos.z + naturalZ + specialZ;
+
+                        // Enhanced pulsing for different parts
+                        let pulseFactor = 1.0;
+                        if (particle.userData.particleType === 'flower') {
+                            pulseFactor = Math.sin(time * 2.0 + particle.userData.pulsePhase) * 0.1 + 1.0;
+                        } else if (particle.userData.particleType === 'leaf') {
+                            pulseFactor = Math.sin(time * 1.4 + particle.userData.pulsePhase) * 0.05 + 1.0;
+                        }
+                        
+                        particle.scale.set(
+                            particle.userData.size * pulseFactor,
+                            particle.userData.size * pulseFactor,
+                            particle.userData.size * pulseFactor
+                        );
+                        
+                        // Color shifting for petals
+                        if (particle.userData.particleType === 'flower' && Math.random() < 0.01) {
+                            const sparkleIntensity = Math.sin(time * 8 + i * 0.3) * 0.3;
+                            const originalColor = new THREE.Color().setHSL(
+                                particle.userData.originalHue,
+                                particle.userData.originalSaturation,
+                                particle.userData.originalLightness
+                            );
+                            
+                            particle.material.color.setRGB(
+                                Math.min(1, originalColor.r + sparkleIntensity * 0.5),
+                                Math.min(1, originalColor.g + sparkleIntensity * 0.3),
+                                Math.min(1, originalColor.b + sparkleIntensity * 0.4)
+                            );
+                            
+                            setTimeout(() => {
+                                particle.material.color.copy(originalColor);
+                            }, 60);
+                        }
+                    }
+
+                    // Enhanced rotation animation
+                    particle.rotation.x += particle.userData.rotationSpeed;
+                    particle.rotation.y += particle.userData.rotationSpeed * 0.7;
+                    particle.rotation.z += particle.userData.rotationSpeed * 0.5;
+
+                    // Color shifting for dissolving hearts
+                    if (currentPhase === 'dissolving' && particle.userData.type === 'heart') {
+                        const hueShift = (particle.userData.originalHue + Math.sin(time * 2) * 0.1) % 1;
+                        particle.material.color.setHSL(hueShift, particle.userData.originalSaturation, particle.userData.originalLightness);
+                    }
+                }
+            });            // Animated text particles if in text phase
+            if (currentPhase === 'text') {
+                textParticles.forEach((particle, i) => {
+                    if (particle.userData) {
+                        // Gentle floating movement
+                        const floatAmplitude = 0.03;
+                        const floatFrequency = 0.5;
+                        const xOffset = Math.sin(time * floatFrequency + particle.userData.pulsePhase) * floatAmplitude;
+                        const yOffset = Math.cos(time * floatFrequency * 0.7 + particle.userData.pulsePhase) * floatAmplitude;
+                        
+                        particle.position.x = particle.userData.targetPos.x + xOffset;
+                        particle.position.y = particle.userData.targetPos.y + yOffset;
+                        
+                        // Gentle rotation
+                        particle.rotation.x += particle.userData.rotationSpeed * 0.3;
+                        particle.rotation.y += particle.userData.rotationSpeed * 0.2;
+                        
+                        // Natural breathing effect
+                        const breatheFactor = Math.sin(time + particle.userData.pulsePhase) * 0.05 + 1.0;
+                        particle.scale.set(
+                            particle.userData.size * breatheFactor,
+                            particle.userData.size * breatheFactor,
+                            particle.userData.size * breatheFactor
+                        );
+                    }
+                });
+            }
+            
+            // Star field animation
+            starParticles.forEach(stars => {
+                stars.rotation.y += 0.0005;
+                stars.rotation.x += 0.0002;
+            });
+
+            // Camera movement
+            camera.position.x += (mouse.x * 2 - camera.position.x) * 0.02;
+            camera.position.y += (-mouse.y * 2 - camera.position.y) * 0.02;
+            camera.lookAt(scene.position);
+
+            // Scene gentle rotation
+            scene.rotation.y = Math.sin(time * 0.1) * 0.02;
+
+            composer.render();
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        }        // Custom cursor functionality
+        function initCustomCursor() {
+            const cursor = document.getElementById('cursor');
+            let mouseX = 0;
+            let mouseY = 0;
+            let cursorX = 0;
+            let cursorY = 0;
+
+            // Hide default cursor
+            document.body.style.cursor = 'none';
+
+            // Update mouse position
+            document.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+                
+                // Update mouse coordinates for particle interactions
+                mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            });
+
+            // Smooth cursor following
+            function updateCursor() {
+                cursorX += (mouseX - cursorX) * 0.1;
+                cursorY += (mouseY - cursorY) * 0.1;
+                
+                cursor.style.left = cursorX - 10 + 'px';
+                cursor.style.top = cursorY - 10 + 'px';
+                
+                requestAnimationFrame(updateCursor);
+            }
+            updateCursor();
+
+            // Cursor hover effects
+            const interactiveElements = document.querySelectorAll('button, a, .interactive');
+            
+            interactiveElements.forEach(element => {
+                element.addEventListener('mouseenter', () => {
+                    cursor.style.transform = 'scale(1.5)';
+                    cursor.style.mixBlendMode = 'difference';
+                });
+                
+                element.addEventListener('mouseleave', () => {
+                    cursor.style.transform = 'scale(1)';
+                    cursor.style.mixBlendMode = 'normal';
+                });
+            });
+
+            // Hide cursor when mouse leaves window
+            document.addEventListener('mouseleave', () => {
+                cursor.style.opacity = '0';
+            });
+
+            document.addEventListener('mouseenter', () => {
+                cursor.style.opacity = '1';
+            });
+        }
+
+        // Initialize everything
+        initCustomCursor();
+        
+        // Start animation
+        animate();
+    </script>
+</body>
+
+</html>
