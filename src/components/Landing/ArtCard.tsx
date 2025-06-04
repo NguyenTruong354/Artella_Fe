@@ -1,5 +1,5 @@
-import { motion, useMotionValue, useTransform, animate } from "framer-motion";
-import { useState, useEffect, memo, useRef } from "react";
+import { motion } from "framer-motion";
+import { useState, useEffect, memo } from "react";
 
 interface ArtCardProps {
   title: string;
@@ -99,65 +99,12 @@ const buttonVariants = {
 // Memo hóa component để tránh render lại không cần thiết
 const ArtCard = memo(({ title, quote, imageUrl, onPrev, onNext, index = 0 }: ArtCardProps) => {
   const [isVisible, setIsVisible] = useState(false);
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  
-  // Giảm giá trị biên độ chuyển động để tránh hiệu ứng quá mạnh
-  const rotateX = useTransform(y, [-100, 100], [2, -2]);
-  const rotateY = useTransform(x, [-100, 100], [-2, 2]);
-
-  // Tạo hiệu ứng parallax cho ảnh - giảm biên độ xuống để mượt hơn
-  const imgX = useTransform(x, [-100, 100], [2, -2]);
-  const imgY = useTransform(y, [-100, 100], [2, -2]);
-    // Sử dụng ref để lưu trữ ID của requestAnimationFrame
-  const rafId = useRef<number | null>(null);
-  // Lưu trữ vị trí chuột hiện tại và mục tiêu
-  const mousePosition = useRef({ currentX: 0, currentY: 0, targetX: 0, targetY: 0 });
 
   useEffect(() => {
     // Hiệu ứng xuất hiện khi component được mount
     const timer = setTimeout(() => setIsVisible(true), index * 150);
     return () => clearTimeout(timer);
   }, [index]);
-  
-  // Hàm smoothing để làm mượt chuyển động
-  useEffect(() => {
-    // Function để tạo hiệu ứng mượt mà cho chuyển động
-    const smoothMouseMovement = () => {
-      const { currentX, currentY, targetX, targetY } = mousePosition.current;
-      
-      // Tính toán vị trí mới với smoothing factor
-      const smoothFactor = 0.15; // Giá trị nhỏ hơn = chuyển động mượt hơn
-      const newX = currentX + (targetX - currentX) * smoothFactor;
-      const newY = currentY + (targetY - currentY) * smoothFactor;
-      
-      // Cập nhật vị trí hiện tại
-      mousePosition.current.currentX = newX;
-      mousePosition.current.currentY = newY;
-      
-      // Áp dụng vào motion values
-      x.set(newX);
-      y.set(newY);
-      
-      // Tiếp tục animation nếu vẫn có chuyển động đáng kể
-      if (
-        Math.abs(newX - targetX) > 0.01 || 
-        Math.abs(newY - targetY) > 0.01
-      ) {
-        rafId.current = requestAnimationFrame(smoothMouseMovement);
-      }
-    };
-    
-    // Khởi động animation loop
-    rafId.current = requestAnimationFrame(smoothMouseMovement);
-    
-    // Cleanup khi unmount
-    return () => {
-      if (rafId.current) {
-        cancelAnimationFrame(rafId.current);
-      }
-    };
-  }, [x, y]);
 
   return (
     <motion.div 
@@ -167,46 +114,15 @@ const ArtCard = memo(({ title, quote, imageUrl, onPrev, onNext, index = 0 }: Art
       whileHover="hover"
       variants={cardVariants}
       custom={index}
-      style={{ 
-        x, 
-        y, 
-        rotateX, 
-        rotateY, 
-        willChange: "transform", // Hardware acceleration
-        perspective: 1000 // Improves 3D rendering
-      }}
-      onMouseMove={(e) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        
-        // Sử dụng requestAnimationFrame để tối ưu hiệu suất animation
-        requestAnimationFrame(() => {
-          const posX = (e.clientX - centerX) / 15; // Giảm để mượt hơn
-          const posY = (e.clientY - centerY) / 15;
-          x.set(posX);
-          y.set(posY);
-        });
-      }}
-      onMouseLeave={() => {
-        // Thêm animation khi trở về vị trí ban đầu
-        animate(x, 0, { duration: 0.4, type: "spring", stiffness: 300, damping: 20 });
-        animate(y, 0, { duration: 0.4, type: "spring", stiffness: 300, damping: 20 });
-      }}
     >
       <motion.img
         src={imageUrl}
         alt={title}
         className="absolute inset-0 w-full h-full object-cover"
-        style={{ 
-          x: imgX, 
-          y: imgY,
-          willChange: "transform" // Hardware acceleration cho hình ảnh
-        }}
         initial={{ scale: 1.1, opacity: 0.8 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.6 }}
-        loading="eager" // Ưu tiên tải hình ảnh
+        loading="eager"
       />
       
       {/* Overlay - Lighter gradient overlay with animation */}
@@ -258,7 +174,7 @@ const ArtCard = memo(({ title, quote, imageUrl, onPrev, onNext, index = 0 }: Art
           animate={isVisible ? "visible" : "hidden"}
           whileHover="hover"
           whileTap="tap"
-          custom={[-1, index]} // Direction và index
+          custom={[-1, index]}
           className="absolute top-2 left-2 w-8 h-8 flex items-center justify-center rounded-full bg-blue-500/40 backdrop-blur-sm text-white shadow-lg focus:outline-none pointer-events-auto border border-white/20"
           onClick={(e) => {
             e.stopPropagation();
@@ -283,7 +199,7 @@ const ArtCard = memo(({ title, quote, imageUrl, onPrev, onNext, index = 0 }: Art
           animate={isVisible ? "visible" : "hidden"}
           whileHover="hover"
           whileTap="tap"
-          custom={[1, index]} // Direction và index
+          custom={[1, index]}
           className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full bg-yellow-500/40 backdrop-blur-sm text-white shadow-lg focus:outline-none pointer-events-auto border border-white/20"
           onClick={(e) => {
             e.stopPropagation();

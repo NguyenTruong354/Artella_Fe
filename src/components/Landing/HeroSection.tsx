@@ -37,16 +37,6 @@ const artworks = [
   },
 ];
 
-// Các đối tượng cho phần tử trang trí
-const decorElements = [
-  { x: -15, y: -15, size: 10, delay: 0 },
-  { x: 25, y: 25, size: 8, delay: 0.3 },
-  { x: -25, y: 15, size: 14, delay: 0.5 },
-  { x: 15, y: -25, size: 6, delay: 0.7 },
-  { x: -5, y: 30, size: 12, delay: 0.2 },
-  { x: 30, y: -5, size: 9, delay: 0.4 },
-];
-
 // Variants cho animation
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -314,31 +304,6 @@ export default function EnhancedHeroSection() {
         transition={{ duration: 1 }}
         style={{ backgroundPosition: `calc(50% + ${mouseX.get() * 10}px) calc(50% + ${mouseY.get() * 10}px)` }}
       />
-
-      {/* Phần tử trang trí */}
-      {decorElements.map((elem, index) => (
-        <motion.div
-          key={index}
-          className="absolute rounded-full bg-white/30 backdrop-blur-sm"
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ 
-            opacity: [0.4, 0.8, 0.4],
-            scale: [1, 1.2, 1],
-            x: elem.x + '%',
-            y: elem.y + '%',
-          }}
-          transition={{
-            duration: 5,
-            delay: elem.delay,
-            repeat: Infinity,
-            repeatType: "reverse"
-          }}
-          style={{
-            width: elem.size * 5,
-            height: elem.size * 5,
-          }}
-        />
-      ))}
 
       {/* Container cho toàn bộ nội dung với hiệu ứng stagger */}
       <motion.div 
