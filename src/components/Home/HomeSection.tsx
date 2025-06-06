@@ -3,20 +3,12 @@ import { motion, useAnimation, useInView } from 'framer-motion';
 import { 
   Bell, 
   Search, 
-  Eye, 
   Heart, 
-  Filter, 
   TrendingUp, 
   Users, 
-  Star,
-  ShoppingCart,
   ArrowUpRight,
   Clock,
-  Gavel,
   Palette,
-  Trophy,
-  Camera,
-  Calendar
 } from 'lucide-react';
 
 interface ArtworkData {
@@ -46,17 +38,6 @@ interface FeaturedArtist {
   averagePrice: string;
   topSale: string;
   specialty: string;
-}
-
-interface AuctionEvent {
-  id: number;
-  title: string;
-  date: string;
-  time: string;
-  location: string;
-  artworkCount: number;
-  estimatedTotal: string;
-  status: 'live' | 'preview' | 'upcoming';
 }
 
 const HomeSection: React.FC = () => {
