@@ -72,11 +72,11 @@ const ServiceSection = () => {
                         group transition-all duration-500"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: false }}
               transition={{ duration: 0.5, delay: index * 0.2 }}
             >
               {/* Gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent 
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent 
                             translate-x-[100%] group-hover:translate-x-[-100%] transition-transform duration-1000 ease-in-out" />
 
               {/* Icon */}
@@ -90,7 +90,7 @@ const ServiceSection = () => {
                   }}
                 >
                   <div className={`p-5 rounded-full bg-gradient-to-br ${service.bgColor} shadow-lg 
-                                group-hover:shadow-xl transition-shadow duration-300`}>
+                                group-hover:shadow-xl transition-all duration-300`}>
                     <img 
                       src={service.icon}
                       alt={service.title}
@@ -104,15 +104,11 @@ const ServiceSection = () => {
               <div className="relative z-10 space-y-2 mb-6">
                 <motion.h3 
                   className={`text-xl md:text-2xl font-serif ${service.textColor}`}
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.2 }}
                 >
                   {service.title}
                 </motion.h3>
                 <motion.p 
                   className="text-sm font-medium text-[#8a9690] uppercase tracking-widest"
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.2 }}
                 >
                   {service.subtitle}
                 </motion.p>

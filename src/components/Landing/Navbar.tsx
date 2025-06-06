@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const menuItems = [
-  { label: "Home", to: "/" },
-  { label: "About", to: "/about" },
-  { label: "Services", to: "/services" },
-  { label: "Pricing", to: "/pricing" },
-  { label: "Solution", to: "/solution" },
+  { label: "Home", to: "#home" },
+  { label: "About", to: "#about" },
+  { label: "Services", to: "#services" },
+  { label: "Explore", to: "#explore" },
+  { label: "Pricing", to: "#pricing" },
+  { label: "FAQ", to: "#faq" },
 ];
 
 export default function Navbar() {
@@ -16,18 +17,15 @@ export default function Navbar() {
   const [languageDropdown, setLanguageDropdown] = useState(false);
   const [visible, setVisible] = useState(true);
   const lastScrollY = useRef(0);
-  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
 
       if (currentScrollY > lastScrollY.current && currentScrollY > 70) {
-        // Cuộn xuống và vượt quá 70px
         setVisible(false);
-        if (menuOpen) setMenuOpen(false); // Đóng menu mobile nếu đang mở
+        if (menuOpen) setMenuOpen(false);
       } else if (currentScrollY < lastScrollY.current) {
-        // Cuộn lên
         setVisible(true);
       }
 
@@ -40,15 +38,38 @@ export default function Navbar() {
     };
   }, [menuOpen]);
 
+  // Update active item based on scroll position
   useEffect(() => {
-    const path = location.pathname;
-    const currentItem = menuItems.find((item) => item.to === path);
-    if (currentItem) {
-      setActiveItem(currentItem.label);
-    } else {
-      setActiveItem("");
+    const handleScroll = () => {
+      const sections = menuItems.map(item => item.to.substring(1));
+      const scrollPosition = window.scrollY + 100;
+
+      for (const section of sections) {
+        const element = document.getElementById(section);
+        if (element) {
+          const { offsetTop, offsetHeight } = element;
+          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+            setActiveItem(section);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      window.scrollTo({
+        top: element.offsetTop,
+        behavior: "smooth"
+      });
     }
-  }, [location]);
+    setMenuOpen(false);
+  };
 
   return (
     <motion.nav
@@ -99,18 +120,17 @@ export default function Navbar() {
             transition={{ delay: 0.2, duration: 0.5, type: "spring" }}
           >
             {menuItems.map((item) => {
-              const isActive = activeItem === item.label;
+              const isActive = activeItem === item.to.substring(1);
               return (
                 <motion.div key={item.label} className="relative">
-                  <Link
-                    to={item.to}
+                  <button
+                    onClick={() => scrollToSection(item.to.substring(1))}
                     className={`px-4 py-2 rounded-md text-white font-medium transition-all duration-300 flex items-center hover:bg-white/15 ${
                       isActive ? "bg-white/15" : ""
                     }`}
-                    onClick={() => setActiveItem(item.label)}
                   >
                     {item.label}
-                  </Link>
+                  </button>
                   {isActive && (
                     <motion.div
                       className="absolute -bottom-1 left-2 right-2 h-0.5 bg-yellow-400 rounded-full"
@@ -285,14 +305,13 @@ export default function Navbar() {
       >
         <div className="flex flex-col items-center py-4 space-y-2">
           {menuItems.map((item) => (
-            <Link
+            <button
               key={item.label}
-              to={item.to}
+              onClick={() => scrollToSection(item.to.substring(1))}
               className="w-11/12 text-center px-4 py-3 rounded-md text-white font-medium bg-white/10 hover:bg-white/20 transition-colors duration-200"
-              onClick={() => setMenuOpen(false)}
             >
               {item.label}
-            </Link>
+            </button>
           ))}
           <button className="w-11/12 flex items-center justify-center px-4 py-3 rounded-md text-white font-medium bg-white/10 hover:bg-white/20">
             <svg

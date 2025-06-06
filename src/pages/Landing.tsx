@@ -10,14 +10,28 @@ import Footer from '../components/Landing/Footer';
 
 const Landing: React.FC = () => {
   return (
-    <div className="w-full overflow-x-hidden">
+    <div className="w-full">
       <Navbar />
-      <HeroSection />
-      <AboutSection />
-      <ServiceSection />
-      <ExploreSection />
-      <PricingSection />
-      <FAQSection />
+      <div className="relative">
+        <section id="home">
+          <HeroSection />
+        </section>
+        <section id="about">
+          <AboutSection />
+        </section>
+        <section id="services">
+          <ServiceSection />
+        </section>
+        <section id="explore">
+          <ExploreSection />
+        </section>
+        <section id="pricing">
+          <PricingSection />
+        </section>
+        <section id="faq">
+          <FAQSection />
+        </section>
+      </div>
       <Footer />
     </div>
   );
