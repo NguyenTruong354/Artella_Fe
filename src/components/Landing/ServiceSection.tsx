@@ -61,8 +61,7 @@ const ServiceSection = () => {
             </span>
           </p>
         </div>
-        
-        {/* Services grid */}
+          {/* Services grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 max-w-7xl mx-auto">
           {services.map((service, index) => (
             <motion.div
@@ -75,11 +74,13 @@ const ServiceSection = () => {
               viewport={{ once: false }}
               transition={{ duration: 0.5, delay: index * 0.2 }}
             >
-              {/* Gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent 
-                            translate-x-[100%] group-hover:translate-x-[-100%] transition-transform duration-1000 ease-in-out" />
-
-              {/* Icon */}
+              {/* Background color overlay */}
+              <div className={`absolute inset-0 bg-gradient-to-r ${service.bgColor} 
+                            translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-700 ease-out`} />
+              
+              {/* Shine overlay */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent 
+                            translate-x-[100%] group-hover:translate-x-[-100%] transition-transform duration-1000 ease-in-out delay-200" />              {/* Icon */}
               <div className="flex justify-center relative mb-6">
                 <motion.div 
                   className="relative z-10"
@@ -88,8 +89,7 @@ const ServiceSection = () => {
                     rotate: [0, -5, 5, 0],
                     transition: { duration: 0.5 }
                   }}
-                >
-                  <div className={`p-5 rounded-full bg-gradient-to-br ${service.bgColor} shadow-lg 
+                >                  <div className={`p-5 rounded-full bg-gradient-to-br ${service.bgColor} shadow-lg 
                                 group-hover:shadow-xl transition-all duration-300`}>
                     <img 
                       src={service.icon}
@@ -99,8 +99,7 @@ const ServiceSection = () => {
                   </div>
                 </motion.div>
               </div>
-              
-              {/* Content */}
+                {/* Content */}
               <div className="relative z-10 space-y-2 mb-6">
                 <motion.h3 
                   className={`text-xl md:text-2xl font-serif ${service.textColor}`}
@@ -116,9 +115,7 @@ const ServiceSection = () => {
               
               <p className="text-sm md:text-base font-light text-[#62737e] mb-8 relative z-10 max-w-xs mx-auto leading-relaxed">
                 {service.description}
-              </p>
-              
-              {/* Button */}
+              </p>                {/* Button */}
               <motion.button
                 className="bg-gradient-to-r from-[#c2a792] to-[#d8bca6] text-white px-8 py-3 
                           text-sm rounded-full font-medium shadow-lg relative z-10 
