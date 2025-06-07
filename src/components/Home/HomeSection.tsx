@@ -268,10 +268,10 @@ const HomeSection: React.FC = () => {
           variants={containerVariants}
           initial="hidden"
           animate={controls}
-        >
-          {/* Left Column (Banner & Trending) */}
+        >          {/* Left Column (Banner & Trending) */}
           <motion.div className="lg:col-span-2 space-y-8" variants={itemVariants}>
-            {/* Sell & Buy NFT Banner */}            <motion.section 
+            {/* Sell & Buy NFT Banner */}
+            <motion.section
               className="relative p-8 sm:p-10 rounded-3xl shadow-2xl flex flex-col md:flex-row items-center overflow-hidden backdrop-blur-lg transition-all duration-500 bg-gradient-to-br from-white via-gray-50 to-gray-100 border border-gray-200/30 dark:bg-gradient-to-br dark:from-[#141414] dark:via-[#1A1A1A] dark:to-[#1F1F1F] dark:border dark:border-gray-800/30"
               variants={itemVariants}
               whileHover={{ scale: 1.01, y: -2 }}

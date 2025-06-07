@@ -38,39 +38,55 @@ export default {
         'slideInRight': {
           '0%': { transform: 'translateX(100%)', opacity: '0' },
           '100%': { transform: 'translateX(0)', opacity: '1' }
-        },
-        'water-ripple': {
+        },        'water-ripple': {
           '0%': { 
             transform: 'translate(-50%, -50%) scale(0)', 
-            opacity: '0.8' 
+            opacity: '0.9',  // Tăng từ 0.8 lên 0.9
+            filter: 'blur(0px)'
           },
           '25%': { 
-            opacity: '0.6' 
+            opacity: '0.75', // Tăng từ 0.6 lên 0.75
+            filter: 'blur(0.5px)'
           },
           '50%': { 
-            opacity: '0.4',
-            transform: 'translate(-50%, -50%) scale(0.5)' 
+            opacity: '0.6',  // Tăng từ 0.4 lên 0.6
+            transform: 'translate(-50%, -50%) scale(0.5)',
+            filter: 'blur(1px)' 
           },
           '75%': { 
-            opacity: '0.2' 
+            opacity: '0.4',  // Tăng từ 0.2 lên 0.4
+            filter: 'blur(1.5px)'
           },
           '100%': { 
             transform: 'translate(-50%, -50%) scale(1)', 
-            opacity: '0' 
+            opacity: '0',
+            filter: 'blur(2px)' 
           }
         },
         'wave-wobble': {
           '0%, 100%': { 
-            transform: 'translate(-50%, -50%) scale(1)' 
+            transform: 'translate(-50%, -50%) scale(1)',
+            boxShadow: '0 0 15px 4px rgba(255, 255, 255, 0.25)'
           },
           '25%': { 
-            transform: 'translate(-51%, -49%) scale(1.01)' 
+            transform: 'translate(-51%, -49%) scale(1.02)',  // Tăng từ 1.01 lên 1.02
+            boxShadow: '0 0 20px 5px rgba(255, 255, 255, 0.3)' 
           },
           '50%': { 
-            transform: 'translate(-50%, -51%) scale(0.99)' 
+            transform: 'translate(-50%, -51%) scale(0.98)',  // Giảm từ 0.99 xuống 0.98
+            boxShadow: '0 0 15px 4px rgba(255, 255, 255, 0.25)' 
           },
           '75%': { 
-            transform: 'translate(-49%, -50%) scale(1.01)' 
+            transform: 'translate(-49%, -50%) scale(1.02)',  // Tăng từ 1.01 lên 1.02
+            boxShadow: '0 0 20px 5px rgba(255, 255, 255, 0.3)' 
+          }
+        },
+        'wave-pulse': {
+          '0%, 100%': {
+            boxShadow: '0 0 15px 4px rgba(255, 255, 255, 0.25)'
+          },
+          '50%': {
+            boxShadow: '0 0 25px 8px rgba(255, 255, 255, 0.4)'
           }
         }},      animation: {
         'gentle-shine': 'gentle-shine 3s ease-in-out infinite',
@@ -80,9 +96,11 @@ export default {
         'tracking-in': 'tracking-in 0.8s ease-out',
         'fade-up': 'fade-up 0.8s ease-out',
         'slideInLeft': 'slideInLeft 0.8s ease-out',
-        'slideInRight': 'slideInRight 0.8s ease-out',
-        'water-ripple': 'water-ripple 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards',
-        'wave-wobble': 'wave-wobble 3s ease-in-out infinite'
+        'slideInRight': 'slideInRight 0.8s ease-out',        'water-ripple': 'water-ripple 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards', // Tăng thời gian từ 2.2s lên 2.5s
+        'wave-wobble': 'wave-wobble 3s ease-in-out infinite',
+        'wave-pulse': 'wave-pulse 2.5s ease-in-out infinite', // Tăng từ 2s lên 2.5s
+        'ripple-opacity': 'ripple-opacity 3s ease-in-out infinite',
+        'ripple-shimmer': 'ripple-shimmer 4s ease-in-out infinite'
       },
       translate: {
         '30': '7.5rem',

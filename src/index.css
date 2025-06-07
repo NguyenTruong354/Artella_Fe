@@ -70,6 +70,13 @@ html {
   overflow: hidden;
   contain: strict;
   
+  /* Thêm hiệu ứng ánh sáng nền */
+  background-image: radial-gradient(
+    circle at center,
+    transparent 95%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  
   /* Performance optimizations */
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
@@ -87,15 +94,18 @@ html {
   transform: translate(-50%, -50%) scale(0);
   will-change: transform, opacity;
   transition-property: transform, opacity;
-  transition-timing-function: ease-out; /* Simpler timing function */
+  transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Improved timing function */
   
-  /* Reduced heavy rendering effects */
+  /* Reduced heavy rendering effects but enhanced visibility */
   contain: layout style paint size;
   
   /* Hardware acceleration hints */
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
   backface-visibility: hidden;
+  
+  /* Tăng độ nổi bật với mix-blend-mode */
+  mix-blend-mode: plus-lighter;
 }
 
 /* Ripple transition overlay for dark mode switching */
@@ -222,24 +232,122 @@ html {
   .wave-ripple-layer-3 {
     opacity: 0.5;
     z-index: 9997;
-  }
-  /* Hiệu ứng cho sóng - tối ưu hiệu suất */
+  }  /* Hiệu ứng cho sóng - tối ưu hiệu suất và tăng độ rõ nét */
   .wave-ripple-enhanced {
     transform-origin: center center;
+    backdrop-filter: blur(1px); /* Thêm một chút blur để tăng độ nổi bật */
+    -webkit-backdrop-filter: blur(1px);
+    box-sizing: border-box;
+    /* Thêm đổ bóng nhẹ bên ngoài */
+    filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.2));
   }
   
-  /* Hiệu ứng cho các sóng phụ - tối ưu hiệu suất */
+  /* Hiệu ứng cho sóng chính - tăng độ nổi bật */
+  .wave-ripple-main {
+    /* Thêm đường viền hai lớp */
+    outline: 1px solid rgba(255, 255, 255, 0.1);
+    outline-offset: 2px;
+    
+    /* Hiệu ứng ánh sáng phát ra từ viền */
+    box-shadow: 
+      0 0 0 1px rgba(255, 255, 255, 0.05),
+      0 0 15px 5px rgba(255, 255, 255, 0.15);
+    
+    /* Hiệu ứng màu gradient nhẹ */
+    background-image: radial-gradient(
+      circle at center,
+      rgba(255, 255, 255, 0.08) 0%,
+      transparent 70%
+    );
+    
+    /* Tối ưu hiệu suất vẫn là ưu tiên */
+    will-change: transform, opacity, box-shadow;
+    z-index: 10000;
+    mix-blend-mode: plus-lighter;
+  }
+  
+  /* Hiệu ứng cho các sóng phụ - tối ưu hiệu suất và tăng độ rõ nét */
   .wave-ripple-secondary {
-    opacity: 0.5 !important;
+    opacity: 0.75 !important; /* Tăng từ 0.7 lên 0.75 */
+    backdrop-filter: blur(0.8px); /* Tăng từ 0.5px lên 0.8px */
+    -webkit-backdrop-filter: blur(0.8px);
+    
+    /* Hiệu ứng ánh sáng nhẹ */
+    box-shadow: 0 0 8px 2px rgba(255, 255, 255, 0.1);
+    
+    /* Sử dụng mix-blend-mode để tạo hiệu ứng màu sắc nổi bật */
+    mix-blend-mode: overlay;
   }
-  
-  /* Hiệu ứng dao động nhẹ cho sóng - đơn giản hóa để tăng hiệu suất */
+  /* Hiệu ứng dao động nâng cao cho sóng - cải thiện để rõ hơn và tự nhiên hơn */
   @keyframes wave-wobble {
     0%, 100% {
       transform: translate(-50%, -50%) scale(1);
+      border-width: 2px;
+      filter: brightness(1);
+    }
+    25% {
+      transform: translate(-50.5%, -49.5%) scale(1.02);
+      border-width: 2.3px;
+      filter: brightness(1.05);
     }
     50% {
-      transform: translate(-50%, -50%) scale(1.01);
+      transform: translate(-50%, -50.5%) scale(0.985);
+      border-width: 1.8px;
+      filter: brightness(0.98);
+    }
+    75% {
+      transform: translate(-49.5%, -50%) scale(1.015);
+      border-width: 2.2px;
+      filter: brightness(1.03);
+    }
+  }
+  
+  /* Hiệu ứng pulse cải tiến để tăng độ nổi bật của sóng */
+  @keyframes wave-pulse {
+    0%, 100% {
+      box-shadow: 0 0 15px 4px rgba(255, 255, 255, 0.25);
+      opacity: 0.9;
+    }
+    50% {
+      box-shadow: 0 0 25px 8px rgba(255, 255, 255, 0.4);
+      opacity: 0.95;
+    }
+  }
+  
+  /* Thêm hiệu ứng gợn sóng để tăng tính tự nhiên */
+  @keyframes ripple-opacity {
+    0% {
+      opacity: 0.9;
+    }
+    25% {
+      opacity: 0.8;
+    }
+    50% {
+      opacity: 0.95;
+    }
+    75% {
+      opacity: 0.85;
+    }
+    100% {
+      opacity: 0.9;
+    }
+  }
+  
+  /* Hiệu ứng ánh sáng lấp lánh cho sóng */
+  @keyframes ripple-shimmer {
+    0%, 100% {
+      background-image: radial-gradient(
+        circle at center,
+        rgba(255, 255, 255, 0.1) 0%,
+        transparent 70%
+      );
+    }
+    50% {
+      background-image: radial-gradient(
+        circle at center,
+        rgba(255, 255, 255, 0.15) 0%,
+        transparent 70%
+      );
     }
   }
 }
