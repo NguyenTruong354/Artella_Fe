@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useMemo, useCallback, Suspense, lazy, memo, useReducer } from 'react'; // Added useReducer
 import { motion, useAnimation, useInView } from 'framer-motion';
-import { Search, Grid3X3, List, Eye, Heart, Share2, ArrowUpRight, Zap } from 'lucide-react';
+import { Search, Grid3X3, List, Eye, Heart, Share2, ArrowUpRight, Zap, LayoutGrid, Bookmark, Download } from 'lucide-react';
 import useDarkMode from '../hooks/useDarkMode';
 
 // Lazy load components for better code splitting
@@ -26,7 +26,7 @@ interface ArtworkItem {
 // State Management with useReducer
 interface GalleryPageState {
   selectedCategory: string;
-  viewMode: 'grid' | 'list';
+  viewMode: 'masonry' | 'grid' | 'list';
   searchQuery: string;
   likedItems: Set<number>;
   isLoading: boolean;
@@ -35,7 +35,7 @@ interface GalleryPageState {
 
 type GalleryPageAction =
   | { type: 'SET_CATEGORY'; payload: string }
-  | { type: 'SET_VIEW_MODE'; payload: 'grid' | 'list' }
+  | { type: 'SET_VIEW_MODE'; payload: 'masonry' | 'grid' | 'list' }
   | { type: 'SET_SEARCH_QUERY'; payload: string }
   | { type: 'TOGGLE_LIKE'; payload: number }
   | { type: 'FINISH_INITIAL_LOADING' };
@@ -88,7 +88,7 @@ const getInitialLikedItems = (): Set<number> => {
 // Initial state for the reducer
 const initialGalleryPageState: GalleryPageState = {
   selectedCategory: 'All',
-  viewMode: 'grid',
+  viewMode: 'masonry', // Changed default to masonry
   searchQuery: '',
   likedItems: getInitialLikedItems(), // Load from localStorage
   isLoading: true,
@@ -120,14 +120,35 @@ const ComponentFallback = memo(() => (
   <div className="animate-pulse bg-gray-200 dark:bg-gray-800 rounded-lg w-full h-8"></div>
 ));
 
-// ArtworkCard component - simplified without lazy loading issues
+// Pinterest-style Masonry Grid Component
+const MasonryGrid = memo(({ children, className = '' }: { children: React.ReactNode; className?: string }) => {
+  return (
+    <div className={`masonry-grid ${className}`} style={{
+      columnCount: 'auto',
+      columnWidth: '320px',
+      columnGap: '1.5rem',
+      columnFill: 'balance',
+    }}>
+      {children}
+    </div>
+  );
+});
+
+// ArtworkCard component - optimized for Pinterest-style masonry layout
 const ArtworkCard = memo(({ artwork, viewMode, likedItems, toggleLike }: {
   artwork: ArtworkItem;
-  viewMode: 'grid' | 'list';
+  viewMode: 'masonry' | 'grid' | 'list';
   likedItems: Set<number>;
   toggleLike: (id: number) => void;
 }) => {
   const isLiked = useMemo(() => likedItems.has(artwork.id), [likedItems, artwork.id]);
+    // Generate dynamic heights for masonry effect based on content
+  const masonryHeight = useMemo(() => {
+    const baseHeight = 280;
+    const heightVariations = [0, 80, 160, 240, 120, 200, 40, 100];
+    const variation = heightVariations[artwork.id % heightVariations.length];
+    return baseHeight + variation;
+  }, [artwork.id]);
     
   return (
     <motion.div
@@ -143,15 +164,17 @@ const ArtworkCard = memo(({ artwork, viewMode, likedItems, toggleLike }: {
             duration: 0.4,
           },
         },
-      }}
-      className={`group relative ${
-        viewMode === 'grid'
+      }}      className={`group relative pinterest-card masonry-item-load ${
+        viewMode === 'masonry'
+          ? 'masonry-item mb-6 break-inside-avoid backdrop-blur-sm rounded-2xl overflow-hidden shadow-xl border border-gray-200/30 dark:border-gray-800/30 bg-white/70 dark:bg-gray-900/70'
+          : viewMode === 'grid'
           ? 'backdrop-blur-sm rounded-2xl overflow-hidden shadow-xl border border-gray-200/30 dark:border-gray-800/30 bg-white/70 dark:bg-gray-900/70'
           : 'flex gap-6 p-6 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/30 dark:border-gray-800/30 bg-white/70 dark:bg-gray-900/70'
       }`}
+      style={viewMode === 'masonry' ? { display: 'inline-block', width: '100%' } : {}}
       whileHover={{ 
-        scale: viewMode === 'grid' ? 1.02 : 1.01, 
-        y: viewMode === 'grid' ? -5 : -2 
+        scale: viewMode === 'list' ? 1.01 : 1.02, 
+        y: viewMode === 'list' ? -2 : -5 
       }}
       transition={{ type: "spring", stiffness: 300, damping: 24 }}
     >
@@ -183,12 +206,15 @@ const ArtworkCard = memo(({ artwork, viewMode, likedItems, toggleLike }: {
         >
           ✨ New
         </motion.div>
-      )}
-
-      {/* Image with optimized lazy loading */}
+      )}      {/* Image with optimized lazy loading */}
       <div className={`relative overflow-hidden ${
-        viewMode === 'grid' ? 'aspect-[4/5]' : 'w-48 h-32 rounded-xl'
-      }`}>
+        viewMode === 'masonry' 
+          ? 'w-full rounded-t-2xl' 
+          : viewMode === 'grid' 
+          ? 'aspect-[4/5]' 
+          : 'w-48 h-32 rounded-xl'
+      }`}
+      style={viewMode === 'masonry' ? { height: `${masonryHeight}px` } : {}}>
         <img
           src={artwork.image}
           alt={artwork.title}
@@ -197,12 +223,11 @@ const ArtworkCard = memo(({ artwork, viewMode, likedItems, toggleLike }: {
           decoding="async"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        
-        {/* Hover Actions */}
+          {/* Hover Actions - Pinterest Style */}
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
           <div className="flex gap-2">
             <motion.button
-              className="p-2 bg-white/90 dark:bg-gray-800/90 rounded-full text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-lg"
+              className="p-2 bg-white/95 dark:bg-gray-800/95 rounded-full text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-lg backdrop-blur-sm"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => toggleLike(artwork.id)}
@@ -211,15 +236,23 @@ const ArtworkCard = memo(({ artwork, viewMode, likedItems, toggleLike }: {
               <Heart className={`w-5 h-5 ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
             </motion.button>
             <motion.button
-              className="p-2 bg-white/90 dark:bg-gray-800/90 rounded-full text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-lg"
+              className="p-2 bg-white/95 dark:bg-gray-800/95 rounded-full text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-lg backdrop-blur-sm"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              aria-label={`Share ${artwork.title}`}
+              aria-label={`Save ${artwork.title}`}
             >
-              <Share2 className="w-5 h-5" />
+              <Bookmark className="w-5 h-5" />
             </motion.button>
             <motion.button
-              className="p-2 bg-blue-500 dark:bg-amber-500 rounded-full text-white hover:bg-blue-600 dark:hover:bg-amber-600 transition-colors shadow-lg"
+              className="p-2 bg-white/95 dark:bg-gray-800/95 rounded-full text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-lg backdrop-blur-sm"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              aria-label={`Download ${artwork.title}`}
+            >
+              <Download className="w-5 h-5" />
+            </motion.button>
+            <motion.button
+              className="p-2 bg-blue-500 dark:bg-amber-500 rounded-full text-white hover:bg-blue-600 dark:hover:bg-amber-600 transition-colors shadow-lg backdrop-blur-sm"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               aria-label={`View details of ${artwork.title}`}
@@ -228,10 +261,14 @@ const ArtworkCard = memo(({ artwork, viewMode, likedItems, toggleLike }: {
             </motion.button>
           </div>
         </div>
-      </div>
-
-      {/* Content */}
-      <div className={`${viewMode === 'grid' ? 'p-6' : 'flex-1'}`}>
+      </div>      {/* Content */}
+      <div className={`${
+        viewMode === 'masonry' 
+          ? 'p-4' 
+          : viewMode === 'grid' 
+          ? 'p-6' 
+          : 'flex-1'
+      }`}>
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
             <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1 group-hover:text-blue-600 dark:group-hover:text-amber-400 transition-colors">
@@ -319,7 +356,6 @@ const Gallery: React.FC = () => {
     }, 1500); // Simulate a 1.5 second loading time
     return () => clearTimeout(timer);
   }, []); // Empty dependency array means this runs once on mount
-
   // Memoized gallery data for performance - remains outside reducer for now as it's static
   const artworks: ArtworkItem[] = useMemo(() => [
     {
@@ -333,7 +369,7 @@ const Gallery: React.FC = () => {
       views: 1520,
       isNew: true,
       isFeatured: true,
-      description: "A mesmerizing journey through space and time",
+      description: "A mesmerizing journey through space and time, exploring the infinite possibilities of the cosmos",
       tags: ["space", "cosmic", "digital art"]
     },
     {
@@ -341,7 +377,7 @@ const Gallery: React.FC = () => {
       title: "Abstract Harmony",
       artist: "Marcus Chen",
       price: "2.8 ETH",
-      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500&h=600&fit=crop",
+      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500&h=700&fit=crop",
       category: "Abstract",
       likes: 89,
       views: 980,
@@ -355,13 +391,13 @@ const Gallery: React.FC = () => {
       title: "Neon Cityscapes",
       artist: "Sarah Kim",
       price: "4.1 ETH",
-      image: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=500&h=600&fit=crop",
+      image: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=500&h=800&fit=crop",
       category: "Cyberpunk",
       likes: 156,
       views: 2340,
       isNew: true,
       isFeatured: false,
-      description: "Urban dreams in electric colors",
+      description: "Urban dreams in electric colors, capturing the essence of modern metropolitan life",
       tags: ["cyberpunk", "neon", "city"]
     },
     {
@@ -369,13 +405,13 @@ const Gallery: React.FC = () => {
       title: "Ethereal Portrait",
       artist: "David Wilson",
       price: "1.9 ETH",
-      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500&h=600&fit=crop",
+      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500&h=650&fit=crop",
       category: "Portrait",
       likes: 67,
       views: 756,
       isNew: false,
       isFeatured: false,
-      description: "Capturing the essence of human emotion",
+      description: "Capturing the essence of human emotion through digital artistry",
       tags: ["portrait", "emotion", "human"]
     },
     {
@@ -383,13 +419,13 @@ const Gallery: React.FC = () => {
       title: "Digital Flora",
       artist: "Anna Petrov",
       price: "2.5 ETH",
-      image: "https://images.unsplash.com/photo-1551913902-c92207136625?w=500&h=600&fit=crop",
+      image: "https://images.unsplash.com/photo-1551913902-c92207136625?w=500&h=750&fit=crop",
       category: "Nature",
       likes: 203,
       views: 1890,
       isNew: true,
       isFeatured: true,
-      description: "Nature reimagined through digital lens",
+      description: "Nature reimagined through digital lens, blending organic forms with technological aesthetics",
       tags: ["nature", "flora", "digital"]
     },
     {
@@ -397,7 +433,7 @@ const Gallery: React.FC = () => {
       title: "Geometric Visions",
       artist: "James Park",
       price: "3.7 ETH",
-      image: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=500&h=600&fit=crop",
+      image: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=500&h=550&fit=crop",
       category: "Geometric",
       likes: 91,
       views: 1234,
@@ -405,10 +441,47 @@ const Gallery: React.FC = () => {
       isFeatured: false,
       description: "Perfect mathematics in artistic form",
       tags: ["geometric", "mathematics", "precision"]
+    },
+    {
+      id: 7,
+      title: "Ocean Waves",
+      artist: "Mia Thompson",
+      price: "2.1 ETH",
+      image: "https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=500&h=900&fit=crop",
+      category: "Nature",
+      likes: 134,
+      views: 1456,
+      isNew: true,
+      isFeatured: false,
+      description: "The eternal dance of ocean waves captured in digital form",
+      tags: ["ocean", "waves", "nature"]
+    },
+    {
+      id: 8,
+      title: "Urban Reflections",
+      artist: "Alex Rivera",
+      price: "3.4 ETH",
+      image: "https://images.unsplash.com/photo-1493770348161-369560ae357d?w=500&h=600&fit=crop",
+      category: "Abstract",
+      likes: 78,
+      views: 945,
+      isNew: false,
+      isFeatured: true,
+      description: "City lights reflected in glass and steel",
+      tags: ["urban", "reflection", "abstract"]
     }
   ], []);
 
   const categories = useMemo(() => ['All', 'Digital', 'Abstract', 'Cyberpunk', 'Portrait', 'Nature', 'Geometric'], []);
+  
+  // Sort options for Pinterest-style experience
+  const sortOptions = useMemo(() => [
+    { value: 'recent', label: 'Most Recent' },
+    { value: 'popular', label: 'Most Popular' },
+    { value: 'trending', label: 'Trending' },
+    { value: 'price-high', label: 'Price: High to Low' },
+    { value: 'price-low', label: 'Price: Low to High' }
+  ], []);
 
   // Update handlers to dispatch actions
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -435,8 +508,8 @@ const Gallery: React.FC = () => {
   const handleCategoryChange = useCallback((category: string) => {
     dispatch({ type: 'SET_CATEGORY', payload: category });
   }, []);
-
   // Update view mode handlers to dispatch actions
+  const setMasonryView = useCallback(() => dispatch({ type: 'SET_VIEW_MODE', payload: 'masonry' }), []);
   const setGridView = useCallback(() => dispatch({ type: 'SET_VIEW_MODE', payload: 'grid' }), []);
   const setListView = useCallback(() => dispatch({ type: 'SET_VIEW_MODE', payload: 'list' }), []);
 
@@ -473,24 +546,34 @@ const Gallery: React.FC = () => {
             <div className="flex items-center gap-4 mb-4 sm:mb-0">
               <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 dark:from-amber-500 dark:to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
                 <Grid3X3 className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-gray-100 leading-tight">
-                  Art Gallery
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  Discover amazing digital artworks
-                </p>
-              </div>
+              </div>            <div>
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-gray-100 leading-tight">
+                Art Gallery
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                Discover, collect & share amazing digital artworks
+              </p>
+            </div>
             </div>
             <div className="flex gap-4">
               {/* Dark Mode Toggle */}
               <Suspense fallback={<div className="w-10 h-10 animate-pulse rounded-full bg-gray-200 dark:bg-gray-800" />}>
                 <DarkModeToggle />
-              </Suspense>
-
-              {/* View Mode Switcher */}
+              </Suspense>              {/* View Mode Switcher */}
               <div className="flex gap-2">
+                <motion.button
+                  className={`p-2 rounded-full transition-all duration-300 flex items-center justify-center shadow-md ${
+                    viewMode === 'masonry'
+                      ? 'bg-blue-500 text-white shadow-lg'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                  }`}
+                  onClick={setMasonryView}
+                  aria-label="Masonry view"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <LayoutGrid className="w-5 h-5" />
+                </motion.button>
                 <motion.button
                   className={`p-2 rounded-full transition-all duration-300 flex items-center justify-center shadow-md ${
                     viewMode === 'grid'
@@ -567,53 +650,89 @@ const Gallery: React.FC = () => {
               ))}
             </div>
           </div>
-        </header>
-
-        {/* Gallery Grid */}
-        <motion.div
-          className={`grid gap-6 ${
-            viewMode === 'grid' // Use state.viewMode
-              ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-              : 'grid-cols-1'
-          }`}
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          {isLoading ? ( // Use state.isLoading
-            // Display SkeletonCards when loading
-            Array.from({ length: viewMode === 'grid' ? 3 : 2 }).map((_, index) => ( // Use state.viewMode
-              <SkeletonCard key={`skeleton-${index}`} />
-            ))
-          ) : filteredArtworks.length === 0 ? (
-            <motion.div 
-              className="col-span-full text-center py-20"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Search className="w-8 h-8 text-gray-400" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                No artworks found
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                Try adjusting your search or filter criteria to find what you're looking for.
-              </p>
-            </motion.div>
-          ) : (
-            filteredArtworks.map((artwork) => (
-              <ArtworkCard
-                key={artwork.id}
-                artwork={artwork}
-                viewMode={viewMode} // Pass state.viewMode
-                likedItems={likedItems} // Pass state.likedItems
-                toggleLike={toggleLike} // Pass updated toggleLike
-              />
-            ))
-          )}
-        </motion.div>
+        </header>        {/* Gallery Grid */}
+        {viewMode === 'masonry' ? (
+          <MasonryGrid className="w-full">
+            {isLoading ? (
+              Array.from({ length: 6 }).map((_, index) => (
+                <div key={`skeleton-${index}`} className="masonry-item mb-6 break-inside-avoid">
+                  <SkeletonCard />
+                </div>
+              ))
+            ) : filteredArtworks.length === 0 ? (
+              <motion.div 
+                className="col-span-full text-center py-20"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Search className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  No artworks found
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                  Try adjusting your search or filter criteria to find what you're looking for.
+                </p>
+              </motion.div>
+            ) : (
+              filteredArtworks.map((artwork) => (
+                <ArtworkCard
+                  key={artwork.id}
+                  artwork={artwork}
+                  viewMode={viewMode}
+                  likedItems={likedItems}
+                  toggleLike={toggleLike}
+                />
+              ))
+            )}
+          </MasonryGrid>
+        ) : (
+          <motion.div
+            className={`grid gap-6 ${
+              viewMode === 'grid'
+                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                : 'grid-cols-1'
+            }`}
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {isLoading ? (
+              Array.from({ length: viewMode === 'grid' ? 3 : 2 }).map((_, index) => (
+                <SkeletonCard key={`skeleton-${index}`} />
+              ))
+            ) : filteredArtworks.length === 0 ? (
+              <motion.div 
+                className="col-span-full text-center py-20"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Search className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  No artworks found
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                  Try adjusting your search or filter criteria to find what you're looking for.
+                </p>
+              </motion.div>
+            ) : (
+              filteredArtworks.map((artwork) => (
+                <ArtworkCard
+                  key={artwork.id}
+                  artwork={artwork}
+                  viewMode={viewMode}
+                  likedItems={likedItems}
+                  toggleLike={toggleLike}
+                />
+              ))
+            )}
+          </motion.div>
+        )}
       </div>
     </>
   );
