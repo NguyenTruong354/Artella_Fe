@@ -57,21 +57,21 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
       icon: "✦",
       label: "Create NFT",
       action: "create",
-      gradient: "from-gradient-to-r from-yellow-400 via-orange-500 to-red-500",
+      gradient: "from-amber-400 via-orange-500 to-red-500",
       description: "Mint Art"
     },
     {
       icon: "⊙",
       label: "Sell Art",
       action: "sell",
-      gradient: "from-gradient-to-r from-green-400 via-blue-500 to-purple-600",
+      gradient: "from-green-400 via-blue-500 to-purple-600",
       description: "List Item"
     },
     {
       icon: "◈",
       label: "Analytics",
       action: "analytics",
-      gradient: "from-gradient-to-r from-purple-400 via-pink-500 to-red-500",
+      gradient: "from-purple-400 via-pink-500 to-red-500",
       description: "View Stats"
     }
   ];
@@ -102,8 +102,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
       x: 0,
       transition: {
         type: "spring",
-        stiffness: 600,
-        damping: 30
+        stiffness: 500, // Changed from 600
+        damping: 35,    // Changed from 30
       }
     },
     closed: {
@@ -128,8 +128,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
         staggerDirection: -1
       }
     }
-  };
-  const floatingVariants = {
+  };  const floatingVariants = {
     animate: {
       y: [-10, 10, -10],
       rotate: [-5, 5, -5],
@@ -139,13 +138,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
         ease: "easeInOut"
       }
     }
-  };
-
-  // Wallet info (mock data)
-  const walletInfo = {
-    address: "0x742d...4e9f",
-    balance: "12.45 ETH",
-    isConnected: true
   };
 
   useEffect(() => {
@@ -169,57 +161,28 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
         )}
       </AnimatePresence>
 
-      {/* Artistic Sidebar */}
+      {/* Modern Sidebar */}
       <motion.aside
         className="fixed left-0 top-0 h-full w-80 z-50 lg:z-30 overflow-hidden"
         variants={sidebarVariants}
         initial="closed"
         animate={isOpen ? "open" : "closed"}
       >
-        {/* Complex Artistic Background */}
+        {/* Modern Background */}
         <div className="absolute inset-0">
-          {/* Base gradient */}
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-orange-50 to-red-50"></div>
+          {/* Base gradient - matching HomeSection style */}
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:bg-gradient-to-br dark:from-[#0A0A0A] dark:via-[#0D0D0D] dark:to-[#111111]"></div>
           
-          {/* Organic shapes overlay */}
-          <div className="absolute inset-0">
-            <svg className="w-full h-full opacity-20" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">
-              <defs>
-                <linearGradient id="organic1" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.3"/>
-                  <stop offset="50%" stopColor="#ea580c" stopOpacity="0.2"/>
-                  <stop offset="100%" stopColor="#dc2626" stopOpacity="0.1"/>
-                </linearGradient>
-                <linearGradient id="organic2" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.2"/>
-                  <stop offset="100%" stopColor="#f97316" stopOpacity="0.1"/>
-                </linearGradient>
-              </defs>
-              
-              {/* Organic flowing shapes */}
-              <path d="M0,100 Q100,50 200,100 T400,100 L400,300 Q300,250 200,300 T0,300 Z" fill="url(#organic1)"/>
-              <path d="M0,400 Q150,350 300,400 T400,400 L400,600 Q250,550 100,600 T0,600 Z" fill="url(#organic2)"/>
-              <path d="M0,650 Q200,600 400,650 L400,800 L0,800 Z" fill="url(#organic1)"/>
-              
-              {/* Floating artistic elements */}
-              <circle cx="50" cy="150" r="30" fill="url(#organic2)" opacity="0.6"/>
-              <circle cx="350" cy="300" r="25" fill="url(#organic1)" opacity="0.4"/>
-              <circle cx="100" cy="500" r="20" fill="url(#organic2)" opacity="0.5"/>
-              <circle cx="320" cy="650" r="35" fill="url(#organic1)" opacity="0.3"/>
-              
-              {/* Artistic lines */}
-              <path d="M50,50 Q200,100 350,50" stroke="url(#organic1)" strokeWidth="2" fill="none" opacity="0.6"/>
-              <path d="M0,250 Q200,200 400,250" stroke="url(#organic2)" strokeWidth="1.5" fill="none" opacity="0.4"/>
-              <path d="M50,750 Q200,700 350,750" stroke="url(#organic1)" strokeWidth="1" fill="none" opacity="0.5"/>
-            </svg>
-          </div>
+          {/* Subtle decorative elements */}
+          <div className="absolute top-20 right-20 w-72 h-72 rounded-full blur-3xl opacity-5 bg-gradient-to-r from-blue-400 to-cyan-500 dark:bg-gradient-to-r dark:from-amber-400 dark:to-orange-500"></div>
+          <div className="absolute bottom-40 left-20 w-64 h-64 rounded-full blur-3xl opacity-5 bg-gradient-to-r from-purple-400 to-pink-500 dark:bg-gradient-to-r dark:from-blue-400 dark:to-purple-500"></div>
           
           {/* Floating particles */}
           <div className="absolute inset-0">
-            {[...Array(12)].map((_, i) => (
+            {[...Array(8)].map((_, i) => (
               <motion.div
                 key={i}
-                className="absolute w-2 h-2 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full opacity-60"
+                className="absolute w-2 h-2 bg-gradient-to-br from-blue-400 to-cyan-500 dark:from-amber-400 dark:to-orange-500 rounded-full"
                 style={{
                   left: `${Math.random() * 90 + 5}%`,
                   top: `${Math.random() * 90 + 5}%`,
@@ -228,7 +191,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
                   y: [-10, 10, -10],
                   x: [-5, 5, -5],
                   scale: [0.8, 1.2, 0.8],
-                  opacity: [0.3, 0.8, 0.3]
+                  opacity: [0.2, 0.5, 0.2]
                 }}
                 transition={{
                   duration: 4 + Math.random() * 2,
@@ -241,10 +204,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
           </div>
           
           {/* Glass morphism overlay */}
-          <div className="absolute inset-0 backdrop-blur-sm bg-white/40 border-r border-amber-200/50"></div>
-        </div>        {/* Content Container */}
+          <div className="absolute inset-0 backdrop-blur-sm bg-white/80 dark:bg-black/20 border-r border-gray-200/50 dark:border-gray-800/30"></div>
+        </div>
+        
+        {/* Content Container */}
         <div className="relative z-10 flex flex-col h-full">
-          {/* Artistic Header */}
+          {/* Modern Header */}
           <motion.div 
             className="p-6 relative"
             variants={itemVariants}
@@ -256,30 +221,31 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
                   animate={{ rotate: 360 }}
                   transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
                 >
-                  <div className="w-14 h-14 bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 rounded-3xl flex items-center justify-center shadow-2xl relative overflow-hidden">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 dark:from-amber-500 dark:to-orange-500 rounded-2xl flex items-center justify-center shadow-lg relative overflow-hidden">
                     <motion.div
-                      className="absolute inset-0 bg-gradient-to-br from-yellow-400/30 to-transparent"
+                      className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent dark:from-yellow-400/30 dark:to-transparent"
                       animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
                       transition={{ duration: 2, repeat: Infinity }}
                     />
                     <span className="text-white font-bold text-xl relative z-10">A</span>
                   </div>
                   <motion.div 
-                    className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full"
+                    className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-cyan-400 to-blue-500 dark:from-yellow-400 dark:to-amber-500 rounded-full"
                     animate={{ scale: [1, 1.3, 1] }}
                     transition={{ duration: 1.5, repeat: Infinity }}
                   />
                 </motion.div>
                 <div>
-                  <h2 className="text-gray-800 font-bold text-xl tracking-tight bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+                  <h2 className="text-gray-800 dark:text-gray-200 font-bold text-xl tracking-tight bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-amber-500 dark:to-orange-500 bg-clip-text text-transparent">
                     ArtChain
                   </h2>
-                  <p className="text-gray-600 text-xs font-medium">Creative Marketplace</p>
+                  <p className="text-gray-600 dark:text-gray-400 text-xs font-medium">Creative Marketplace</p>
                 </div>
               </div>
+              
               <button
                 onClick={onToggle}
-                className="p-2 text-gray-600 hover:text-gray-800 hover:bg-white/60 rounded-xl transition-all duration-200 lg:hidden"
+                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-white/60 dark:hover:bg-gray-800/60 rounded-xl transition-all duration-200 lg:hidden"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
@@ -287,67 +253,28 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
               </button>
             </div>
             
-            {/* Artistic Time Display */}
+            {/* Modern Time Display */}
             <motion.div 
-              className="text-center py-3 px-4 bg-white/60 rounded-2xl border border-amber-200/60 backdrop-blur-sm"
+              className="backdrop-blur-sm bg-white/70 dark:bg-gray-800/30 border border-gray-200/50 dark:border-gray-700/30 rounded-2xl px-4 py-3 shadow-lg"
               variants={floatingVariants}
               animate="animate"
             >
-              <div className="text-gray-800 font-mono text-sm">
+              <div className="text-gray-800 dark:text-gray-200 font-mono text-sm">
                 {time.toLocaleTimeString()}
               </div>
-              <div className="text-gray-600 text-xs">
+              <div className="text-gray-600 dark:text-gray-400 text-xs">
                 {time.toLocaleDateString()}
               </div>
-            </motion.div>
-          </motion.div>          {/* Artistic Wallet Info */}
+            </motion.div>          </motion.div>
+          
+          {/* Modern Navigation */}
           <motion.div 
-            className="px-6 pb-6"
-            variants={itemVariants}
-          >
-            <div className="relative overflow-hidden">
-              {/* Artistic background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-amber-50/80 rounded-3xl"></div>
-              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-amber-100/30 to-orange-100/30 rounded-3xl"></div>
-              
-              {/* Decorative elements */}
-              <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-amber-300/20 to-transparent rounded-full transform translate-x-4 -translate-y-4"></div>
-              <div className="absolute bottom-0 left-0 w-12 h-12 bg-gradient-to-tr from-orange-300/20 to-transparent rounded-full transform -translate-x-3 translate-y-3"></div>
-              
-              <div className="relative p-5 border border-amber-200/40 rounded-3xl backdrop-blur-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-gray-700 text-sm font-bold tracking-wide flex items-center">
-                    <span className="w-2 h-2 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full mr-2 shadow-sm"></span>
-                    Wallet Connected
-                  </span>
-                  <motion.div 
-                    className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center"
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
-                    </svg>
-                  </motion.div>
-                </div>
-                <div className="space-y-3">
-                  <div className="bg-gray-100/80 px-4 py-3 rounded-2xl border border-gray-200/50">
-                    <div className="text-gray-800 font-mono text-sm tracking-wider">{walletInfo.address}</div>
-                  </div>
-                  <div className="text-amber-700 font-bold text-2xl tracking-tight">
-                    {walletInfo.balance}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>          {/* Artistic Navigation */}
-          <motion.div 
-            className="flex-1 px-6 space-y-6"
+            className="flex-1 px-6 space-y-6 overflow-y-auto custom-scrollbar"
             variants={containerVariants}
           >
             <div>
-              <h3 className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-4 flex items-center">
-                <span className="w-8 h-px bg-gradient-to-r from-amber-400 to-orange-400 mr-3"></span>
+              <h3 className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-widest mb-4 flex items-center">
+                <span className="w-8 h-px bg-gradient-to-r from-blue-400 to-cyan-500 dark:from-amber-400 dark:to-orange-500 mr-3"></span>
                 Navigation
               </h3>
               <nav className="space-y-2">
@@ -361,8 +288,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
                       to={item.path}
                       className={`group relative flex items-center space-x-4 p-4 rounded-2xl transition-all duration-300 overflow-hidden ${
                         activeSection === item.path
-                          ? "bg-white/70 border border-amber-300/50 text-gray-800 shadow-lg"
-                          : "text-gray-600 hover:text-gray-800 hover:bg-white/50"
+                          ? "backdrop-blur-lg shadow-xl bg-gradient-to-br from-white/80 via-gray-50/80 to-gray-100/80 border border-gray-200/50 dark:bg-gradient-to-br dark:from-[#1A1A1A]/80 dark:via-[#1D1D1D]/80 dark:to-[#202020]/80 dark:border dark:border-gray-700/30" // Changed shadow-2xl to shadow-xl
+                          : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-800/30"
                       }`}
                       onClick={() => setActiveSection(item.path)}
                     >
@@ -375,30 +302,34 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
                         />
                       )}
                       
-                      {/* Icon with artistic styling */}
+                      {/* Icon with modern styling */}
                       <div className={`relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 ${
                         activeSection === item.path 
-                          ? `bg-gradient-to-br ${item.gradient} text-white shadow-md` 
-                          : "bg-white/60 text-gray-600 group-hover:bg-white/80"
+                          ? `bg-gradient-to-br ${item.gradient} text-white shadow-lg` // Changed shadow-md to shadow-lg
+                          : "bg-white/60 dark:bg-gray-800/60 text-gray-600 dark:text-gray-400 group-hover:bg-white/80 dark:group-hover:bg-gray-800/80"
                       }`}>
                         <span className="text-lg font-bold">{item.icon}</span>
-                        {activeSection === item.path && (
-                          <motion.div
-                            className="absolute inset-0 bg-white/20 rounded-xl"
-                            animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
-                            transition={{ duration: 2, repeat: Infinity }}
-                          />
-                        )}
                       </div>
-                      
-                      <div className="flex-1">
-                        <div className="font-semibold tracking-wide">{item.label}</div>
-                        <div className="text-xs opacity-70 font-medium">{item.description}</div>
+                        <div className="flex-1">
+                        <p className={`font-medium ${
+                          activeSection === item.path
+                            ? "text-gray-800 dark:text-gray-200"
+                            : "text-gray-600 dark:text-gray-400 group-hover:text-gray-800 dark:group-hover:text-gray-200"
+                        }`}>
+                          {item.label}
+                        </p>
+                        <p className={`text-xs ${
+                          activeSection === item.path
+                            ? "text-gray-600 dark:text-gray-400"
+                            : "text-gray-500 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-400"
+                        }`}>
+                          {item.description}
+                        </p>
                       </div>
                       
                       {activeSection === item.path && (
                         <motion.div
-                          className={`w-3 h-3 bg-gradient-to-br ${item.gradient} rounded-full shadow-sm`}
+                          className={`w-1.5 h-10 bg-gradient-to-br ${item.gradient} rounded-full shadow-md`} // Changed w-2 to w-1.5, shadow-sm to shadow-md
                           layoutId="activeIndicator"
                           transition={{ type: "spring", stiffness: 400, damping: 30 }}
                         />
@@ -407,25 +338,27 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
                   </motion.div>
                 ))}
               </nav>
-            </div>            {/* Artistic Quick Actions */}
+            </div>
+            
+            {/* Modern Quick Actions */}
             <div>
-              <h3 className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-4 flex items-center">
-                <span className="w-8 h-px bg-gradient-to-r from-orange-400 to-red-400 mr-3"></span>
+              <h3 className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-widest mb-4 flex items-center">
+                <span className="w-8 h-px bg-gradient-to-r from-blue-400 to-cyan-500 dark:from-amber-400 dark:to-orange-500 mr-3"></span>
                 Quick Actions
               </h3>
               <div className="space-y-3">
                 {quickActions.map((action, index) => (
                   <motion.button
                     key={action.action}
-                    className="w-full group relative flex items-center space-x-4 p-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white transition-all duration-300 overflow-hidden shadow-lg hover:shadow-xl"
+                    className="w-full group relative flex items-center space-x-4 p-4 rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-600 dark:from-amber-500 dark:to-orange-500 hover:from-blue-600 hover:to-cyan-700 dark:hover:from-amber-600 dark:hover:to-orange-600 text-white transition-all duration-300 overflow-hidden shadow-lg hover:shadow-xl"
                     variants={itemVariants}
                     custom={index}
                     whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    {/* Animated background effect */}
+                    {/* Decorative animated highlight */}
                     <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-red-400/20"
+                      className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent"
                       animate={{ 
                         x: [-100, 400],
                         opacity: [0, 0.5, 0]
@@ -437,98 +370,92 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
                       }}
                     />
                     
-                    <div className="relative flex items-center justify-center w-10 h-10 bg-white/20 rounded-xl">
-                      <span className="text-xl font-bold">{action.icon}</span>
+                    {/* Icon container */}
+                    <div className="flex items-center justify-center w-10 h-10 bg-white/20 rounded-xl">
+                      <span className="text-lg font-bold">{action.icon}</span>
                     </div>
+                    
+                    {/* Text container */}
                     <div className="flex-1 text-left">
-                      <div className="font-semibold tracking-wide">{action.label}</div>
-                      <div className="text-xs opacity-80 font-medium">{action.description}</div>
+                      <p className="font-medium">{action.label}</p>
+                      <p className="text-xs text-white/70">{action.description}</p>
                     </div>
-                    <div className="w-6 h-6 flex items-center justify-center">
-                      <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7"/>
-                      </svg>
-                    </div>
+                    
+                    {/* Arrow icon */}
+                    <svg className="w-5 h-5 text-white/70 group-hover:text-white transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
                   </motion.button>
                 ))}
               </div>
             </div>
-          </motion.div>          {/* Artistic Footer */}
+          </motion.div>
+          
+          {/* Modern Footer */}
           <motion.div 
             className="p-6 relative"
             variants={itemVariants}
           >
-            <div className="relative overflow-hidden bg-white/60 rounded-3xl border border-amber-200/40 backdrop-blur-sm">
-              {/* Decorative background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-50/50 to-orange-50/30"></div>
-              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-amber-200/20 to-transparent rounded-full transform translate-x-6 -translate-y-6"></div>
-              
-              <div className="relative p-4 space-y-3">
-                <motion.button 
-                  className="w-full flex items-center justify-center space-x-3 p-3 rounded-2xl bg-white/60 text-gray-700 hover:text-gray-800 hover:bg-white/80 transition-all duration-200 border border-gray-200/50"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <div className="w-8 h-8 bg-gradient-to-br from-gray-400 to-gray-600 rounded-xl flex items-center justify-center">
-                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <div className="backdrop-blur-lg rounded-3xl shadow-lg p-4 transition-all duration-500 bg-gradient-to-br from-white/80 via-gray-50/80 to-gray-100/80 border border-gray-200/50 dark:bg-gradient-to-br dark:from-[#1A1A1A]/80 dark:via-[#1D1D1D]/80 dark:to-[#202020]/80 dark:border dark:border-gray-800/30">
+              <div className="flex items-center justify-between">
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  © 2025 ArtChain
+                </div>
+                <div className="flex space-x-2">
+                  <motion.button 
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                    whileHover={{ scale: 1.1, y: -2 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2.163c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                     </svg>
-                  </div>
-                  <span className="font-medium">Settings</span>
-                </motion.button>
-                
-                <motion.button 
-                  className="w-full flex items-center justify-center space-x-3 p-3 rounded-2xl bg-gradient-to-r from-red-500 to-pink-500 text-white hover:from-red-600 hover:to-pink-600 transition-all duration-200 shadow-md"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                  </motion.button>
+                  <motion.button 
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                    whileHover={{ scale: 1.1, y: -2 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
                     </svg>
-                  </div>
-                  <span className="font-medium">Disconnect</span>
-                </motion.button>
+                  </motion.button>
+                  <motion.button 
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                    whileHover={{ scale: 1.1, y: -2 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                  </motion.button>
+                </div>
               </div>
             </div>
           </motion.div>
         </div>
-      </motion.aside>      {/* Artistic Toggle Button for Desktop */}
+      </motion.aside>
+      
+      {/* Modern Toggle Button for Desktop */}
       <motion.button
-        className="fixed top-6 left-6 z-30 lg:block hidden w-14 h-14 bg-gradient-to-br from-amber-600 via-orange-600 to-red-600 rounded-2xl shadow-xl text-white hover:shadow-2xl transition-all duration-300 overflow-hidden group"
+        className="fixed top-6 left-6 z-30 lg:block hidden w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 dark:from-amber-500 dark:to-orange-600 rounded-xl shadow-lg text-white overflow-hidden group"
         onClick={onToggle}
-        whileHover={{ scale: 1.05, rotate: 5 }}
+        whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         animate={isOpen ? { x: 320, rotate: 180 } : { x: 0, rotate: 0 }}
         transition={{ type: "spring", stiffness: 400, damping: 30 }}
       >
-        {/* Animated background */}
         <motion.div
-          className="absolute inset-0 bg-gradient-to-br from-yellow-400/30 to-transparent"
+          className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent"
           animate={{ 
             scale: [1, 1.2, 1],
             opacity: [0.3, 0.6, 0.3]
           }}
           transition={{ duration: 2, repeat: Infinity }}
         />
-        
-        <div className="relative flex items-center justify-center w-full h-full">
-          <motion.svg 
-            className="w-6 h-6" 
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24"
-            animate={{ rotate: isOpen ? 45 : 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={2.5} 
-              d={isOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} 
-            />
-          </motion.svg>
-        </div>
+        <svg className="w-6 h-6 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+        </svg>
       </motion.button>
     </>
   );
