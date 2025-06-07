@@ -1,15 +1,39 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, useAnimationControls, useInView, AnimatePresence } from 'framer-motion';
-import { Star, TrendingUp, Users, Eye, Filter, Search, Grid, List, Info, ExternalLink, Heart, Grid3X3, Activity, Crown, Share2, HelpCircle, RotateCw, X } from 'lucide-react';
-import '../styles/cardFlip.css';
+import React, { useState, useEffect, useRef } from "react";
+import {
+  motion,
+  useAnimationControls,
+  useInView,
+  AnimatePresence,
+} from "framer-motion";
+import {
+  Star,
+  TrendingUp,
+  Users,
+  Eye,
+  Filter,
+  Search,
+  Grid,
+  List,
+  Info,
+  ExternalLink,
+  Heart,
+  Grid3X3,
+  Activity,
+  Crown,
+  Share2,
+  HelpCircle,
+  RotateCw,
+  X,
+} from "lucide-react";
+import "../styles/cardFlip.css";
 
 const Collections: React.FC = () => {
   const controls = useAnimationControls();
   const sectionRef = useRef<HTMLDivElement>(null);
   const inView = useInView(sectionRef, { once: true, amount: 0.1 });
-  const [activeFilter, setActiveFilter] = useState('all');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [searchTerm, setSearchTerm] = useState("");
   const [activeCard, setActiveCard] = useState<number | null>(null);
   const [showFlipHint, setShowFlipHint] = useState(true);
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -18,11 +42,13 @@ const Collections: React.FC = () => {
     {
       id: 1,
       name: "Digital Dreams",
-      description: "A collection of surreal digital artworks exploring the boundaries of imagination and reality through digital mediums",
+      description:
+        "A collection of surreal digital artworks exploring the boundaries of imagination and reality through digital mediums",
       items: 125,
       floorPrice: "0.5 ETH",
       volume: "234 ETH",
-      image: "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527214/background_3_wif3cl.jpg",
+      image:
+        "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527214/background_3_wif3cl.jpg",
       verified: true,
       trending: true,
       category: "Digital Art",
@@ -38,21 +64,24 @@ const Collections: React.FC = () => {
         "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527228/background_1_rinkqa.jpg",
         "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527227/background_4_ik77ls.jpg",
         "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527214/background_5_jth6qh.webp",
-        "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527233/background_9_kpnd1e.jpg"
+        "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527233/background_9_kpnd1e.jpg",
       ],
-      creatorAvatar: "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527214/background_3_wif3cl.jpg",
+      creatorAvatar:
+        "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527214/background_3_wif3cl.jpg",
       totalOwners: 89,
       salesVolume: "234.5 ETH",
-      topBid: "2.1 ETH"
+      topBid: "2.1 ETH",
     },
     {
       id: 2,
       name: "Abstract Realities",
-      description: "Modern abstract art pieces that challenge perception and reality through innovative visual storytelling",
+      description:
+        "Modern abstract art pieces that challenge perception and reality through innovative visual storytelling",
       items: 89,
       floorPrice: "0.8 ETH",
       volume: "189 ETH",
-      image: "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527229/background_2_dhvm4o.jpg",
+      image:
+        "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527229/background_2_dhvm4o.jpg",
       verified: true,
       trending: false,
       category: "Abstract",
@@ -68,21 +97,24 @@ const Collections: React.FC = () => {
         "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527227/background_4_ik77ls.jpg",
         "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527214/background_5_jth6qh.webp",
         "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527233/background_9_kpnd1e.jpg",
-        "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527214/background_3_wif3cl.jpg"
+        "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527214/background_3_wif3cl.jpg",
       ],
-      creatorAvatar: "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527229/background_2_dhvm4o.jpg",
+      creatorAvatar:
+        "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527229/background_2_dhvm4o.jpg",
       totalOwners: 67,
       salesVolume: "189.3 ETH",
-      topBid: "1.8 ETH"
+      topBid: "1.8 ETH",
     },
     {
       id: 3,
       name: "Crypto Landscapes",
-      description: "Beautiful landscapes reimagined through blockchain technology and digital transformation processes",
+      description:
+        "Beautiful landscapes reimagined through blockchain technology and digital transformation processes",
       items: 67,
       floorPrice: "1.2 ETH",
       volume: "312 ETH",
-      image: "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527228/background_1_rinkqa.jpg",
+      image:
+        "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527228/background_1_rinkqa.jpg",
       verified: false,
       trending: true,
       category: "Landscape",
@@ -98,21 +130,24 @@ const Collections: React.FC = () => {
         "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527214/background_5_jth6qh.webp",
         "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527233/background_9_kpnd1e.jpg",
         "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527214/background_3_wif3cl.jpg",
-        "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527229/background_2_dhvm4o.jpg"
+        "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527229/background_2_dhvm4o.jpg",
       ],
-      creatorAvatar: "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527228/background_1_rinkqa.jpg",
+      creatorAvatar:
+        "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527228/background_1_rinkqa.jpg",
       totalOwners: 45,
       salesVolume: "312.7 ETH",
-      topBid: "2.8 ETH"
+      topBid: "2.8 ETH",
     },
     {
       id: 4,
       name: "Mystic Portraits",
-      description: "Ethereal portrait collection capturing the essence of human emotion through mystical artistic interpretation",
+      description:
+        "Ethereal portrait collection capturing the essence of human emotion through mystical artistic interpretation",
       items: 156,
       floorPrice: "2.1 ETH",
       volume: "456 ETH",
-      image: "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527227/background_4_ik77ls.jpg",
+      image:
+        "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527227/background_4_ik77ls.jpg",
       verified: true,
       trending: false,
       category: "Portrait",
@@ -128,21 +163,24 @@ const Collections: React.FC = () => {
         "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527233/background_9_kpnd1e.jpg",
         "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527214/background_3_wif3cl.jpg",
         "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527229/background_2_dhvm4o.jpg",
-        "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527228/background_1_rinkqa.jpg"
+        "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527228/background_1_rinkqa.jpg",
       ],
-      creatorAvatar: "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527227/background_4_ik77ls.jpg",
+      creatorAvatar:
+        "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527227/background_4_ik77ls.jpg",
       totalOwners: 123,
       salesVolume: "456.9 ETH",
-      topBid: "4.2 ETH"
+      topBid: "4.2 ETH",
     },
     {
       id: 5,
       name: "Future Cities",
-      description: "Visionary cityscapes depicting the future of urban living through architectural imagination and digital artistry",
+      description:
+        "Visionary cityscapes depicting the future of urban living through architectural imagination and digital artistry",
       items: 203,
       floorPrice: "1.8 ETH",
       volume: "567 ETH",
-      image: "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527214/background_5_jth6qh.webp",
+      image:
+        "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527214/background_5_jth6qh.webp",
       verified: true,
       trending: true,
       category: "Architecture",
@@ -158,21 +196,24 @@ const Collections: React.FC = () => {
         "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527214/background_3_wif3cl.jpg",
         "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527229/background_2_dhvm4o.jpg",
         "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527228/background_1_rinkqa.jpg",
-        "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527227/background_4_ik77ls.jpg"
+        "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527227/background_4_ik77ls.jpg",
       ],
-      creatorAvatar: "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527214/background_5_jth6qh.webp",
+      creatorAvatar:
+        "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527214/background_5_jth6qh.webp",
       totalOwners: 156,
       salesVolume: "567.2 ETH",
-      topBid: "3.5 ETH"
+      topBid: "3.5 ETH",
     },
     {
       id: 6,
       name: "Ocean Depths",
-      description: "Underwater worlds brought to life through artistic vision, exploring the mysteries of the deep sea",
+      description:
+        "Underwater worlds brought to life through artistic vision, exploring the mysteries of the deep sea",
       items: 91,
       floorPrice: "0.9 ETH",
       volume: "178 ETH",
-      image: "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527233/background_9_kpnd1e.jpg",
+      image:
+        "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527233/background_9_kpnd1e.jpg",
       verified: false,
       trending: false,
       category: "Nature",
@@ -188,21 +229,32 @@ const Collections: React.FC = () => {
         "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527229/background_2_dhvm4o.jpg",
         "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527228/background_1_rinkqa.jpg",
         "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527227/background_4_ik77ls.jpg",
-        "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527214/background_5_jth6qh.webp"
+        "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527214/background_5_jth6qh.webp",
       ],
-      creatorAvatar: "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527233/background_9_kpnd1e.jpg",
+      creatorAvatar:
+        "https://res.cloudinary.com/dkxpy5kg2/image/upload/v1748527233/background_9_kpnd1e.jpg",
       totalOwners: 62,
       salesVolume: "178.4 ETH",
-      topBid: "1.7 ETH"
-    }
+      topBid: "1.7 ETH",
+    },
   ];
 
-  const categories = ['all', 'Digital Art', 'Abstract', 'Landscape', 'Portrait', 'Architecture', 'Nature'];
+  const categories = [
+    "all",
+    "Digital Art",
+    "Abstract",
+    "Landscape",
+    "Portrait",
+    "Architecture",
+    "Nature",
+  ];
 
-  const filteredCollections = collections.filter(collection => {
-    const matchesFilter = activeFilter === 'all' || collection.category === activeFilter;
-    const matchesSearch = collection.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         collection.creator.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredCollections = collections.filter((collection) => {
+    const matchesFilter =
+      activeFilter === "all" || collection.category === activeFilter;
+    const matchesSearch =
+      collection.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      collection.creator.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
@@ -214,7 +266,7 @@ const Collections: React.FC = () => {
 
   // Manage hint visibility based on user interaction history
   useEffect(() => {
-    const hasSeenHint = localStorage.getItem('collections-flip-hint-seen');
+    const hasSeenHint = localStorage.getItem("collections-flip-hint-seen");
     if (hasSeenHint) {
       setShowFlipHint(false);
       setHasInteracted(true);
@@ -224,7 +276,7 @@ const Collections: React.FC = () => {
   // Save interaction state to localStorage
   useEffect(() => {
     if (hasInteracted) {
-      localStorage.setItem('collections-flip-hint-seen', 'true');
+      localStorage.setItem("collections-flip-hint-seen", "true");
     }
   }, [hasInteracted]);
 
@@ -248,9 +300,9 @@ const Collections: React.FC = () => {
       transition: {
         type: "spring",
         stiffness: 300,
-        damping: 24
-      }
-    }
+        damping: 24,
+      },
+    },
   };
 
   const heroVariants = {
@@ -262,9 +314,9 @@ const Collections: React.FC = () => {
         type: "spring",
         stiffness: 200,
         damping: 20,
-        duration: 0.8
-      }
-    }
+        duration: 0.8,
+      },
+    },
   };
 
   return (
@@ -276,7 +328,7 @@ const Collections: React.FC = () => {
           animate={{
             x: [0, 50, 0],
             y: [0, -30, 0],
-            scale: [1, 1.2, 1]
+            scale: [1, 1.2, 1],
           }}
           transition={{ duration: 8, repeat: Infinity, repeatType: "reverse" }}
         />
@@ -285,7 +337,7 @@ const Collections: React.FC = () => {
           animate={{
             x: [0, -40, 0],
             y: [0, 40, 0],
-            scale: [1, 0.8, 1]
+            scale: [1, 0.8, 1],
           }}
           transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
         />
@@ -293,7 +345,7 @@ const Collections: React.FC = () => {
           className="absolute top-1/2 left-1/3 w-48 h-48 rounded-full blur-2xl bg-gradient-to-r from-green-400/10 to-cyan-500/10 dark:from-purple-400/10 dark:to-pink-500/10"
           animate={{
             rotate: [0, 360],
-            scale: [1, 1.1, 1]
+            scale: [1, 1.1, 1],
           }}
           transition={{ duration: 15, repeat: Infinity }}
         />
@@ -307,10 +359,7 @@ const Collections: React.FC = () => {
         animate={controls}
       >
         {/* Hero Section */}
-        <motion.div
-          variants={heroVariants}
-          className="text-center mb-16"
-        >
+        <motion.div variants={heroVariants} className="text-center mb-16">
           <motion.div
             className="relative inline-block mb-6"
             whileHover={{ scale: 1.02 }}
@@ -326,12 +375,13 @@ const Collections: React.FC = () => {
               transition={{ delay: 0.5, duration: 0.8 }}
             />
           </motion.div>
-          
+
           <motion.p
             className="text-xl md:text-2xl font-light text-gray-600 dark:text-gray-400 max-w-3xl mx-auto leading-relaxed mb-8"
             variants={itemVariants}
           >
-            Discover extraordinary digital art collections from the world's most innovative creators
+            Discover extraordinary digital art collections from the world's most
+            innovative creators
           </motion.p>
 
           {/* Search and Filter Section */}
@@ -359,13 +409,13 @@ const Collections: React.FC = () => {
                   onClick={() => setActiveFilter(category)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                     activeFilter === category
-                      ? 'bg-blue-500 dark:bg-amber-500 text-white shadow-lg'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      ? "bg-blue-500 dark:bg-amber-500 text-white shadow-lg"
+                      : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                   }`}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  {category === 'all' ? 'All Categories' : category}
+                  {category === "all" ? "All Categories" : category}
                 </motion.button>
               ))}
             </div>
@@ -373,9 +423,11 @@ const Collections: React.FC = () => {
             {/* View Mode Toggle */}
             <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
               <motion.button
-                onClick={() => setViewMode('grid')}
+                onClick={() => setViewMode("grid")}
                 className={`p-2 rounded-md transition-all duration-200 ${
-                  viewMode === 'grid' ? 'bg-white dark:bg-gray-600 shadow-sm' : ''
+                  viewMode === "grid"
+                    ? "bg-white dark:bg-gray-600 shadow-sm"
+                    : ""
                 }`}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
@@ -383,9 +435,11 @@ const Collections: React.FC = () => {
                 <Grid className="w-4 h-4" />
               </motion.button>
               <motion.button
-                onClick={() => setViewMode('list')}
+                onClick={() => setViewMode("list")}
                 className={`p-2 rounded-md transition-all duration-200 ${
-                  viewMode === 'list' ? 'bg-white dark:bg-gray-600 shadow-sm' : ''
+                  viewMode === "list"
+                    ? "bg-white dark:bg-gray-600 shadow-sm"
+                    : ""
                 }`}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
@@ -398,7 +452,7 @@ const Collections: React.FC = () => {
 
         {/* Interactive Hint Banner */}
         <AnimatePresence>
-          {showFlipHint && viewMode === 'grid' && (
+          {showFlipHint && viewMode === "grid" && (
             <motion.div
               initial={{ opacity: 0, y: -20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -413,22 +467,26 @@ const Collections: React.FC = () => {
                     background: [
                       "linear-gradient(45deg, rgba(59, 130, 246, 0.05), rgba(147, 51, 234, 0.05))",
                       "linear-gradient(135deg, rgba(147, 51, 234, 0.05), rgba(59, 130, 246, 0.05))",
-                      "linear-gradient(45deg, rgba(59, 130, 246, 0.05), rgba(147, 51, 234, 0.05))"
-                    ]
+                      "linear-gradient(45deg, rgba(59, 130, 246, 0.05), rgba(147, 51, 234, 0.05))",
+                    ],
                   }}
                   transition={{ duration: 3, repeat: Infinity }}
                 />
-                
+
                 <div className="relative flex items-center justify-between">
                   <div className="flex items-center gap-4 flex-1">
                     <motion.div
                       className="flex items-center justify-center w-12 h-12 bg-blue-500/20 dark:bg-amber-500/20 rounded-full"
                       animate={{ rotate: [0, 180, 360] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "linear",
+                      }}
                     >
                       <RotateCw className="w-6 h-6 text-blue-600 dark:text-amber-600" />
                     </motion.div>
-                    
+
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className="font-semibold text-blue-700 dark:text-amber-400">
@@ -443,16 +501,19 @@ const Collections: React.FC = () => {
                       </div>
                       <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
                         <span className="hidden sm:inline">
-                          <strong>Desktop:</strong> Hover over cards to reveal detailed info • 
-                          <strong className="ml-2">Mobile:</strong> Tap cards to flip them
+                          <strong>Desktop:</strong> Hover over cards to reveal
+                          detailed info •
+                          <strong className="ml-2">Mobile:</strong> Tap cards to
+                          flip them
                         </span>
                         <span className="sm:hidden">
-                          <strong>Tap cards</strong> to see detailed NFT info and statistics
+                          <strong>Tap cards</strong> to see detailed NFT info
+                          and statistics
                         </span>
                       </p>
                     </div>
                   </div>
-                  
+
                   <motion.button
                     onClick={() => {
                       setShowFlipHint(false);
@@ -474,9 +535,9 @@ const Collections: React.FC = () => {
         {/* Collections Grid/List */}
         <motion.div
           className={`${
-            viewMode === 'grid' 
-              ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8' 
-              : 'space-y-6'
+            viewMode === "grid"
+              ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8"
+              : "space-y-6"
           } transition-all duration-300`}
           variants={containerVariants}
         >
@@ -486,25 +547,29 @@ const Collections: React.FC = () => {
                 key={collection.id}
                 layout
                 className={`group relative ${
-                  viewMode === 'grid' 
-                    ? `aspect-[4/5] card-flip-container ${activeCard === collection.id ? 'active' : ''}` 
-                    : 'h-32 flex items-center'
+                  viewMode === "grid"
+                    ? `aspect-[4/5] card-flip-container ${
+                        activeCard === collection.id ? "active" : ""
+                      }`
+                    : "h-32 flex items-center"
                 }`}
                 variants={itemVariants}
-                whileHover={{ 
-                  scale: viewMode === 'grid' ? 1.02 : 1.01, 
-                  y: viewMode === 'grid' ? -8 : -2 
+                whileHover={{
+                  scale: viewMode === "grid" ? 1.02 : 1.01,
+                  y: viewMode === "grid" ? -8 : -2,
                 }}
                 onClick={() => {
-                  if (viewMode === 'grid') {
-                    setActiveCard(activeCard === collection.id ? null : collection.id);
+                  if (viewMode === "grid") {
+                    setActiveCard(
+                      activeCard === collection.id ? null : collection.id
+                    );
                     setHasInteracted(true);
                     setShowFlipHint(false);
                   }
                 }}
               >
                 {/* Interactive Hint Overlay for Grid Cards */}
-                {viewMode === 'grid' && !hasInteracted && index < 2 && (
+                {viewMode === "grid" && !hasInteracted && index < 2 && (
                   <motion.div
                     className="absolute top-4 right-4 z-20 pointer-events-none"
                     initial={{ opacity: 0, scale: 0 }}
@@ -513,13 +578,13 @@ const Collections: React.FC = () => {
                   >
                     <motion.div
                       className="bg-blue-500 dark:bg-amber-500 text-white p-2 rounded-full shadow-lg"
-                      animate={{ 
+                      animate={{
                         scale: [1, 1.2, 1],
                         boxShadow: [
                           "0 4px 6px rgba(0, 0, 0, 0.1)",
                           "0 8px 25px rgba(59, 130, 246, 0.4)",
-                          "0 4px 6px rgba(0, 0, 0, 0.1)"
-                        ]
+                          "0 4px 6px rgba(0, 0, 0, 0.1)",
+                        ],
                       }}
                       transition={{ duration: 2, repeat: Infinity }}
                     >
@@ -529,25 +594,27 @@ const Collections: React.FC = () => {
                 )}
 
                 {/* 3D Card Container for Grid View */}
-                {viewMode === 'grid' ? (
+                {viewMode === "grid" ? (
                   <div className="card-flip-inner">
                     {/* Front Side of Card */}
                     <div className="card-front">
                       {/* Background Image with Overlay */}
                       <div className="absolute inset-0">
-                        <img 
-                          src={collection.image} 
+                        <img
+                          src={collection.image}
                           alt={collection.name}
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                        <div className={`absolute inset-0 bg-gradient-to-br ${collection.background} opacity-60`} />
+                        <div
+                          className={`absolute inset-0 bg-gradient-to-br ${collection.background} opacity-60`}
+                        />
                       </div>
 
                       {/* Badges */}
                       <div className="absolute top-4 left-4 flex flex-wrap gap-2 z-10">
                         {collection.verified && (
-                          <motion.div 
+                          <motion.div
                             className="bg-blue-500 dark:bg-amber-500 text-white p-2 rounded-full shadow-lg"
                             whileHover={{ scale: 1.1, rotate: 360 }}
                             transition={{ duration: 0.3 }}
@@ -556,7 +623,7 @@ const Collections: React.FC = () => {
                           </motion.div>
                         )}
                         {collection.trending && (
-                          <motion.div 
+                          <motion.div
                             className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1"
                             animate={{ y: [0, -2, 0] }}
                             transition={{ duration: 2, repeat: Infinity }}
@@ -583,7 +650,7 @@ const Collections: React.FC = () => {
                               {collection.description.substring(0, 80)}...
                             </p>
                           </div>
-                          
+
                           <div className="flex items-center text-gray-300 text-sm gap-4">
                             <div className="flex items-center gap-1">
                               <Users className="w-4 h-4" />
@@ -598,15 +665,22 @@ const Collections: React.FC = () => {
                           <div className="grid grid-cols-3 gap-4 py-4 bg-black/20 backdrop-blur-sm rounded-xl">
                             <div className="text-center">
                               <p className="text-gray-300 text-xs">Items</p>
-                              <p className="font-bold text-white">{collection.items}</p>
+                              <p className="font-bold text-white">
+                                {collection.items}
+                              </p>
                             </div>
                             <div className="text-center">
-                              <p className="text-gray-300 text-xs">Floor</p>
-                              <p className="font-bold text-blue-300 dark:text-amber-300">{collection.floorPrice}</p>
+                              <p className="text-gray-300 text-xs">Floor </p>
+                              <p className="font-bold text-blue-300 dark:text-amber-300">
+                                {collection.floorPrice}
+                              </p>
                             </div>
                             <div className="text-center">
                               <p className="text-gray-300 text-xs">Volume</p>
-                              <p className="font-bold text-green-300">{collection.volume}</p>
+                              <p className="font-bold text-green-300">
+                                {" "}
+                                {collection.volume}
+                              </p>
                             </div>
                           </div>
                         </motion.div>
@@ -619,8 +693,8 @@ const Collections: React.FC = () => {
                         {/* Header with Creator Info */}
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-3">
-                            <img 
-                              src={collection.creatorAvatar} 
+                            <img
+                              src={collection.creatorAvatar}
                               alt={collection.creator}
                               className="w-10 h-10 rounded-full border-2 border-blue-400 dark:border-amber-400"
                             />
@@ -628,7 +702,9 @@ const Collections: React.FC = () => {
                               <h3 className="text-lg font-bold text-white">
                                 {collection.name}
                               </h3>
-                              <p className="text-sm text-gray-400">by {collection.creator}</p>
+                              <p className="text-sm text-gray-400">
+                                by {collection.creator}
+                              </p>
                             </div>
                           </div>
                           <Info className="w-5 h-5 text-blue-400 dark:text-amber-400" />
@@ -648,8 +724,8 @@ const Collections: React.FC = () => {
                                 whileHover={{ scale: 1.05 }}
                                 transition={{ duration: 0.2 }}
                               >
-                                <img 
-                                  src={thumbnail} 
+                                <img
+                                  src={thumbnail}
                                   alt={`NFT ${idx + 1}`}
                                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                                 />
@@ -672,30 +748,46 @@ const Collections: React.FC = () => {
                             <div className="bg-blue-500/10 dark:bg-amber-500/10 rounded-lg p-3 border border-blue-500/20 dark:border-amber-500/20">
                               <div className="flex items-center gap-2 mb-1">
                                 <Users className="w-4 h-4 text-blue-400 dark:text-amber-400" />
-                                <span className="text-xs text-gray-400">Total Owners</span>
+                                <span className="text-xs text-gray-400">
+                                  Total Owners
+                                </span>
                               </div>
-                              <p className="text-white font-bold">{collection.totalOwners}</p>
+                              <p className="text-white font-bold">
+                                {collection.totalOwners}
+                              </p>
                             </div>
                             <div className="bg-green-500/10 rounded-lg p-3 border border-green-500/20">
                               <div className="flex items-center gap-2 mb-1">
                                 <Activity className="w-4 h-4 text-green-400" />
-                                <span className="text-xs text-gray-400">Sales Volume</span>
+                                <span className="text-xs text-gray-400">
+                                  Sales Volume{" "}
+                                </span>
                               </div>
-                              <p className="text-white font-bold text-sm">{collection.salesVolume}</p>
+                              <p className="text-white font-bold text-sm">
+                                {collection.salesVolume}
+                              </p>
                             </div>
                             <div className="bg-purple-500/10 rounded-lg p-3 border border-purple-500/20">
                               <div className="flex items-center gap-2 mb-1">
                                 <Crown className="w-4 h-4 text-purple-400" />
-                                <span className="text-xs text-gray-400">Top Bid</span>
+                                <span className="text-xs text-gray-400">
+                                  Top Bid
+                                </span>
                               </div>
-                              <p className="text-white font-bold">{collection.topBid}</p>
+                              <p className="text-white font-bold">
+                                {collection.topBid}
+                              </p>
                             </div>
                             <div className="bg-pink-500/10 rounded-lg p-3 border border-pink-500/20">
                               <div className="flex items-center gap-2 mb-1">
                                 <Heart className="w-4 h-4 text-pink-400" />
-                                <span className="text-xs text-gray-400">Likes</span>
+                                <span className="text-xs text-gray-400">
+                                  Likes
+                                </span>
                               </div>
-                              <p className="text-white font-bold">{collection.likes.toLocaleString()}</p>
+                              <p className="text-white font-bold">
+                                {collection.likes.toLocaleString()}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -747,13 +839,13 @@ const Collections: React.FC = () => {
                   <div className="bg-gradient-to-r from-white/50 to-gray-100/50 dark:from-gray-800/50 dark:to-gray-900/50 backdrop-blur-sm rounded-2xl p-4 border border-gray-200/50 dark:border-gray-700/50 shadow-lg">
                     <div className="flex items-center w-full gap-4">
                       <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
-                        <img 
-                          src={collection.image} 
+                        <img
+                          src={collection.image}
                           alt={collection.name}
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      
+
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="text-lg font-bold text-gray-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-amber-400 transition-colors duration-300">
@@ -768,14 +860,16 @@ const Collections: React.FC = () => {
                             </span>
                           )}
                         </div>
-                        <p className="text-gray-600 dark:text-gray-300 text-sm mb-2">by {collection.creator}</p>
+                        <p className="text-gray-600 dark:text-gray-300 text-sm mb-2">
+                          by {collection.creator}
+                        </p>
                         <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                           <span>{collection.items} items</span>
                           <span>Floor: {collection.floorPrice}</span>
                           <span>Volume: {collection.volume}</span>
                         </div>
                       </div>
-                      
+
                       <motion.button
                         className="bg-gradient-to-r from-blue-500 to-purple-500 dark:from-amber-500 dark:to-orange-500 text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transition-all duration-300"
                         whileHover={{ scale: 1.05 }}
@@ -793,11 +887,8 @@ const Collections: React.FC = () => {
 
         {/* Load More Section */}
         {filteredCollections.length > 0 && (
-          <motion.div 
-            className="mt-16 text-center"
-            variants={itemVariants}
-          >
-            <motion.button 
+          <motion.div className="mt-16 text-center" variants={itemVariants}>
+            <motion.button
               className="bg-gradient-to-r from-blue-500 to-purple-500 dark:from-amber-500 dark:to-orange-500 text-white px-12 py-4 rounded-2xl font-bold text-lg hover:shadow-2xl transition-all duration-300 transform-gpu"
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
@@ -809,10 +900,7 @@ const Collections: React.FC = () => {
 
         {/* Empty State */}
         {filteredCollections.length === 0 && (
-          <motion.div
-            className="text-center py-20"
-            variants={itemVariants}
-          >
+          <motion.div className="text-center py-20" variants={itemVariants}>
             <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center">
               <Filter className="w-12 h-12 text-gray-400 dark:text-gray-500" />
             </div>
@@ -820,12 +908,13 @@ const Collections: React.FC = () => {
               No Collections Found
             </h3>
             <p className="text-gray-500 dark:text-gray-500 mb-8 max-w-md mx-auto">
-              Try adjusting your search terms or filters to discover amazing collections.
+              Try adjusting your search terms or filters to discover amazing
+              collections.
             </p>
             <motion.button
               onClick={() => {
-                setSearchTerm('');
-                setActiveFilter('all');
+                setSearchTerm("");
+                setActiveFilter("all");
               }}
               className="bg-blue-500 dark:bg-amber-500 text-white px-6 py-3 rounded-xl font-medium hover:shadow-lg transition-all duration-300"
               whileHover={{ scale: 1.05 }}
@@ -849,25 +938,33 @@ const Collections: React.FC = () => {
               <div className="text-3xl font-black bg-gradient-to-r from-blue-500 to-purple-500 dark:from-amber-500 dark:to-orange-500 bg-clip-text text-transparent">
                 {collections.length}
               </div>
-              <p className="text-gray-600 dark:text-gray-400 font-medium">Total Collections</p>
+              <p className="text-gray-600 dark:text-gray-400 font-medium">
+                Total Collections
+              </p>
             </div>
             <div className="text-center">
               <div className="text-3xl font-black bg-gradient-to-r from-green-500 to-cyan-500 dark:from-purple-500 dark:to-pink-500 bg-clip-text text-transparent">
                 {collections.reduce((sum, c) => sum + c.items, 0)}
               </div>
-              <p className="text-gray-600 dark:text-gray-400 font-medium">Total Items</p>
+              <p className="text-gray-600 dark:text-gray-400 font-medium">
+                Total Items
+              </p>
             </div>
             <div className="text-center">
               <div className="text-3xl font-black bg-gradient-to-r from-red-500 to-pink-500 dark:from-blue-500 dark:to-cyan-500 bg-clip-text text-transparent">
-                {collections.filter(c => c.verified).length}
+                {collections.filter((c) => c.verified).length}
               </div>
-              <p className="text-gray-600 dark:text-gray-400 font-medium">Verified</p>
+              <p className="text-gray-600 dark:text-gray-400 font-medium">
+                Verified
+              </p>
             </div>
             <div className="text-center">
               <div className="text-3xl font-black bg-gradient-to-r from-orange-500 to-red-500 dark:from-green-500 dark:to-emerald-500 bg-clip-text text-transparent">
-                {collections.filter(c => c.trending).length}
+                {collections.filter((c) => c.trending).length}
               </div>
-              <p className="text-gray-600 dark:text-gray-400 font-medium">Trending</p>
+              <p className="text-gray-600 dark:text-gray-400 font-medium">
+                Trending
+              </p>
             </div>
           </div>
         </motion.div>
