@@ -205,9 +205,11 @@ const HomeSection: React.FC = () => {
       <div
         ref={sectionRef}
         className="min-h-screen transition-all duration-500 p-4 sm:p-6 lg:p-8 relative overflow-visible gradient-transition bg-gradient-to-br from-gray-50 via-white to-gray-100 text-gray-900 dark:bg-gradient-to-br dark:from-[#0A0A0A] dark:via-[#0D0D0D] dark:to-[#111111] dark:text-gray-100"
+        role="main"
+        aria-label="Home Section"
       >
         {/* Background decoration */}
-        <div className="absolute inset-0 opacity-5">
+        <div className="absolute inset-0 opacity-5" aria-hidden="true">
           <div className="absolute top-20 right-20 w-72 h-72 rounded-full blur-3xl transition-all duration-500 bg-gradient-to-r from-blue-400 to-cyan-500 dark:bg-gradient-to-r dark:from-amber-400 dark:to-orange-500"></div>
           <div className="absolute bottom-40 left-20 w-64 h-64 rounded-full blur-3xl transition-all duration-500 bg-gradient-to-r from-purple-400 to-pink-500 dark:bg-gradient-to-r dark:from-blue-400 dark:to-purple-500"></div>
         </div>
@@ -217,37 +219,51 @@ const HomeSection: React.FC = () => {
           variants={itemVariants}
           initial="hidden"
           animate={controls}
+          role="banner"
+          aria-label="Top Navigation"
         >
           <div className="relative flex items-center backdrop-blur-sm rounded-2xl px-5 py-3 shadow-2xl w-full sm:w-auto lg:w-[380px] mb-4 sm:mb-0 group transition-all duration-500 bg-gradient-to-r from-white/80 to-gray-50/80 border border-gray-200/50 dark:bg-gradient-to-r dark:from-[#1A1A1A] dark:to-[#1F1F1F] dark:border dark:border-gray-800/50 sm:ml-auto sm:mr-4">
-            <Search className="w-5 h-5 mr-3 transition-colors text-gray-500 group-focus-within:text-blue-500 dark:text-gray-400 dark:group-focus-within:text-amber-400" />
+            <Search className="w-5 h-5 mr-3 transition-colors text-gray-500 group-focus-within:text-blue-500 dark:text-gray-400 dark:group-focus-within:text-amber-400" aria-hidden="true" />
             <input
               type="text"
               placeholder="Search Artwork..."
               className="flex-1 bg-transparent outline-none text-sm font-medium text-gray-700 placeholder-gray-400 dark:text-gray-200 dark:placeholder-gray-500"
+              aria-label="Search Artwork"
+              role="searchbox"
             />
-            <div className="absolute inset-0 rounded-2xl opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none bg-gradient-to-r from-blue-400/10 to-cyan-500/10 dark:bg-gradient-to-r dark:from-amber-400/10 dark:to-orange-500/10"></div>
+            <div className="absolute inset-0 rounded-2xl opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none bg-gradient-to-r from-blue-400/10 to-cyan-500/10 dark:bg-gradient-to-r dark:from-amber-400/10 dark:to-orange-500/10" aria-hidden="true"></div>
           </div>
 
           <div className="flex items-center space-x-3">
             {/* Notification Bell */}
-            <motion.div
+            <motion.button
               className="relative cursor-pointer p-3 rounded-2xl transition-all duration-300 border border-transparent hover:bg-gradient-to-r hover:from-gray-100 hover:to-white hover:border-gray-300/50 dark:hover:bg-gradient-to-r dark:hover:from-[#1A1A1A] dark:hover:to-[#1F1F1F] dark:hover:border-gray-700/50"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              aria-label="View notifications"
+              aria-haspopup="true"
+              aria-expanded="false"
             >
-              <Bell className="w-6 h-6 transition-colors text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-amber-400" />
-              <span className="absolute -top-1 -right-1 bg-gradient-to-r from-amber-400 to-orange-500 text-black text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-lg">
+              <Bell className="w-6 h-6 transition-colors text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-amber-400" aria-hidden="true" />
+              <span className="absolute -top-1 -right-1 bg-gradient-to-r from-amber-400 to-orange-500 text-black text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-lg" aria-label="3 unread notifications">
                 3
               </span>
-            </motion.div>
+            </motion.button>
 
             {/* Dark Mode Toggle */}
             <DarkModeToggle />
 
-            <div className="flex items-center space-x-3 backdrop-blur-sm rounded-2xl px-4 py-2 shadow-xl transition-all duration-500 bg-gradient-to-r from-white/80 to-gray-50/80 border border-gray-200/50 dark:bg-gradient-to-r dark:from-[#1A1A1A] dark:to-[#1F1F1F] dark:border dark:border-gray-800/50">
+            <div 
+              className="flex items-center space-x-3 backdrop-blur-sm rounded-2xl px-4 py-2 shadow-xl transition-all duration-500 bg-gradient-to-r from-white/80 to-gray-50/80 border border-gray-200/50 dark:bg-gradient-to-r dark:from-[#1A1A1A] dark:to-[#1F1F1F] dark:border dark:border-gray-800/50"
+              role="button"
+              tabIndex={0}
+              aria-label="User profile"
+              aria-haspopup="true"
+              aria-expanded="false"
+            >
               <img
                 src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
-                alt="User Avatar"
+                alt="Zack Foster's profile picture"
                 className="w-10 h-10 rounded-full border-2 border-gradient-to-r from-amber-400 to-orange-500 shadow-lg"
                 loading="lazy"
               />
@@ -268,12 +284,16 @@ const HomeSection: React.FC = () => {
           variants={containerVariants}
           initial="hidden"
           animate={controls}
+          role="main"
+          aria-label="Main Content"
         >
           {" "}
           {/* Left Column (Banner & Trending) */}
           <motion.div
             className="lg:col-span-2 space-y-8"
             variants={itemVariants}
+            role="region"
+            aria-label="Featured Content"
           >
             <div className="rounded-xl p-4">
               <BannerSection />
@@ -292,6 +312,8 @@ const HomeSection: React.FC = () => {
           <motion.div
             className="lg:col-span-1 space-y-8"
             variants={itemVariants}
+            role="complementary"
+            aria-label="Sidebar Content"
           >
             <div className="rounded-xl p-4">
               <TopSellers topSellers={topSellers} />
