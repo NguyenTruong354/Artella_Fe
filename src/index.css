@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Root HTML element transition */
+html {
+  transition: background-color 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Enhanced smooth transitions for all elements when theme changes */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  transition-duration: 0.3s; /* Further reduced from 0.5s */
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* Custom Fonts */
 @font-face {
   font-family: 'Segoe Print';
@@ -13,4 +25,221 @@
   font-weight: normal;
   font-style: normal;
   font-display: swap;
+}
+
+/* Dark Mode Transition Styles */
+@layer utilities {  .dark-mode-transition {
+    transition: background-color 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                color 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                border-color 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Further reduced from 0.5s */
+  }
+  
+  .wave-ripple {
+    position: absolute;
+    border-radius: 50%;
+    transform: scale(0);
+    animation: ripple 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    pointer-events: none;
+  }
+  
+  @keyframes ripple {
+    0% {
+      transform: scale(0);
+      opacity: 0.8;
+    }
+    100% {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+  
+  .bg-gradient-radial {
+    background-image: radial-gradient(var(--tw-gradient-stops));
+  }
+}
+
+/* Enhanced Wave ripple animation styles - optimized for performance */
+.wave-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+  contain: strict;
+  
+  /* Performance optimizations */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000;
+  will-change: transform;
+}
+
+.wave-ripple-enhanced {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  
+  /* GPU acceleration */
+  transform: translate(-50%, -50%) scale(0);
+  will-change: transform, opacity;
+  transition-property: transform, opacity;
+  transition-timing-function: ease-out; /* Simpler timing function */
+  
+  /* Reduced heavy rendering effects */
+  contain: layout style paint size;
+  
+  /* Hardware acceleration hints */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Ripple transition overlay for dark mode switching */
+.ripple-transition-overlay {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 1;
+  transition: transform 1.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes wave-expand {
+  0% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(0);
+  }
+  20% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  75% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* Enhanced smooth transitions for theme switching */
+.theme-transition * {
+  transition: 
+    background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), /* Further reduced from 0.35s */
+    color 0.25s cubic-bezier(0.4, 0, 0.2, 1), /* Further reduced from 0.35s */
+    border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), /* Further reduced from 0.35s */
+    box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1); /* Further reduced from 0.35s */
+}
+
+/* Gradient transition helper */
+.gradient-transition {
+  transition: 
+    background 0.3s cubic-bezier(0.4, 0, 0.2, 1), /* Further reduced from 0.4s */
+    backdrop-filter 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Further reduced from 0.4s */
+}
+
+/* Smooth scrollbar styles */
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .scrollbar-thumb-gray-600::-webkit-scrollbar-thumb {
+    background-color: rgb(75 85 99);
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thumb-gray-400::-webkit-scrollbar-thumb {
+    background-color: rgb(156 163 175);
+    border-radius: 3px;
+  }
+  
+  .scrollbar-track-transparent::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+    .scrollbar-track-gray-100::-webkit-scrollbar-track {
+    background-color: rgb(243 244 246);
+  }
+}
+
+/* Dark mode ripple effect enhancement */
+@layer utilities {
+  .ripple-dark {
+    background: radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.9) 30%, rgba(241,245,249,0.8) 60%, transparent 100%);
+  }
+  
+  .ripple-light {
+    background: radial-gradient(circle, rgba(0,0,0,0.95) 0%, rgba(15,23,42,0.9) 30%, rgba(30,41,59,0.8) 60%, transparent 100%);
+  }
+  
+  /* Wave ripple animation variants */
+  .wave-ripple-light {
+    background: radial-gradient(
+      circle,
+      rgba(15,23,42,0.95) 0%,
+      rgba(30,41,59,0.85) 20%,
+      rgba(51,65,85,0.70) 40%,
+      rgba(71,85,105,0.50) 60%,
+      rgba(100,116,139,0.30) 80%,
+      transparent 100%
+    );
+  }
+  
+  .wave-ripple-dark {
+    background: radial-gradient(
+      circle,
+      rgba(255,255,255,0.95) 0%,
+      rgba(248,250,252,0.85) 20%,
+      rgba(241,245,249,0.70) 40%,
+      rgba(226,232,240,0.50) 60%,
+      rgba(203,213,225,0.30) 80%,
+      transparent 100%
+    );
+  }
+  
+  /* Layered ripple effects */
+  .wave-ripple-layer-1 {
+    opacity: 0.9;
+    z-index: 9999;
+  }
+  
+  .wave-ripple-layer-2 {
+    opacity: 0.7;
+    z-index: 9998;
+  }
+  
+  .wave-ripple-layer-3 {
+    opacity: 0.5;
+    z-index: 9997;
+  }
+  /* Hiệu ứng cho sóng - tối ưu hiệu suất */
+  .wave-ripple-enhanced {
+    transform-origin: center center;
+  }
+  
+  /* Hiệu ứng cho các sóng phụ - tối ưu hiệu suất */
+  .wave-ripple-secondary {
+    opacity: 0.5 !important;
+  }
+  
+  /* Hiệu ứng dao động nhẹ cho sóng - đơn giản hóa để tăng hiệu suất */
+  @keyframes wave-wobble {
+    0%, 100% {
+      transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+      transform: translate(-50%, -50%) scale(1.01);
+    }
+  }
 }
