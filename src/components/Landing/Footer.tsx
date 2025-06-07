@@ -158,7 +158,7 @@ const Footer = () => {
               </p>
               
               <div className="flex space-x-4">
-                {socialLinks.map((social, index) => (
+                {socialLinks.map((social) => (
                   <motion.a
                     key={social.name}
                     href={social.href}
@@ -182,7 +182,7 @@ const Footer = () => {
             </motion.div>
 
             {/* Quick Links */}
-            {Object.entries(footerLinks).map(([category, links], index) => (
+            {Object.entries(footerLinks).map(([category, links]) => (
               <motion.div
                 key={category}
                 variants={itemVariants}

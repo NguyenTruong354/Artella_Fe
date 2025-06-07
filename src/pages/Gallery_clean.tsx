@@ -81,11 +81,12 @@ const Gallery: React.FC = () => {
 
   // Using imported utility functions
   const allArtists = useAllArtists(artworks);
-  const allTags = useAllTags(artworks);  const filteredArtworks = useFilteredArtworks(
+  const allTags = useAllTags(artworks);
+  const filteredArtworks = useFilteredArtworks(
     artworks,
-    displayedArtworks,
     selectedCategory,
     searchQuery,
+    displayedArtworks,
     advancedFilters
   );
 
