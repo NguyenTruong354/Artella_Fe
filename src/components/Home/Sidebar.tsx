@@ -86,42 +86,42 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
   const location = useLocation();
   const [activeSection, setActiveSection] = useState('');
   const [time, setTime] = useState(new Date());
-  const prefersReducedMotion = useReducedMotion(); // Added hook usage
+  const prefersReducedMotion = useReducedMotion(); 
 
   // Navigation items with artistic icons
   const navigationItems = [
     {
       icon: "⌂",
       label: "Home",
-      path: "/home",
+      path: "/Home", 
       description: "Creative Hub",
       gradient: "from-amber-500 to-orange-500"
     },
     {
       icon: "⚘",
       label: "Gallery",
-      path: "gallery",
+      path: "/Home/gallery", 
       description: "Art Collection",
       gradient: "from-orange-500 to-red-500"
     },
     {
       icon: "⚡",
       label: "Auctions",
-      path: "auctions",
+      path: "/Home/auctions",
       description: "Live Bidding",
       gradient: "from-red-500 to-pink-500"
     },
     {
       icon: "◊",
       label: "Collections",
-      path: "/collections",
+      path: "/Home/collections", 
       description: "NFT Series",
       gradient: "from-pink-500 to-purple-500"
     },
     {
       icon: "⌘",
       label: "Profile",
-      path: "/profile",
+      path: "/Home/profile",
       description: "Your Space",
       gradient: "from-purple-500 to-indigo-500"
     }
