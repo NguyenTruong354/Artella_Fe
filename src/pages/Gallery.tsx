@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useMemo, useCallback, Suspense, lazy, memo, useReducer } from 'react'; // Added useReducer
 import { motion, useAnimation, useInView } from 'framer-motion';
-import { Search, Grid3X3, List, Eye, Heart, Share2, ArrowUpRight, Zap, LayoutGrid, Bookmark, Download } from 'lucide-react';
+import { Search, Grid3X3, List, Eye, Heart, ArrowUpRight, Zap, LayoutGrid, Bookmark, Download } from 'lucide-react';
 import useDarkMode from '../hooks/useDarkMode';
 
 // Lazy load components for better code splitting
@@ -30,6 +30,10 @@ interface GalleryPageState {
   searchQuery: string;
   likedItems: Set<number>;
   isLoading: boolean;
+  displayedArtworks: ArtworkItem[];
+  hasMoreArtworks: boolean;
+  page: number;
+  isLoadingMore: boolean;
   // artworksData: ArtworkItem[]; // If artworks were fetched and managed by reducer
 }
 
@@ -38,16 +42,19 @@ type GalleryPageAction =
   | { type: 'SET_VIEW_MODE'; payload: 'masonry' | 'grid' | 'list' }
   | { type: 'SET_SEARCH_QUERY'; payload: string }
   | { type: 'TOGGLE_LIKE'; payload: number }
-  | { type: 'FINISH_INITIAL_LOADING' };
+  | { type: 'FINISH_INITIAL_LOADING' }
+  | { type: 'LOAD_MORE_ARTWORKS'; payload: ArtworkItem[] }
+  | { type: 'SET_LOADING_MORE'; payload: boolean }
+  | { type: 'RESET_ARTWORKS'; payload: ArtworkItem[] };
 
 const galleryPageReducer = (state: GalleryPageState, action: GalleryPageAction): GalleryPageState => {
   switch (action.type) {
     case 'SET_CATEGORY':
-      return { ...state, selectedCategory: action.payload };
+      return { ...state, selectedCategory: action.payload, page: 1, displayedArtworks: [] };
     case 'SET_VIEW_MODE':
       return { ...state, viewMode: action.payload };
     case 'SET_SEARCH_QUERY':
-      return { ...state, searchQuery: action.payload };
+      return { ...state, searchQuery: action.payload, page: 1, displayedArtworks: [] };
     case 'TOGGLE_LIKE': {
       const newLikedItems = new Set(state.likedItems);
       if (newLikedItems.has(action.payload)) {
@@ -61,6 +68,23 @@ const galleryPageReducer = (state: GalleryPageState, action: GalleryPageAction):
     }
     case 'FINISH_INITIAL_LOADING':
       return { ...state, isLoading: false };
+    case 'LOAD_MORE_ARTWORKS':
+      return { 
+        ...state, 
+        displayedArtworks: [...state.displayedArtworks, ...action.payload],
+        page: state.page + 1,
+        isLoadingMore: false,
+        hasMoreArtworks: action.payload.length > 0
+      };
+    case 'SET_LOADING_MORE':
+      return { ...state, isLoadingMore: action.payload };
+    case 'RESET_ARTWORKS':
+      return { 
+        ...state, 
+        displayedArtworks: action.payload, 
+        page: 1, 
+        hasMoreArtworks: true 
+      };
     // case 'SET_ARTWORKS': // Example if artworks were fetched
     //   return { ...state, artworksData: action.payload, isLoading: false };
     default:
@@ -92,6 +116,10 @@ const initialGalleryPageState: GalleryPageState = {
   searchQuery: '',
   likedItems: getInitialLikedItems(), // Load from localStorage
   isLoading: true,
+  displayedArtworks: [],
+  hasMoreArtworks: true,
+  page: 1,
+  isLoadingMore: false,
 };
 
 // Skeleton loading component
@@ -133,6 +161,32 @@ const MasonryGrid = memo(({ children, className = '' }: { children: React.ReactN
     </div>
   );
 });
+
+// Infinite Scroll Hook
+const useInfiniteScroll = (callback: () => void, hasMore: boolean, isLoading: boolean) => {
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.innerHeight + document.documentElement.scrollTop >= document.documentElement.offsetHeight - 1000) {
+        if (hasMore && !isLoading) {
+          callback();
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [callback, hasMore, isLoading]);
+};
+
+// Loading More Component
+const LoadingMore = memo(() => (
+  <div className="flex justify-center items-center py-12">
+    <div className="flex flex-col items-center gap-4">
+      <div className="w-8 h-8 border-4 border-blue-500 dark:border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+      <p className="text-gray-600 dark:text-gray-400 text-sm">Loading more artworks...</p>
+    </div>
+  </div>
+));
 
 // ArtworkCard component - optimized for Pinterest-style masonry layout
 const ArtworkCard = memo(({ artwork, viewMode, likedItems, toggleLike }: {
@@ -338,7 +392,7 @@ const Gallery: React.FC = () => {
 
   // Use reducer for state management
   const [state, dispatch] = useReducer(galleryPageReducer, initialGalleryPageState);
-  const { selectedCategory, viewMode, searchQuery, likedItems, isLoading } = state;
+  const { selectedCategory, viewMode, searchQuery, likedItems, isLoading, displayedArtworks, hasMoreArtworks, isLoadingMore } = state;
 
   // Dark mode hook
   const darkMode = useDarkMode();
@@ -348,7 +402,6 @@ const Gallery: React.FC = () => {
       controls.start("visible");
     }
   }, [controls, inView]);
-
   // Simulate data loading
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -356,6 +409,45 @@ const Gallery: React.FC = () => {
     }, 1500); // Simulate a 1.5 second loading time
     return () => clearTimeout(timer);
   }, []); // Empty dependency array means this runs once on mount
+
+  // Generate additional artworks for infinite scroll
+  const generateMoreArtworks = useCallback((startIndex: number, count: number): ArtworkItem[] => {
+    const additionalImages = [
+      "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=500&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&h=700&fit=crop",
+      "https://images.unsplash.com/photo-1604076913837-52ab5629fba9?w=500&h=550&fit=crop",
+      "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=500&h=800&fit=crop",
+      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&h=650&fit=crop",
+      "https://images.unsplash.com/photo-1604076913837-52ab5629fba9?w=500&h=750&fit=crop",
+    ];
+    
+    const artists = ["Maya Chen", "Alex Thompson", "Sofia Rodriguez", "David Kim", "Emma Wilson", "Lucas Brown"];
+    const categories = ["Digital", "Abstract", "Cyberpunk", "Portrait", "Nature", "Geometric"];
+    const adjectives = ["Ethereal", "Vibrant", "Mysterious", "Luminous", "Cosmic", "Serene", "Dynamic", "Fluid"];
+    const nouns = ["Dreams", "Visions", "Reflections", "Echoes", "Whispers", "Shadows", "Lights", "Waves"];
+    
+    return Array.from({ length: count }, (_, index) => {
+      const id = startIndex + index;
+      const adjective = adjectives[id % adjectives.length];
+      const noun = nouns[id % nouns.length];
+      const category = categories[id % categories.length];
+      
+      return {
+        id: id,
+        title: `${adjective} ${noun} ${id}`,
+        artist: artists[id % artists.length],
+        price: `${(1.5 + (id % 30) * 0.1).toFixed(1)} ETH`,
+        image: additionalImages[id % additionalImages.length],
+        category: category,
+        likes: Math.floor(Math.random() * 200) + 50,
+        views: Math.floor(Math.random() * 2000) + 500,
+        isNew: Math.random() > 0.7,
+        isFeatured: Math.random() > 0.8,
+        description: `A stunning piece of ${category.toLowerCase()} art that captures the essence of ${adjective.toLowerCase()} beauty`,
+        tags: [category.toLowerCase(), adjective.toLowerCase(), "digital art"]
+      };
+    });
+  }, []);
   // Memoized gallery data for performance - remains outside reducer for now as it's static
   const artworks: ArtworkItem[] = useMemo(() => [
     {
@@ -473,31 +565,55 @@ const Gallery: React.FC = () => {
   ], []);
 
   const categories = useMemo(() => ['All', 'Digital', 'Abstract', 'Cyberpunk', 'Portrait', 'Nature', 'Geometric'], []);
-  
-  // Sort options for Pinterest-style experience
-  const sortOptions = useMemo(() => [
-    { value: 'recent', label: 'Most Recent' },
-    { value: 'popular', label: 'Most Popular' },
-    { value: 'trending', label: 'Trending' },
-    { value: 'price-high', label: 'Price: High to Low' },
-    { value: 'price-low', label: 'Price: Low to High' }
-  ], []);
+
+  // Load more artworks function
+  const loadMoreArtworks = useCallback(() => {
+    if (isLoadingMore || !hasMoreArtworks) return;
+    
+    dispatch({ type: 'SET_LOADING_MORE', payload: true });
+    
+    // Simulate API call delay
+    setTimeout(() => {
+      const newArtworks = generateMoreArtworks(displayedArtworks.length + 100, 8);
+      const filteredNewArtworks = newArtworks.filter(artwork => {
+        const matchesCategory = selectedCategory === 'All' || artwork.category === selectedCategory;
+        const matchesSearch = artwork.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                             artwork.artist.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesCategory && matchesSearch;
+      });
+      
+      dispatch({ type: 'LOAD_MORE_ARTWORKS', payload: filteredNewArtworks });
+    }, 800);
+  }, [isLoadingMore, hasMoreArtworks, displayedArtworks.length, generateMoreArtworks, selectedCategory, searchQuery]);
+
+  // Use infinite scroll hook
+  useInfiniteScroll(loadMoreArtworks, hasMoreArtworks, isLoadingMore);
 
   // Update handlers to dispatch actions
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch({ type: 'SET_SEARCH_QUERY', payload: e.target.value });
   }, []);
-
   // Memoized filter function for better performance
   const filteredArtworks = useMemo(() => {
-    // If artworks were part of state: state.artworksData.filter(...)
-    return artworks.filter(artwork => {
+    const baseArtworks = artworks.filter(artwork => {
       const matchesCategory = selectedCategory === 'All' || artwork.category === selectedCategory;
       const matchesSearch = artwork.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            artwork.artist.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     });
-  }, [artworks, selectedCategory, searchQuery]);
+    
+    // Combine base artworks with displayed artworks for infinite scroll
+    return [...baseArtworks, ...displayedArtworks.filter(artwork => {
+      const matchesCategory = selectedCategory === 'All' || artwork.category === selectedCategory;
+      const matchesSearch = artwork.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           artwork.artist.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    })];
+  }, [artworks, selectedCategory, searchQuery, displayedArtworks]);
+  // Reset artworks when category or search changes
+  useEffect(() => {
+    dispatch({ type: 'RESET_ARTWORKS', payload: [] });
+  }, [selectedCategory, searchQuery]);
 
   // Update toggleLike to dispatch action
   const toggleLike = useCallback((artworkId: number) => {
@@ -652,86 +768,132 @@ const Gallery: React.FC = () => {
           </div>
         </header>        {/* Gallery Grid */}
         {viewMode === 'masonry' ? (
-          <MasonryGrid className="w-full">
-            {isLoading ? (
-              Array.from({ length: 6 }).map((_, index) => (
-                <div key={`skeleton-${index}`} className="masonry-item mb-6 break-inside-avoid">
-                  <SkeletonCard />
-                </div>
-              ))
-            ) : filteredArtworks.length === 0 ? (
+          <>
+            <MasonryGrid className="w-full">
+              {isLoading ? (
+                Array.from({ length: 6 }).map((_, index) => (
+                  <div key={`skeleton-${index}`} className="masonry-item mb-6 break-inside-avoid">
+                    <SkeletonCard />
+                  </div>
+                ))
+              ) : filteredArtworks.length === 0 ? (
+                <motion.div 
+                  className="col-span-full text-center py-20"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Search className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                    No artworks found
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                    Try adjusting your search or filter criteria to find what you're looking for.
+                  </p>
+                </motion.div>
+              ) : (
+                filteredArtworks.map((artwork) => (
+                  <ArtworkCard
+                    key={artwork.id}
+                    artwork={artwork}
+                    viewMode={viewMode}
+                    likedItems={likedItems}
+                    toggleLike={toggleLike}
+                  />
+                ))
+              )}
+            </MasonryGrid>
+            {/* Loading More Indicator */}
+            {isLoadingMore && <LoadingMore />}
+            {/* End of content indicator */}
+            {!hasMoreArtworks && filteredArtworks.length > 8 && (
               <motion.div 
-                className="col-span-full text-center py-20"
+                className="text-center py-12"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Search className="w-8 h-8 text-gray-400" />
+                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">🎨</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                  No artworks found
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  You've seen it all!
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                  Try adjusting your search or filter criteria to find what you're looking for.
+                <p className="text-gray-600 dark:text-gray-400">
+                  That's all the artworks we have for now. Check back later for more!
                 </p>
               </motion.div>
-            ) : (
-              filteredArtworks.map((artwork) => (
-                <ArtworkCard
-                  key={artwork.id}
-                  artwork={artwork}
-                  viewMode={viewMode}
-                  likedItems={likedItems}
-                  toggleLike={toggleLike}
-                />
-              ))
             )}
-          </MasonryGrid>
+          </>
         ) : (
-          <motion.div
-            className={`grid gap-6 ${
-              viewMode === 'grid'
-                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-                : 'grid-cols-1'
-            }`}
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {isLoading ? (
-              Array.from({ length: viewMode === 'grid' ? 3 : 2 }).map((_, index) => (
-                <SkeletonCard key={`skeleton-${index}`} />
-              ))
-            ) : filteredArtworks.length === 0 ? (
+          <>
+            <motion.div
+              className={`grid gap-6 ${
+                viewMode === 'grid'
+                  ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                  : 'grid-cols-1'
+              }`}
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {isLoading ? (
+                Array.from({ length: viewMode === 'grid' ? 3 : 2 }).map((_, index) => (
+                  <SkeletonCard key={`skeleton-${index}`} />
+                ))
+              ) : filteredArtworks.length === 0 ? (
+                <motion.div 
+                  className="col-span-full text-center py-20"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Search className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                    No artworks found
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                    Try adjusting your search or filter criteria to find what you're looking for.
+                  </p>
+                </motion.div>
+              ) : (
+                filteredArtworks.map((artwork) => (
+                  <ArtworkCard
+                    key={artwork.id}
+                    artwork={artwork}
+                    viewMode={viewMode}
+                    likedItems={likedItems}
+                    toggleLike={toggleLike}
+                  />
+                ))
+              )}
+            </motion.div>
+            {/* Loading More Indicator for Grid/List view */}
+            {isLoadingMore && <LoadingMore />}
+            {/* End of content indicator for Grid/List view */}
+            {!hasMoreArtworks && filteredArtworks.length > 8 && (
               <motion.div 
-                className="col-span-full text-center py-20"
+                className="text-center py-12"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Search className="w-8 h-8 text-gray-400" />
+                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">🎨</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                  No artworks found
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  You've seen it all!
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                  Try adjusting your search or filter criteria to find what you're looking for.
+                <p className="text-gray-600 dark:text-gray-400">
+                  That's all the artworks we have for now. Check back later for more!
                 </p>
               </motion.div>
-            ) : (
-              filteredArtworks.map((artwork) => (
-                <ArtworkCard
-                  key={artwork.id}
-                  artwork={artwork}
-                  viewMode={viewMode}
-                  likedItems={likedItems}
-                  toggleLike={toggleLike}
-                />
-              ))
             )}
-          </motion.div>
+          </>
         )}
       </div>
     </>
