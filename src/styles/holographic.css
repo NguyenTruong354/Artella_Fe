@@ -1,0 +1,97 @@
+@keyframes holographicShine {
+  0% {
+    background-position: -200% -200%, -200% -200%, 0 0;
+  }
+  100% {
+    background-position: 200% 200%, 200% 200%, 0 0;
+  }
+}
+
+@keyframes holographicBorderShine {
+  0% {
+    border-image-source: linear-gradient(45deg, rgba(255,152,0,0.6), rgba(255,87,34,0.6), rgba(0,123,255,0.6), rgba(100,181,246,0.6));
+  }
+  25% {
+    border-image-source: linear-gradient(135deg, rgba(255,152,0,0.6), rgba(255,87,34,0.6), rgba(0,123,255,0.6), rgba(100,181,246,0.6));
+  }
+  50% {
+    border-image-source: linear-gradient(225deg, rgba(255,152,0,0.6), rgba(255,87,34,0.6), rgba(0,123,255,0.6), rgba(100,181,246,0.6));
+  }
+  75% {
+    border-image-source: linear-gradient(315deg, rgba(255,152,0,0.6), rgba(255,87,34,0.6), rgba(0,123,255,0.6), rgba(100,181,246,0.6));
+  }
+  100% {
+    border-image-source: linear-gradient(45deg, rgba(255,152,0,0.6), rgba(255,87,34,0.6), rgba(0,123,255,0.6), rgba(100,181,246,0.6));
+  }
+}
+
+
+.holographic-card {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.5s ease-out;
+  /* Base background from Profile.tsx, slightly adjusted for holographic effect */
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.6), rgba(230, 230, 230, 0.6)); /* Light mode base */
+  border: 2px solid transparent; /* Prepare for animated border */
+  border-image-slice: 1;
+  animation: holographicBorderShine 8s linear infinite;
+}
+
+.dark .holographic-card {
+  background: linear-gradient(to right, rgba(26, 26, 26, 0.7), rgba(31, 31, 31, 0.7)); /* Dark mode base */
+  animation: holographicBorderShine 8s linear infinite; /* Same animation, colors defined in keyframes */
+}
+
+.holographic-card::before,
+.holographic-card::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit; /* Assuming parent has rounded-2xl */
+  opacity: 0.3;
+  mix-blend-mode: screen; /* Experiment with blend modes */
+  pointer-events: none;
+  z-index: -1; /* Behind content but above solid background */
+}
+
+/* Light mode shine */
+.holographic-card::before {
+  background:
+    radial-gradient(circle at 10% 10%, rgba(255, 183, 77, 0.5) 0%, transparent 50%), /* Light Amber */
+    radial-gradient(circle at 90% 80%, rgba(255, 138, 101, 0.5) 0%, transparent 50%); /* Light Orange */
+  background-size: 200% 200%, 200% 200%;
+  animation: holographicShine 10s linear infinite alternate;
+}
+
+/* Dark mode shine */
+.dark .holographic-card::before {
+  background:
+    radial-gradient(circle at 10% 10%, rgba(100, 181, 246, 0.5) 0%, transparent 50%), /* Light Blue */
+    radial-gradient(circle at 90% 80%, rgba(173, 147, 223, 0.5) 0%, transparent 50%); /* Light Purple */
+  background-size: 200% 200%, 200% 200%;
+  animation: holographicShine 10s linear infinite alternate;
+}
+
+/* Optional: subtle glare effect */
+.holographic-card::after {
+  background: linear-gradient(160deg, rgba(255,255,255,0.1) 20%, rgba(255,255,255,0) 60%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.dark .holographic-card::after {
+  background: linear-gradient(160deg, rgba(200,200,255,0.05) 20%, rgba(255,255,255,0) 60%);
+}
+
+.holographic-card:hover::after {
+  opacity: 0.7;
+}
+
+/* Ensure content inside is above pseudo-elements if needed */
+.holographic-card > * {
+  position: relative;
+  z-index: 1;
+}
