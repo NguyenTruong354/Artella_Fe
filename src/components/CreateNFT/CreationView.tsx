@@ -41,10 +41,13 @@ const CreationView: React.FC<CreationViewProps> = ({
   const [isLayersPanelOpen, setIsLayersPanelOpen] = useState(false);
   const [activeSettingsTab, setActiveSettingsTab] = useState<'color' | 'size' | 'advanced'>('color');
   // Initialize tool instance when selectedTool changes
-  useEffect(() => {    const toolInfo = ToolRegistry.getTool(creationState.selectedTool.type);
+  useEffect(() => {
+    // Use selectedTool.id to get the specific tool definition
+    const toolInfo = ToolRegistry.getTool(creationState.selectedTool.id); 
     if (toolInfo) {
+      // Pass toolInfo.id (which is the correct unique identifier) to createToolInstance
       const instance = ToolFactory.createToolInstance(
-        toolInfo.id,
+        toolInfo.id, 
         {
           creationState,
           onStateUpdate,
@@ -53,7 +56,8 @@ const CreationView: React.FC<CreationViewProps> = ({
       );
       setActiveToolInstance(instance);
     }
-  }, [creationState.selectedTool.type, creationState.selectedTool.settings, creationState, onStateUpdate, canvasRef]);
+    // Depend on selectedTool.id instead of selectedTool.type
+  }, [creationState.selectedTool.id, creationState.selectedTool.settings, creationState, onStateUpdate, canvasRef]);
 
   // Create drawing context helper
   const createDrawingContext = (x: number, y: number): DrawingContext => {
