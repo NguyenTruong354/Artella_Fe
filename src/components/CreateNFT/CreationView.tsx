@@ -72,16 +72,54 @@ const CreationView: React.FC<CreationViewProps> = ({
       startPos,
       isDrawing,
     };
-  };
+  };  // Helper function to get accurate mouse coordinates
+  const getMouseCoordinates = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!canvasRef.current) return { x: 0, y: 0 };
 
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    
+    // Get mouse position relative to canvas element
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    // Get logical canvas size (what we set in width/height attributes)
+    const logicalWidth = creationState.canvasSize.width;
+    const logicalHeight = creationState.canvasSize.height;
+    
+    // Get displayed size (CSS size)
+    const displayWidth = rect.width;
+    const displayHeight = rect.height;
+    
+    // Calculate scale factors from display size to logical size
+    const scaleX = logicalWidth / displayWidth;
+    const scaleY = logicalHeight / displayHeight;
+    
+    // Convert mouse coordinates to canvas logical coordinates
+    let x = mouseX * scaleX;
+    let y = mouseY * scaleY;
+    
+    // Apply zoom factor if any
+    const zoomFactor = creationState.zoom || 1;
+    if (zoomFactor !== 1) {
+      x = x / zoomFactor;
+      y = y / zoomFactor;
+    }
+    
+    // Round to nearest pixel and clamp to canvas bounds
+    x = Math.round(Math.max(0, Math.min(x, logicalWidth - 1)));
+    y = Math.round(Math.max(0, Math.min(y, logicalHeight - 1)));
+    
+    return { x, y };
+  };
   // Canvas drawing events using tool instances
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current || !activeToolInstance) return;
 
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+    const { x, y } = getMouseCoordinates(e);
+    
+    // Debug logging (remove in production)
+    console.log('Mouse coordinates:', { x, y, canvasSize: creationState.canvasSize, zoom: creationState.zoom });
 
     setIsDrawing(true);
     setLastPos({ x, y });
@@ -98,10 +136,7 @@ const CreationView: React.FC<CreationViewProps> = ({
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawing || !canvasRef.current || !activeToolInstance) return;
 
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+    const { x, y } = getMouseCoordinates(e);
 
     try {
       const context = createDrawingContext(x, y);
@@ -188,9 +223,7 @@ const CreationView: React.FC<CreationViewProps> = ({
 
   const selectLayer = (layerIndex: number) => {
     onStateUpdate({ activeLayer: layerIndex });
-  };
-
-  // Canvas setup
+  };  // Canvas setup
   useEffect(() => {
     if (canvasRef.current) {
       const canvas = canvasRef.current;
@@ -199,7 +232,14 @@ const CreationView: React.FC<CreationViewProps> = ({
 
       const ctx = canvas.getContext("2d");
       if (ctx) {
+        // Clear canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Set high quality rendering
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        
+        // Set default styles
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
       }
@@ -349,23 +389,22 @@ const CreationView: React.FC<CreationViewProps> = ({
       </motion.div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex">
-        {/* Canvas Area */}
+      <div className="flex-1 flex">        {/* Canvas Area */}
         <div className="flex-1 p-4">
-          <div className="relative bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden h-full">
-            <canvas
+          <div className="relative bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden h-full flex items-center justify-center">            <canvas
               ref={canvasRef}
-              className={`border border-gray-300 dark:border-gray-600 rounded-lg max-w-full max-h-full bg-white ${getCursorStyle()}`}
+              className={`border border-gray-300 dark:border-gray-600 rounded-lg bg-white ${getCursorStyle()}`}
               onMouseDown={startDrawing}
               onMouseMove={draw}
               onMouseUp={stopDrawing}
               onMouseLeave={stopDrawing}
               style={{
-                transform: `scale(${creationState.zoom})`,
-                transformOrigin: "top left",
-                width: "100%",
-                height: "100%",
-                objectFit: "contain"
+                maxWidth: '100%',
+                maxHeight: '100%',
+                width: `${creationState.canvasSize.width}px`,
+                height: `${creationState.canvasSize.height}px`,
+                transform: creationState.zoom !== 1 ? `scale(${creationState.zoom})` : 'none',
+                transformOrigin: "center center"
               }}
             />
           </div>
