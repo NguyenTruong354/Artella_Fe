@@ -1,10 +1,10 @@
-import React, { useEffect, useState, RefObject } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  Brush, 
-  Eraser, 
-  Type, 
-  Square, 
+import React, { useEffect, useState, RefObject } from "react";
+import { motion } from "framer-motion";
+import {
+  Brush,
+  Eraser,
+  Type,
+  Square,
   Circle,
   Palette,
   Layers,
@@ -12,10 +12,10 @@ import {
   EyeOff,
   Plus,
   ZoomIn,
-  ZoomOut
-} from 'lucide-react';
+  ZoomOut,
+} from "lucide-react";
 
-import { CreationState, CanvasTool, CanvasLayer } from './types';
+import { CreationState, CanvasTool, CanvasLayer } from "./types";
 
 interface CreationViewProps {
   creationState: CreationState;
@@ -28,18 +28,32 @@ const CreationView: React.FC<CreationViewProps> = ({
   creationState,
   tools,
   onStateUpdate,
-  canvasRef
-}) => {  
+  canvasRef,
+}) => {
   const [isDrawing, setIsDrawing] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [lastPos, setLastPos] = useState({ x: 0, y: 0 });
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
-  const [previewCanvas, setPreviewCanvas] = useState<HTMLCanvasElement | null>(null);
-  
+  const [previewCanvas, setPreviewCanvas] = useState<HTMLCanvasElement | null>(
+    null
+  );
+
   const colors = [
-    '#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF',
-    '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080',
-    '#FFC0CB', '#A52A2A', '#808080', '#008000', '#000080'
+    "#000000",
+    "#FFFFFF",
+    "#FF0000",
+    "#00FF00",
+    "#0000FF",
+    "#FFFF00",
+    "#FF00FF",
+    "#00FFFF",
+    "#FFA500",
+    "#800080",
+    "#FFC0CB",
+    "#A52A2A",
+    "#808080",
+    "#008000",
+    "#000080",
   ];
 
   const sizes = [2, 5, 10, 15, 20, 30, 40, 50];
@@ -47,139 +61,173 @@ const CreationView: React.FC<CreationViewProps> = ({
   // Canvas drawing functions
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current) return;
-    
+
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
     const x = (e.clientX - rect.left) * (canvas.width / rect.width);
     const y = (e.clientY - rect.top) * (canvas.height / rect.height);
-    
+
     setIsDrawing(true);
     setLastPos({ x, y });
     setStartPos({ x, y });
-    
+
     // Handle text tool click
-    if (creationState.selectedTool.type === 'text') {
-      const text = prompt('Enter text:');
+    if (creationState.selectedTool.type === "text") {
+      const text = prompt("Enter text:");
       if (text) {
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext("2d");
         if (ctx) {
-          ctx.globalCompositeOperation = 'source-over';
-          ctx.fillStyle = creationState.selectedTool.settings?.color || '#000000';
-          ctx.font = `${creationState.selectedTool.settings?.size || 20}px Arial`;
+          ctx.globalCompositeOperation = "source-over";
+          ctx.fillStyle =
+            creationState.selectedTool.settings?.color || "#000000";
+          ctx.font = `${
+            creationState.selectedTool.settings?.size || 20
+          }px Arial`;
           ctx.fillText(text, x, y);
         }
       }
       setIsDrawing(false); // Don't continue drawing for text
       return;
     }
-      // For shapes, save current canvas state for preview
-    if (creationState.selectedTool.type === 'shape') {
-      const ctx = canvas.getContext('2d');
+    // For shapes, save current canvas state for preview
+    if (creationState.selectedTool.type === "shape") {
+      const ctx = canvas.getContext("2d");
       if (ctx) {
         // Create preview canvas if it doesn't exist
-        const tempCanvas = document.createElement('canvas');
+        const tempCanvas = document.createElement("canvas");
         tempCanvas.width = canvas.width;
         tempCanvas.height = canvas.height;
-        const tempCtx = tempCanvas.getContext('2d');
+        const tempCtx = tempCanvas.getContext("2d");
         if (tempCtx) {
           tempCtx.drawImage(canvas, 0, 0);
           setPreviewCanvas(tempCanvas);
         }
       }
     }
-    
-    if (creationState.selectedTool.type === 'brush') {
-      const ctx = canvas.getContext('2d');
+    if (creationState.selectedTool.type === "brush") {
+      const ctx = canvas.getContext("2d");
       if (ctx) {
         ctx.beginPath();
         ctx.moveTo(x, y);
+      }
+    }
+
+    // Handle eraser tool - start erasing immediately on click
+    if (creationState.selectedTool.type === "eraser") {
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.save();
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.fillStyle = "rgba(0,0,0,1)";
+        ctx.beginPath();
+        ctx.arc(
+          x,
+          y,
+          (creationState.selectedTool.settings?.size || 20) / 2,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+        ctx.restore();
       }
     }
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawing || !canvasRef.current) return;
-    
+
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    
+
     const rect = canvas.getBoundingClientRect();
     const x = (e.clientX - rect.left) * (canvas.width / rect.width);
     const y = (e.clientY - rect.top) * (canvas.height / rect.height);
-      if (creationState.selectedTool.type === 'brush') {
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.strokeStyle = creationState.selectedTool.settings?.color || '#000000';
+    if (creationState.selectedTool.type === "brush") {
+      ctx.globalCompositeOperation = "source-over";
+      ctx.strokeStyle = creationState.selectedTool.settings?.color || "#000000";
       ctx.lineWidth = creationState.selectedTool.settings?.size || 10;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
       // Create smooth line from last position to current position
       ctx.beginPath();
       ctx.moveTo(lastPos.x, lastPos.y);
       ctx.lineTo(x, y);
       ctx.stroke();
-    } else if (creationState.selectedTool.type === 'eraser') {
+    } else if (creationState.selectedTool.type === "eraser") {
       // Set eraser mode - remove pixels using destination-out
-      ctx.globalCompositeOperation = 'destination-out';
-      ctx.strokeStyle = 'rgba(0,0,0,1)'; // Any color works for eraser in destination-out mode
+      ctx.save(); // Save current context state
+      ctx.globalCompositeOperation = "destination-out";
+      ctx.strokeStyle = "rgba(0,0,0,1)"; // Color doesn't matter for destination-out
+      ctx.fillStyle = "rgba(0,0,0,1)"; // For round eraser effect
       ctx.lineWidth = creationState.selectedTool.settings?.size || 20;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
       // Draw eraser line from last position to current position
       ctx.beginPath();
       ctx.moveTo(lastPos.x, lastPos.y);
       ctx.lineTo(x, y);
       ctx.stroke();
-      
-      // Reset composite operation back to normal for other tools
-      ctx.globalCompositeOperation = 'source-over';
-    } else if (creationState.selectedTool.type === 'shape' && previewCanvas) {
+
+      // Also draw circles at each point for smoother erasing
+      ctx.beginPath();
+      ctx.arc(
+        x,
+        y,
+        (creationState.selectedTool.settings?.size || 20) / 2,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+
+      ctx.restore(); // Restore context state
+    } else if (creationState.selectedTool.type === "shape" && previewCanvas) {
       // Shape preview: restore original canvas and draw shape preview
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(previewCanvas, 0, 0);
-      
+
       // Draw shape preview
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.strokeStyle = creationState.selectedTool.settings?.color || '#000000';
+      ctx.globalCompositeOperation = "source-over";
+      ctx.strokeStyle = creationState.selectedTool.settings?.color || "#000000";
       ctx.lineWidth = creationState.selectedTool.settings?.size || 2;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
       const width = x - startPos.x;
       const height = y - startPos.y;
-      
-      if (creationState.selectedTool.id === 'rectangle') {
+
+      if (creationState.selectedTool.id === "rectangle") {
         ctx.strokeRect(startPos.x, startPos.y, width, height);
-      } else if (creationState.selectedTool.id === 'circle') {
+      } else if (creationState.selectedTool.id === "circle") {
         const radius = Math.sqrt(width * width + height * height);
         ctx.beginPath();
         ctx.arc(startPos.x, startPos.y, radius, 0, 2 * Math.PI);
         ctx.stroke();
       }
     }
-    
+
     setLastPos({ x, y });
   };
 
   const stopDrawing = () => {
     if (!isDrawing) return;
     setIsDrawing(false);
-    
+
     // For shapes, finalize the shape drawing
-    if (creationState.selectedTool.type === 'shape' && canvasRef.current) {
+    if (creationState.selectedTool.type === "shape" && canvasRef.current) {
       // The final shape is already drawn on canvas from the last draw call
       // Just need to save to history
     }
-    
+
     // Save to history
     if (canvasRef.current) {
       const imageData = canvasRef.current.toDataURL();
       // Update layer content and save to history
       onStateUpdate({
-        layers: creationState.layers.map((layer, index) => 
-          index === creationState.activeLayer 
+        layers: creationState.layers.map((layer, index) =>
+          index === creationState.activeLayer
             ? { ...layer, content: imageData }
             : layer
         ),
@@ -187,10 +235,10 @@ const CreationView: React.FC<CreationViewProps> = ({
           ...creationState.history.slice(0, creationState.historyIndex + 1),
           {
             layers: creationState.layers,
-            timestamp: Date.now()
-          }
+            timestamp: Date.now(),
+          },
         ],
-        historyIndex: creationState.historyIndex + 1
+        historyIndex: creationState.historyIndex + 1,
       });
     }
   };
@@ -207,9 +255,9 @@ const CreationView: React.FC<CreationViewProps> = ({
         ...creationState.selectedTool,
         settings: {
           ...creationState.selectedTool.settings,
-          color
-        }
-      }
+          color,
+        },
+      },
     });
     setShowColorPicker(false);
   };
@@ -220,9 +268,9 @@ const CreationView: React.FC<CreationViewProps> = ({
         ...creationState.selectedTool,
         settings: {
           ...creationState.selectedTool.settings,
-          size
-        }
-      }
+          size,
+        },
+      },
     });
   };
 
@@ -233,13 +281,13 @@ const CreationView: React.FC<CreationViewProps> = ({
       name: `Layer ${creationState.layers.length + 1}`,
       visible: true,
       opacity: 1,
-      content: '',
-      type: 'drawing'
+      content: "",
+      type: "drawing",
     };
-    
+
     onStateUpdate({
       layers: [...creationState.layers, newLayer],
-      activeLayer: creationState.layers.length
+      activeLayer: creationState.layers.length,
     });
   };
 
@@ -247,46 +295,66 @@ const CreationView: React.FC<CreationViewProps> = ({
     onStateUpdate({
       layers: creationState.layers.map((layer, index) =>
         index === layerIndex ? { ...layer, visible: !layer.visible } : layer
-      )
+      ),
     });
   };
 
   const selectLayer = (layerIndex: number) => {
     onStateUpdate({ activeLayer: layerIndex });
-  };
-  // Canvas setup
+  }; // Canvas setup
   useEffect(() => {
     if (canvasRef.current) {
       const canvas = canvasRef.current;
       canvas.width = creationState.canvasSize.width;
       canvas.height = creationState.canvasSize.height;
-      
-      const ctx = canvas.getContext('2d');
+
+      const ctx = canvas.getContext("2d");
       if (ctx) {
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Clear canvas to transparent instead of white background
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Set up initial canvas properties
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
       }
     }
   }, [creationState.canvasSize, canvasRef]);
-
   const getToolIcon = (toolType: string) => {
-    const tool = tools.find(t => t.type === toolType);
-    if (tool?.id === 'rectangle') return <Square className="w-5 h-5" />;
-    if (tool?.id === 'circle') return <Circle className="w-5 h-5" />;
-    
+    const tool = tools.find((t) => t.type === toolType);
+    if (tool?.id === "rectangle") return <Square className="w-5 h-5" />;
+    if (tool?.id === "circle") return <Circle className="w-5 h-5" />;
+
     switch (toolType) {
-      case 'brush': return <Brush className="w-5 h-5" />;
-      case 'eraser': return <Eraser className="w-5 h-5" />;
-      case 'text': return <Type className="w-5 h-5" />;
-      case 'shape': return <Square className="w-5 h-5" />;
-      default: return <Brush className="w-5 h-5" />;
+      case "brush":
+        return <Brush className="w-5 h-5" />;
+      case "eraser":
+        return <Eraser className="w-5 h-5" />;
+      case "text":
+        return <Type className="w-5 h-5" />;
+      case "shape":
+        return <Square className="w-5 h-5" />;
+      default:
+        return <Brush className="w-5 h-5" />;
+    }
+  };
+
+  // Get cursor style based on selected tool
+  const getCursorStyle = () => {
+    switch (creationState.selectedTool.type) {
+      case "eraser":
+        return "cursor-cell";
+      case "text":
+        return "cursor-text";
+      case "brush":
+      case "shape":
+      default:
+        return "cursor-crosshair";
     }
   };
 
   return (
     <div className="h-full space-y-6">
       {/* Tools Panel */}
-      <motion.div 
+      <motion.div
         className="backdrop-blur-sm rounded-2xl p-4 bg-white/80 dark:bg-[#1A1A1A]/80 border border-gray-200/50 dark:border-gray-800/50"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -295,7 +363,7 @@ const CreationView: React.FC<CreationViewProps> = ({
         <h3 className="text-lg font-semibold mb-4 bg-gradient-to-r from-purple-600 to-pink-600 dark:from-amber-400 dark:to-orange-500 bg-clip-text text-transparent">
           Creation Tools
         </h3>
-          {/* Tool Selection */}
+        {/* Tool Selection */}
         <div className="grid grid-cols-5 gap-2 mb-4">
           {tools.map((tool) => (
             <button
@@ -303,8 +371,8 @@ const CreationView: React.FC<CreationViewProps> = ({
               onClick={() => selectTool(tool)}
               className={`p-3 rounded-xl transition-all duration-200 flex items-center justify-center ${
                 creationState.selectedTool.id === tool.id
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg scale-105'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg scale-105"
+                  : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
               }`}
               title={tool.name}
             >
@@ -321,13 +389,16 @@ const CreationView: React.FC<CreationViewProps> = ({
             <button
               onClick={() => setShowColorPicker(!showColorPicker)}
               className="w-full h-10 rounded-lg border-2 border-gray-300 dark:border-gray-600 relative overflow-hidden"
-              style={{ backgroundColor: creationState.selectedTool.settings?.color || '#000000' }}
+              style={{
+                backgroundColor:
+                  creationState.selectedTool.settings?.color || "#000000",
+              }}
             >
               <div className="absolute inset-0 flex items-center justify-center">
                 <Palette className="w-5 h-5 text-white drop-shadow-lg" />
               </div>
             </button>
-            
+
             {showColorPicker && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -369,8 +440,8 @@ const CreationView: React.FC<CreationViewProps> = ({
                     onClick={() => updateToolSize(size)}
                     className={`px-2 py-1 text-xs rounded ${
                       creationState.selectedTool.settings?.size === size
-                        ? 'bg-purple-500 text-white'
-                        : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                        ? "bg-purple-500 text-white"
+                        : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
                     }`}
                   >
                     {size}
@@ -383,7 +454,7 @@ const CreationView: React.FC<CreationViewProps> = ({
       </motion.div>
 
       {/* Canvas Area */}
-      <motion.div 
+      <motion.div
         className="backdrop-blur-sm rounded-2xl p-4 bg-white/80 dark:bg-[#1A1A1A]/80 border border-gray-200/50 dark:border-gray-800/50"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -404,26 +475,25 @@ const CreationView: React.FC<CreationViewProps> = ({
               <ZoomIn className="w-4 h-4" />
             </button>
           </div>
-        </div>
-        
+        </div>{" "}
         <div className="relative bg-gray-100 dark:bg-gray-800 rounded-xl p-4 overflow-hidden">
           <canvas
             ref={canvasRef}
-            className="border border-gray-300 dark:border-gray-600 rounded-lg cursor-crosshair max-w-full h-auto"
+            className={`border border-gray-300 dark:border-gray-600 rounded-lg max-w-full h-auto bg-white ${getCursorStyle()}`}
             onMouseDown={startDrawing}
             onMouseMove={draw}
             onMouseUp={stopDrawing}
             onMouseLeave={stopDrawing}
-            style={{ 
+            style={{
               transform: `scale(${creationState.zoom})`,
-              transformOrigin: 'top left'
+              transformOrigin: "top left",
             }}
           />
         </div>
       </motion.div>
 
       {/* Layers Panel */}
-      <motion.div 
+      <motion.div
         className="backdrop-blur-sm rounded-2xl p-4 bg-white/80 dark:bg-[#1A1A1A]/80 border border-gray-200/50 dark:border-gray-800/50"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -440,15 +510,15 @@ const CreationView: React.FC<CreationViewProps> = ({
             <Plus className="w-4 h-4" />
           </button>
         </div>
-        
+
         <div className="space-y-2 max-h-32 overflow-y-auto">
           {creationState.layers.map((layer, index) => (
             <div
               key={layer.id}
               className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${
                 index === creationState.activeLayer
-                  ? 'bg-purple-100 dark:bg-purple-900/30 border border-purple-300 dark:border-purple-700'
-                  : 'bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  ? "bg-purple-100 dark:bg-purple-900/30 border border-purple-300 dark:border-purple-700"
+                  : "bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800"
               }`}
               onClick={() => selectLayer(index)}
             >
@@ -460,7 +530,11 @@ const CreationView: React.FC<CreationViewProps> = ({
                   }}
                   className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                 >
-                  {layer.visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                  {layer.visible ? (
+                    <Eye className="w-4 h-4" />
+                  ) : (
+                    <EyeOff className="w-4 h-4" />
+                  )}
                 </button>
                 <Layers className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                 <span className="text-sm font-medium">{layer.name}</span>

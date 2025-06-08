@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  Plus, 
-  Minus, 
-  Tag, 
-  FileText, 
-  User, 
-  Percent, 
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import {
+  Plus,
+  Minus,
+  Tag,
+  FileText,
+  User,
+  Percent,
   DollarSign,
   Hash,
   Image,
@@ -14,10 +14,10 @@ import {
   Camera,
   Music,
   Video,
-  Gamepad2
-} from 'lucide-react';
+  Gamepad2,
+} from "lucide-react";
 
-import { NFTMetadata, NFTAttribute } from './types';
+import { NFTMetadata, NFTAttribute } from "./types";
 
 interface NFTMetadataFormProps {
   metadata: NFTMetadata;
@@ -26,25 +26,44 @@ interface NFTMetadataFormProps {
 
 const NFTMetadataForm: React.FC<NFTMetadataFormProps> = ({
   metadata,
-  onMetadataChange
+  onMetadataChange,
 }) => {
   const [newAttribute, setNewAttribute] = useState<NFTAttribute>({
-    trait_type: '',
-    value: ''
+    trait_type: "",
+    value: "",
   });
 
   const categories = [
-    { value: 'Art', icon: <Palette className="w-4 h-4" />, label: 'Digital Art' },
-    { value: 'Photography', icon: <Camera className="w-4 h-4" />, label: 'Photography' },
-    { value: 'Music', icon: <Music className="w-4 h-4" />, label: 'Music' },
-    { value: 'Video', icon: <Video className="w-4 h-4" />, label: 'Video' },
-    { value: 'Gaming', icon: <Gamepad2 className="w-4 h-4" />, label: 'Gaming' },
-    { value: 'Collectible', icon: <Hash className="w-4 h-4" />, label: 'Collectible' }
+    {
+      value: "Art",
+      icon: <Palette className="w-4 h-4" />,
+      label: "Digital Art",
+    },
+    {
+      value: "Photography",
+      icon: <Camera className="w-4 h-4" />,
+      label: "Photography",
+    },
+    { value: "Music", icon: <Music className="w-4 h-4" />, label: "Music" },
+    { value: "Video", icon: <Video className="w-4 h-4" />, label: "Video" },
+    {
+      value: "Gaming",
+      icon: <Gamepad2 className="w-4 h-4" />,
+      label: "Gaming",
+    },
+    {
+      value: "Collectible",
+      icon: <Hash className="w-4 h-4" />,
+      label: "Collectible",
+    },
   ];
-  const handleInputChange = (field: keyof NFTMetadata, value: string | number) => {
+  const handleInputChange = (
+    field: keyof NFTMetadata,
+    value: string | number
+  ) => {
     onMetadataChange({
       ...metadata,
-      [field]: value
+      [field]: value,
     });
   };
 
@@ -52,30 +71,34 @@ const NFTMetadataForm: React.FC<NFTMetadataFormProps> = ({
     if (newAttribute.trait_type && newAttribute.value) {
       onMetadataChange({
         ...metadata,
-        attributes: [...metadata.attributes, { ...newAttribute }]
+        attributes: [...metadata.attributes, { ...newAttribute }],
       });
-      setNewAttribute({ trait_type: '', value: '' });
+      setNewAttribute({ trait_type: "", value: "" });
     }
   };
 
   const removeAttribute = (index: number) => {
     onMetadataChange({
       ...metadata,
-      attributes: metadata.attributes.filter((_, i) => i !== index)
+      attributes: metadata.attributes.filter((_, i) => i !== index),
     });
   };
-  const updateAttribute = (index: number, field: keyof NFTAttribute, value: string | number) => {
+  const updateAttribute = (
+    index: number,
+    field: keyof NFTAttribute,
+    value: string | number
+  ) => {
     const updatedAttributes = metadata.attributes.map((attr, i) =>
       i === index ? { ...attr, [field]: value } : attr
     );
     onMetadataChange({
       ...metadata,
-      attributes: updatedAttributes
+      attributes: updatedAttributes,
     });
   };
 
   return (
-    <motion.div 
+    <motion.div
       className="backdrop-blur-sm rounded-2xl p-6 bg-white/80 dark:bg-[#1A1A1A]/80 border border-gray-200/50 dark:border-gray-800/50"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -84,7 +107,7 @@ const NFTMetadataForm: React.FC<NFTMetadataFormProps> = ({
       <h3 className="text-xl font-bold mb-6 bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-amber-400 dark:to-orange-500 bg-clip-text text-transparent">
         NFT Metadata
       </h3>
-      
+
       <div className="space-y-6">
         {/* Basic Information */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -97,7 +120,7 @@ const NFTMetadataForm: React.FC<NFTMetadataFormProps> = ({
             <input
               type="text"
               value={metadata.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
+              onChange={(e) => handleInputChange("name", e.target.value)}
               placeholder="Enter NFT name..."
               className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 focus:border-purple-500 dark:focus:border-amber-400 focus:ring-2 focus:ring-purple-500/20 dark:focus:ring-amber-400/20 outline-none transition-all duration-200"
             />
@@ -112,7 +135,7 @@ const NFTMetadataForm: React.FC<NFTMetadataFormProps> = ({
             <div className="relative">
               <select
                 value={metadata.category}
-                onChange={(e) => handleInputChange('category', e.target.value)}
+                onChange={(e) => handleInputChange("category", e.target.value)}
                 className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 focus:border-purple-500 dark:focus:border-amber-400 focus:ring-2 focus:ring-purple-500/20 dark:focus:ring-amber-400/20 outline-none transition-all duration-200 appearance-none"
               >
                 {categories.map((category) => (
@@ -133,7 +156,7 @@ const NFTMetadataForm: React.FC<NFTMetadataFormProps> = ({
             <input
               type="text"
               value={metadata.creator}
-              onChange={(e) => handleInputChange('creator', e.target.value)}
+              onChange={(e) => handleInputChange("creator", e.target.value)}
               placeholder="Creator name..."
               className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 focus:border-purple-500 dark:focus:border-amber-400 focus:ring-2 focus:ring-purple-500/20 dark:focus:ring-amber-400/20 outline-none transition-all duration-200"
             />
@@ -152,11 +175,15 @@ const NFTMetadataForm: React.FC<NFTMetadataFormProps> = ({
                 max="50"
                 step="0.1"
                 value={metadata.royalty}
-                onChange={(e) => handleInputChange('royalty', parseFloat(e.target.value) || 0)}
+                onChange={(e) =>
+                  handleInputChange("royalty", parseFloat(e.target.value) || 0)
+                }
                 className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 focus:border-purple-500 dark:focus:border-amber-400 focus:ring-2 focus:ring-purple-500/20 dark:focus:ring-amber-400/20 outline-none transition-all duration-200"
               />
               <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                <span className="text-gray-500 dark:text-gray-400 text-sm">%</span>
+                <span className="text-gray-500 dark:text-gray-400 text-sm">
+                  %
+                </span>
               </div>
             </div>
           </div>
@@ -170,8 +197,8 @@ const NFTMetadataForm: React.FC<NFTMetadataFormProps> = ({
           </label>
           <input
             type="text"
-            value={metadata.price || ''}
-            onChange={(e) => handleInputChange('price', e.target.value)}
+            value={metadata.price || ""}
+            onChange={(e) => handleInputChange("price", e.target.value)}
             placeholder="e.g., 0.5 ETH, $100, etc..."
             className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 focus:border-purple-500 dark:focus:border-amber-400 focus:ring-2 focus:ring-purple-500/20 dark:focus:ring-amber-400/20 outline-none transition-all duration-200"
           />
@@ -185,7 +212,7 @@ const NFTMetadataForm: React.FC<NFTMetadataFormProps> = ({
           </label>
           <textarea
             value={metadata.description}
-            onChange={(e) => handleInputChange('description', e.target.value)}
+            onChange={(e) => handleInputChange("description", e.target.value)}
             placeholder="Describe your NFT..."
             rows={4}
             className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 focus:border-purple-500 dark:focus:border-amber-400 focus:ring-2 focus:ring-purple-500/20 dark:focus:ring-amber-400/20 outline-none transition-all duration-200 resize-none"
@@ -200,8 +227,8 @@ const NFTMetadataForm: React.FC<NFTMetadataFormProps> = ({
           </label>
           <input
             type="text"
-            value={metadata.collection || ''}
-            onChange={(e) => handleInputChange('collection', e.target.value)}
+            value={metadata.collection || ""}
+            onChange={(e) => handleInputChange("collection", e.target.value)}
             placeholder="Collection name..."
             className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 focus:border-purple-500 dark:focus:border-amber-400 focus:ring-2 focus:ring-purple-500/20 dark:focus:ring-amber-400/20 outline-none transition-all duration-200"
           />
@@ -213,7 +240,7 @@ const NFTMetadataForm: React.FC<NFTMetadataFormProps> = ({
             <Tag className="w-4 h-4" />
             <span>Properties & Attributes</span>
           </label>
-          
+
           {/* Existing Attributes */}
           {metadata.attributes.length > 0 && (
             <div className="space-y-3 mb-4">
@@ -227,14 +254,18 @@ const NFTMetadataForm: React.FC<NFTMetadataFormProps> = ({
                   <input
                     type="text"
                     value={attribute.trait_type}
-                    onChange={(e) => updateAttribute(index, 'trait_type', e.target.value)}
+                    onChange={(e) =>
+                      updateAttribute(index, "trait_type", e.target.value)
+                    }
                     placeholder="Property name"
                     className="flex-1 p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 focus:border-purple-500 dark:focus:border-amber-400 outline-none transition-all duration-200"
                   />
                   <input
                     type="text"
                     value={attribute.value}
-                    onChange={(e) => updateAttribute(index, 'value', e.target.value)}
+                    onChange={(e) =>
+                      updateAttribute(index, "value", e.target.value)
+                    }
                     placeholder="Value"
                     className="flex-1 p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 focus:border-purple-500 dark:focus:border-amber-400 outline-none transition-all duration-200"
                   />
@@ -254,14 +285,21 @@ const NFTMetadataForm: React.FC<NFTMetadataFormProps> = ({
             <input
               type="text"
               value={newAttribute.trait_type}
-              onChange={(e) => setNewAttribute(prev => ({ ...prev, trait_type: e.target.value }))}
+              onChange={(e) =>
+                setNewAttribute((prev) => ({
+                  ...prev,
+                  trait_type: e.target.value,
+                }))
+              }
               placeholder="Property name (e.g., Color, Rarity)"
               className="flex-1 p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 focus:border-purple-500 dark:focus:border-amber-400 outline-none transition-all duration-200"
             />
             <input
               type="text"
               value={newAttribute.value}
-              onChange={(e) => setNewAttribute(prev => ({ ...prev, value: e.target.value }))}
+              onChange={(e) =>
+                setNewAttribute((prev) => ({ ...prev, value: e.target.value }))
+              }
               placeholder="Value (e.g., Blue, Rare)"
               className="flex-1 p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 focus:border-purple-500 dark:focus:border-amber-400 outline-none transition-all duration-200"
             />
