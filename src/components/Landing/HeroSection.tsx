@@ -123,7 +123,7 @@ export default function EnhancedHeroSection() {
     };
   }, [mouseX, mouseY, windowSize]);  // Effect để xử lý auto-sliding
   useEffect(() => {
-    let intervalId: NodeJS.Timeout;
+    let intervalId: number; // Thay đổi NodeJS.Timeout thành number
     
     // Auto-slide khi người dùng không tương tác với slider
     if (!userInteracted) {
@@ -148,7 +148,7 @@ export default function EnhancedHeroSection() {
 
   // Effect tạm dừng auto-slide nếu người dùng tương tác, và khôi phục sau 10 giây
   useEffect(() => {
-    let pauseTimeout: NodeJS.Timeout;
+    let pauseTimeout: number; // Thay đổi NodeJS.Timeout thành number
     
     if (userInteracted) {
       pauseTimeout = setTimeout(() => {
