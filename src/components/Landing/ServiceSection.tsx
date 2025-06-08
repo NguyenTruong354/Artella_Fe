@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import ServiceCard from "./ServiceCard"; // Import the new component
 
 const ServiceSection = () => {
   const services = [
@@ -64,72 +64,7 @@ const ServiceSection = () => {
           {/* Services grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 max-w-7xl mx-auto">
           {services.map((service, index) => (
-            <motion.div
-              key={index}
-              className="bg-white/70 backdrop-blur-md rounded-3xl p-8 text-center 
-                        border-2 border-[#e2d6c3] relative overflow-hidden shadow-lg
-                        group transition-all duration-500"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false }}
-              transition={{ duration: 0.5, delay: index * 0.2 }}
-            >
-              {/* Background color overlay */}
-              <div className={`absolute inset-0 bg-gradient-to-r ${service.bgColor} 
-                            translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-700 ease-out`} />
-              
-              {/* Shine overlay */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent 
-                            translate-x-[100%] group-hover:translate-x-[-100%] transition-transform duration-1000 ease-in-out delay-200" />              {/* Icon */}
-              <div className="flex justify-center relative mb-6">
-                <motion.div 
-                  className="relative z-10"
-                  whileHover={{ 
-                    scale: 1.1,
-                    rotate: [0, -5, 5, 0],
-                    transition: { duration: 0.5 }
-                  }}
-                >                  <div className={`p-5 rounded-full bg-gradient-to-br ${service.bgColor} shadow-lg 
-                                group-hover:shadow-xl transition-all duration-300`}>
-                    <img 
-                      src={service.icon}
-                      alt={service.title}
-                      className="w-16 h-16 md:w-20 md:h-20 object-contain transform group-hover:scale-110 transition-transform duration-300"
-                    />
-                  </div>
-                </motion.div>
-              </div>
-                {/* Content */}
-              <div className="relative z-10 space-y-2 mb-6">
-                <motion.h3 
-                  className={`text-xl md:text-2xl font-serif ${service.textColor}`}
-                >
-                  {service.title}
-                </motion.h3>
-                <motion.p 
-                  className="text-sm font-medium text-[#8a9690] uppercase tracking-widest"
-                >
-                  {service.subtitle}
-                </motion.p>
-              </div>
-              
-              <p className="text-sm md:text-base font-light text-[#62737e] mb-8 relative z-10 max-w-xs mx-auto leading-relaxed">
-                {service.description}
-              </p>                {/* Button */}
-              <motion.button
-                className="bg-gradient-to-r from-[#c2a792] to-[#d8bca6] text-white px-8 py-3 
-                          text-sm rounded-full font-medium shadow-lg relative z-10 
-                          uppercase tracking-wider border border-white/20
-                          hover:shadow-xl hover:from-[#d8bca6] hover:to-[#c2a792] transition-all duration-300"
-                whileHover={{ 
-                  scale: 1.05,
-                  boxShadow: "0 10px 20px rgba(194, 167, 146, 0.3)",
-                }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {service.buttonText}
-              </motion.button>
-            </motion.div>
+            <ServiceCard key={index} service={service} index={index} />
           ))}
         </div>
       </div>
