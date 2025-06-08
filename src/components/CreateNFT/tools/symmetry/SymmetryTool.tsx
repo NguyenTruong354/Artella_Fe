@@ -1,7 +1,7 @@
 import React from 'react';
 import { BaseTool } from '../BaseTool';
 import { ToolProps, DrawingContext } from '../types';
-import { calculateSymmetryPoints, drawSymmetryAxis } from '../utils/symmetryUtils';
+import { calculateSymmetryPoints, drawSymmetryAxis, symmetryUtils } from '../utils/symmetryUtils';
 
 export class SymmetryTool extends BaseTool {
   private isDrawing: boolean = false;
@@ -28,51 +28,56 @@ export class SymmetryTool extends BaseTool {
     this.lastPos = { x: context.x, y: context.y };
   }
 
-  onMouseUp(_context: DrawingContext): void {
+  onMouseUp(): void { // Removed _context as it's not used
     this.isDrawing = false;
     this.lastPos = null;
   }
 
   private drawWithSymmetry(context: DrawingContext, from: { x: number; y: number } | null, to: { x: number; y: number }): void {
-    if (!context.canvas) return;    const ctx = context.canvas.getContext('2d');
+    if (!context.canvas) return;
+    const ctx = context.canvas.getContext('2d');
     if (!ctx) return;
 
-    const canvasCenter = {
-      x: context.canvas.width / 2,
-      y: context.canvas.height / 2
-    };
-
-    // Get all symmetry points
     const symmetryOptions = this.getSymmetryOptions();
-    const points = calculateSymmetryPoints(canvasCenter.x, canvasCenter.y, to.x, to.y, symmetryOptions);ctx.save();
+    // Use symmetryUtils.getSymmetryCenter to respect custom axis from settings
+    const effectiveCenter = symmetryUtils.getSymmetryCenter(context.canvas, symmetryOptions.axis);
+
+    // Get all symmetry points for the 'to' position
+    const pointsTo = calculateSymmetryPoints(effectiveCenter.x, effectiveCenter.y, to.x, to.y, symmetryOptions);
+    
+    ctx.save();
     ctx.strokeStyle = this.getToolColor();
     ctx.lineWidth = this.getToolSize();
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
     // Draw on all symmetry points
-    points.forEach(point => {
+    pointsTo.forEach((pointTo, index) => { // Added index for correct 'from' point mapping
       if (from) {
-        const fromPoints = calculateSymmetryPoints(canvasCenter.x, canvasCenter.y, from.x, from.y, symmetryOptions);
-        const correspondingFrom = fromPoints.find((_, index) => index === points.indexOf(point));
+        // Calculate 'from' points based on the same effectiveCenter
+        const pointsFrom = calculateSymmetryPoints(effectiveCenter.x, effectiveCenter.y, from.x, from.y, symmetryOptions);
+        const correspondingFrom = pointsFrom[index]; // Correctly map using index
         
         if (correspondingFrom) {
           ctx.beginPath();
           ctx.moveTo(correspondingFrom.x, correspondingFrom.y);
-          ctx.lineTo(point.x, point.y);
+          ctx.lineTo(pointTo.x, pointTo.y);
           ctx.stroke();
         }
-      } else {        // Draw dot for initial point
+      } else {
+        // Draw dot for initial point
+        ctx.fillStyle = this.getToolColor(); // Set fillStyle for the dot
         ctx.beginPath();
-        ctx.arc(point.x, point.y, this.getToolSize() / 2, 0, 2 * Math.PI);
+        ctx.arc(pointTo.x, pointTo.y, this.getToolSize() / 2, 0, 2 * Math.PI);
         ctx.fill();
       }
     });
 
-    ctx.restore();    // Draw symmetry axis if enabled
-    if ((this.props.settings?.showAxis as boolean) !== false) {
-      const symmetryOptions = this.getSymmetryOptions();
-      drawSymmetryAxis(ctx, context.canvas, symmetryOptions, canvasCenter.x, canvasCenter.y);
+    ctx.restore();
+    // Draw symmetry axis if enabled
+    if (symmetryOptions.enabled && (this.props.settings?.showAxis as boolean) !== false) {
+      // Pass effectiveCenter to drawSymmetryAxis
+      drawSymmetryAxis(ctx, context.canvas, symmetryOptions, effectiveCenter.x, effectiveCenter.y);
     }
   }
   render(): React.ReactElement {

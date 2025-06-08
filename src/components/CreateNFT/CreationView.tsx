@@ -1,5 +1,5 @@
 import React, { useEffect, useState, RefObject } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Layers,
   Eye,
@@ -7,6 +7,9 @@ import {
   Plus,
   ZoomIn,
   ZoomOut,
+  Settings,
+  Palette,
+  Sliders,
 } from "lucide-react";
 
 import { CreationState, CanvasTool, CanvasLayer } from "./types";
@@ -27,10 +30,16 @@ const CreationView: React.FC<CreationViewProps> = ({
   tools,
   onStateUpdate,
   canvasRef,
-}) => {  const [isDrawing, setIsDrawing] = useState(false);
+}) => {
+  const [isDrawing, setIsDrawing] = useState(false);
   const [lastPos, setLastPos] = useState({ x: 0, y: 0 });
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [activeToolInstance, setActiveToolInstance] = useState<ToolHandler | null>(null);
+  
+  // UI State for collapsible panels
+  const [isToolsPanelOpen, setIsToolsPanelOpen] = useState(true);
+  const [isLayersPanelOpen, setIsLayersPanelOpen] = useState(false);
+  const [activeSettingsTab, setActiveSettingsTab] = useState<'color' | 'size' | 'advanced'>('color');
   // Initialize tool instance when selectedTool changes
   useEffect(() => {    const toolInfo = ToolRegistry.getTool(creationState.selectedTool.type);
     if (toolInfo) {
@@ -210,147 +219,222 @@ const CreationView: React.FC<CreationViewProps> = ({
         return "cursor-crosshair";
     }
   };
-
   return (
-    <div className="h-full space-y-6">
-      {/* Tools Panel */}
+    <div className="h-full flex flex-col">
+      {/* Compact Floating Toolbar */}
       <motion.div
-        className="backdrop-blur-sm rounded-2xl p-4 bg-white/80 dark:bg-[#1A1A1A]/80 border border-gray-200/50 dark:border-gray-800/50"
-        initial={{ opacity: 0, y: 20 }}
+        className="sticky top-0 z-10 backdrop-blur-sm bg-white/90 dark:bg-[#1A1A1A]/90 border-b border-gray-200/50 dark:border-gray-800/50 p-2"
+        initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
+        transition={{ duration: 0.3 }}
       >
-        <h3 className="text-lg font-semibold mb-4 bg-gradient-to-r from-purple-600 to-pink-600 dark:from-amber-400 dark:to-orange-500 bg-clip-text text-transparent">
-          Creation Tools
-        </h3>
-          {/* Tool Selection */}
-        <ToolSelector
-          selectedToolId={creationState.selectedTool.id}
-          onToolSelect={selectTool}
-        />
+        <div className="flex items-center justify-between">
+          {/* Primary Tools - Always Visible */}
+          <div className="flex items-center space-x-1">
+            <ToolSelector
+              selectedToolId={creationState.selectedTool.id}
+              onToolSelect={selectTool}
+              compact={true}
+            />
+          </div>
 
-        {/* Tool Settings */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-          {/* Color Picker */}
-          <ColorPicker
-            selectedColor={creationState.selectedTool.settings?.color || "#000000"}
-            onColorSelect={(color) => handleToolSettingsUpdate({ color })}
-          />
+          {/* Quick Settings */}
+          <div className="flex items-center space-x-2">
+            {/* Color Picker - Compact */}
+            <div className="flex items-center space-x-1">
+              <div 
+                className="w-6 h-6 rounded border-2 border-gray-300 dark:border-gray-600 cursor-pointer"
+                style={{ backgroundColor: creationState.selectedTool.settings?.color || "#000000" }}
+                onClick={() => setActiveSettingsTab('color')}
+              />
+            </div>
 
-          {/* Size Slider */}
-          <SizeSlider
-            size={creationState.selectedTool.settings?.size || 10}
-            onSizeChange={(size) => handleToolSettingsUpdate({ size })}
-          />          {/* Tool-specific Settings */}
-          <div className="col-span-1 sm:col-span-2">
-            <ToolSettingsPanel
-              toolId={creationState.selectedTool.id}
-              settings={creationState.selectedTool.settings || {}}
-              onSettingsChange={handleToolSettingsUpdate}
+            {/* Size Indicator */}
+            <div className="flex items-center space-x-1 text-xs text-gray-600 dark:text-gray-400">
+              <span>{creationState.selectedTool.settings?.size || 10}px</span>
+            </div>
+
+            {/* Toggle Panels */}
+            <button
+              onClick={() => setIsToolsPanelOpen(!isToolsPanelOpen)}
+              className="p-1.5 bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+            
+            <button
+              onClick={() => setIsLayersPanelOpen(!isLayersPanelOpen)}
+              className="p-1.5 bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            >
+              <Layers className="w-4 h-4" />
+            </button>
+
+            {/* Zoom Controls */}
+            <div className="flex items-center space-x-1 border-l border-gray-300 dark:border-gray-600 pl-2">
+              <button className="p-1.5 bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                <ZoomOut className="w-4 h-4" />
+              </button>
+              <span className="text-xs text-gray-600 dark:text-gray-400 min-w-[35px] text-center">
+                {Math.round(creationState.zoom * 100)}%
+              </span>
+              <button className="p-1.5 bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                <ZoomIn className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Expandable Settings Panel */}
+        <AnimatePresence>
+          {isToolsPanelOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden mt-2 border-t border-gray-200/50 dark:border-gray-800/50 pt-2"
+            >
+              {/* Settings Tabs */}
+              <div className="flex space-x-1 mb-2">
+                {[
+                  { id: 'color', label: 'Color', icon: Palette },
+                  { id: 'size', label: 'Size', icon: Sliders },
+                  { id: 'advanced', label: 'Advanced', icon: Settings }
+                ].map(({ id, label, icon: Icon }) => (
+                  <button
+                    key={id}
+                    onClick={() => setActiveSettingsTab(id as 'color' | 'size' | 'advanced')}
+                    className={`flex items-center space-x-1 px-2 py-1 rounded text-xs transition-colors ${
+                      activeSettingsTab === id
+                        ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    <Icon className="w-3 h-3" />
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Settings Content */}
+              <div className="min-h-[60px]">
+                {activeSettingsTab === 'color' && (
+                  <ColorPicker
+                    selectedColor={creationState.selectedTool.settings?.color || "#000000"}
+                    onColorSelect={(color) => handleToolSettingsUpdate({ color })}
+                    compact={true}
+                  />
+                )}
+                
+                {activeSettingsTab === 'size' && (
+                  <SizeSlider
+                    size={creationState.selectedTool.settings?.size || 10}
+                    onSizeChange={(size) => handleToolSettingsUpdate({ size })}
+                    compact={true}
+                  />
+                )}
+                
+                {activeSettingsTab === 'advanced' && (
+                  <ToolSettingsPanel
+                    toolId={creationState.selectedTool.id}
+                    settings={creationState.selectedTool.settings || {}}
+                    onSettingsChange={handleToolSettingsUpdate}
+                    compact={true}
+                  />
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex">
+        {/* Canvas Area */}
+        <div className="flex-1 p-4">
+          <div className="relative bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden h-full">
+            <canvas
+              ref={canvasRef}
+              className={`border border-gray-300 dark:border-gray-600 rounded-lg max-w-full max-h-full bg-white ${getCursorStyle()}`}
+              onMouseDown={startDrawing}
+              onMouseMove={draw}
+              onMouseUp={stopDrawing}
+              onMouseLeave={stopDrawing}
+              style={{
+                transform: `scale(${creationState.zoom})`,
+                transformOrigin: "top left",
+                width: "100%",
+                height: "100%",
+                objectFit: "contain"
+              }}
             />
           </div>
         </div>
-      </motion.div>
 
-      {/* Canvas Panel */}
-      <motion.div
-        className="backdrop-blur-sm rounded-2xl p-4 bg-white/80 dark:bg-[#1A1A1A]/80 border border-gray-200/50 dark:border-gray-800/50"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-      >
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-amber-400 dark:to-orange-500 bg-clip-text text-transparent">
-            Canvas
-          </h3>
-          <div className="flex items-center space-x-2">
-            <button className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-              <ZoomOut className="w-4 h-4" />
-            </button>
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              {Math.round(creationState.zoom * 100)}%
-            </span>
-            <button className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-              <ZoomIn className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        <div className="relative bg-gray-100 dark:bg-gray-800 rounded-xl p-4 overflow-hidden">
-          <canvas
-            ref={canvasRef}
-            className={`border border-gray-300 dark:border-gray-600 rounded-lg max-w-full h-auto bg-white ${getCursorStyle()}`}
-            onMouseDown={startDrawing}
-            onMouseMove={draw}
-            onMouseUp={stopDrawing}
-            onMouseLeave={stopDrawing}
-            style={{
-              transform: `scale(${creationState.zoom})`,
-              transformOrigin: "top left",
-            }}
-          />
-        </div>
-      </motion.div>
-
-      {/* Layers Panel */}
-      <motion.div
-        className="backdrop-blur-sm rounded-2xl p-4 bg-white/80 dark:bg-[#1A1A1A]/80 border border-gray-200/50 dark:border-gray-800/50"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-amber-400 dark:to-orange-500 bg-clip-text text-transparent">
-            Layers
-          </h3>
-          <button
-            onClick={addLayer}
-            className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:shadow-lg transition-all duration-200"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-        </div>
-
-        <div className="space-y-2 max-h-48 overflow-y-auto">
-          {creationState.layers.map((layer, index) => (
-            <div
-              key={layer.id}
-              className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all duration-200 ${
-                index === creationState.activeLayer
-                  ? "bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-700"
-                  : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
-              }`}
-              onClick={() => selectLayer(index)}
+        {/* Floating Layers Panel */}
+        <AnimatePresence>
+          {isLayersPanelOpen && (
+            <motion.div
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 280, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="bg-white/90 dark:bg-[#1A1A1A]/90 backdrop-blur-sm border-l border-gray-200/50 dark:border-gray-800/50 overflow-hidden"
             >
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleLayerVisibility(index);
-                  }}
-                  className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
-                >
-                  {layer.visible ? (
-                    <Eye className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                  ) : (
-                    <EyeOff className="w-4 h-4 text-gray-400" />
-                  )}
-                </button>
-                <div>
-                  <p className="text-sm font-medium">{layer.name}</p>
-                  <p className="text-xs text-gray-500 capitalize">{layer.type}</p>
+              <div className="p-4 h-full flex flex-col">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-sm font-semibold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-amber-400 dark:to-orange-500 bg-clip-text text-transparent">
+                    Layers
+                  </h3>
+                  <button
+                    onClick={addLayer}
+                    className="p-1.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded hover:shadow-lg transition-all duration-200"
+                  >
+                    <Plus className="w-3 h-3" />
+                  </button>
+                </div>
+
+                <div className="flex-1 space-y-1 overflow-y-auto">
+                  {creationState.layers.map((layer, index) => (
+                    <div
+                      key={layer.id}
+                      className={`flex items-center justify-between p-2 rounded border cursor-pointer transition-all duration-200 ${
+                        index === creationState.activeLayer
+                          ? "bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-700"
+                          : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      }`}
+                      onClick={() => selectLayer(index)}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleLayerVisibility(index);
+                          }}
+                          className="p-0.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
+                        >
+                          {layer.visible ? (
+                            <Eye className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                          ) : (
+                            <EyeOff className="w-3 h-3 text-gray-400" />
+                          )}
+                        </button>
+                        <div>
+                          <p className="text-xs font-medium">{layer.name}</p>
+                          <p className="text-xs text-gray-500 capitalize">{layer.type}</p>
+                        </div>
+                      </div>
+                      <span className="text-xs text-gray-500">
+                        {Math.round(layer.opacity * 100)}%
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <span className="text-xs text-gray-500">
-                  {Math.round(layer.opacity * 100)}%
-                </span>
-                <Layers className="w-4 h-4 text-gray-400" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 };

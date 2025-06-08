@@ -1,20 +1,27 @@
 // Pattern generation utilities
-import { PatternOptions } from '../types';
+import { PatternOptions, WoodPatternSpecificOptions, StonePatternSpecificOptions, FabricPatternSpecificOptions } from '../types';
+
+// Helper type for combined options passed to generators
+type FullWoodOptions = WoodPatternSpecificOptions & { scale: number; baseColor?: string; };
+type FullStoneOptions = StonePatternSpecificOptions & { scale: number; baseColor?: string; };
+type FullFabricOptions = FabricPatternSpecificOptions & { scale: number; baseColor?: string; };
+// Marble and Metal might just use scale and baseColor from PatternOptions directly for now.
 
 export const patternGenerators = {
-  createWoodPattern: (scale: number = 1): HTMLCanvasElement => {
+  createWoodPattern: (options: FullWoodOptions): HTMLCanvasElement => {
     const patternCanvas = document.createElement('canvas');
     const patternCtx = patternCanvas.getContext('2d');
     if (!patternCtx) throw new Error('Cannot create pattern context');
 
-    const size = 50 * scale;
+    const size = 50 * options.scale; // Use options.scale
     patternCanvas.width = size;
     patternCanvas.height = size;
 
     // Wood grain pattern
-    patternCtx.fillStyle = '#8B4513';
+    // TODO: Implement usage of options.woodType, options.grainDirection, options.patternIntensity for more varied wood patterns.
+    patternCtx.fillStyle = options.baseColor || '#8B4513'; 
     patternCtx.fillRect(0, 0, size, size);
-    patternCtx.strokeStyle = '#654321';
+    patternCtx.strokeStyle = '#654321'; // Detail color, consider making this configurable via options
     patternCtx.lineWidth = 2;
     
     for (let i = 0; i < size; i += 8) {
@@ -27,17 +34,18 @@ export const patternGenerators = {
     return patternCanvas;
   },
 
-  createStonePattern: (scale: number = 1): HTMLCanvasElement => {
+  createStonePattern: (options: FullStoneOptions): HTMLCanvasElement => {
     const patternCanvas = document.createElement('canvas');
     const patternCtx = patternCanvas.getContext('2d');
     if (!patternCtx) throw new Error('Cannot create pattern context');
 
-    const size = 50 * scale;
+    const size = 50 * options.scale; // Use options.scale
     patternCanvas.width = size;
     patternCanvas.height = size;
 
     // Stone texture pattern
-    patternCtx.fillStyle = '#696969';
+    // TODO: Implement usage of options.stoneType, options.roughness, options.addCracks, options.weathered, options.patternIntensity for more varied stone textures.
+    patternCtx.fillStyle = options.baseColor || '#696969'; 
     patternCtx.fillRect(0, 0, size, size);
     
     // Add random stone-like shapes
@@ -57,19 +65,20 @@ export const patternGenerators = {
     return patternCanvas;
   },
 
-  createFabricPattern: (scale: number = 1): HTMLCanvasElement => {
+  createFabricPattern: (options: FullFabricOptions): HTMLCanvasElement => {
     const patternCanvas = document.createElement('canvas');
     const patternCtx = patternCanvas.getContext('2d');
     if (!patternCtx) throw new Error('Cannot create pattern context');
 
-    const size = 50 * scale;
+    const size = 50 * options.scale;
     patternCanvas.width = size;
     patternCanvas.height = size;
 
     // Fabric weave pattern
-    patternCtx.fillStyle = '#F5F5DC';
+    // TODO: Implement usage of options.fabricType, options.weaveStyle, options.threadThickness, options.patternIntensity for more varied fabric patterns.
+    patternCtx.fillStyle = options.baseColor || '#F5F5DC'; // Use options.baseColor
     patternCtx.fillRect(0, 0, size, size);
-    patternCtx.strokeStyle = '#DEB887';
+    patternCtx.strokeStyle = '#DEB887'; // Detail color, consider making this configurable via options
     patternCtx.lineWidth = 1;
     
     const spacing = size / 10;
@@ -143,17 +152,21 @@ export const patternGenerators = {
   ): CanvasPattern | null => {
     let patternCanvas: HTMLCanvasElement;
 
+    // Assuming PatternOptions is a discriminated union, TypeScript will narrow down 'options' type in each case.
     switch (options.type) {
       case 'wood':
-        patternCanvas = patternGenerators.createWoodPattern(options.scale);
+        patternCanvas = patternGenerators.createWoodPattern(options as WoodPatternSpecificOptions & { scale: number; baseColor?: string; });
         break;
       case 'stone':
-        patternCanvas = patternGenerators.createStonePattern(options.scale);
+        patternCanvas = patternGenerators.createStonePattern(options as StonePatternSpecificOptions & { scale: number; baseColor?: string; });
         break;
       case 'fabric':
-        patternCanvas = patternGenerators.createFabricPattern(options.scale);
+        patternCanvas = patternGenerators.createFabricPattern(options as FabricPatternSpecificOptions & { scale: number; baseColor?: string; });
         break;
       case 'marble':
+        // For marble and metal, if PatternOptions for these types also include baseColor,
+        // their respective generator functions could be updated to accept an options object.
+        // For now, they only accept scale.
         patternCanvas = patternGenerators.createMarblePattern(options.scale);
         break;
       case 'metal':

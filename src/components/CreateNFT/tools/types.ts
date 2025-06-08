@@ -51,11 +51,40 @@ export interface CanvasUtils {
 }
 
 // Pattern generation types
+export interface WoodPatternSpecificOptions {
+  woodType?: 'oak' | 'pine' | 'mahogany' | 'birch'; // From ToolRegistry
+  grainDirection?: 'horizontal' | 'vertical' | 'diagonal'; // From ToolRegistry
+  patternIntensity?: number; // From ToolRegistry (already in PatternOptions as opacity, maybe consolidate or keep specific)
+}
+
+export interface StonePatternSpecificOptions {
+  stoneType?: 'granite' | 'marble' | 'slate' | 'sandstone'; // From ToolRegistry
+  roughness?: number; // From ToolRegistry
+  addCracks?: boolean; // From ToolRegistry
+  weathered?: boolean; // From ToolRegistry
+  patternIntensity?: number; // From ToolRegistry
+}
+
+export interface FabricPatternSpecificOptions {
+  fabricType?: 'cotton' | 'silk' | 'wool' | 'linen'; // From ToolRegistry
+  weaveDensity?: number; // From ToolRegistry
+  colorVariation?: number; // From ToolRegistry
+  showWarp?: boolean; // From ToolRegistry
+  showWeft?: boolean; // From ToolRegistry
+  patternIntensity?: number; // From ToolRegistry
+}
+
+// Generic PatternOptions, now including specific sub-options
 export interface PatternOptions {
   type: 'wood' | 'stone' | 'fabric' | 'marble' | 'metal' | 'custom';
-  scale: number;
-  opacity: number;
-  color?: string;
+  scale: number; // General scale factor
+  opacity: number; // General opacity for the applied pattern
+  color?: string; // A base color or tint for the pattern
+  wood?: WoodPatternSpecificOptions;
+  stone?: StonePatternSpecificOptions;
+  fabric?: FabricPatternSpecificOptions;
+  // Marble and Metal might have their own specific options too if needed
+  // For now, they might only use scale, opacity, color
 }
 
 // Gradient types

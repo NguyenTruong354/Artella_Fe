@@ -1,6 +1,7 @@
 import React from 'react';
 import { BaseTool } from '../BaseTool';
 import { ToolProps, DrawingContext } from '../types';
+import { createConicGradient } from '../utils/gradientUtils'; // Import the utility
 
 export class ConicGradientTool extends BaseTool {
   private centerPos: { x: number; y: number } | null = null;
@@ -66,14 +67,20 @@ export class ConicGradientTool extends BaseTool {
     }
   }
   private drawGradientPreview(ctx: CanvasRenderingContext2D, center: { x: number; y: number }, startAngle: number): void {
-    const gradientColors = [
+    const gradientColors = this.props.settings?.gradientOptions?.colors || [
       { position: 0, color: this.getToolColor() },
       { position: 1, color: '#ffffff' }
     ];
 
-    // Since HTML5 Canvas doesn't support conic gradients natively, we'll simulate it
-    this.simulateConicGradient(ctx, center, startAngle, gradientColors, 0.7);
+    // Use the updated utility which calls native createConicGradient
+    const gradient = createConicGradient(ctx, startAngle, center.x, center.y, gradientColors);
     
+    ctx.save(); // Save before applying gradient to preview
+    ctx.globalAlpha = 0.7; // Keep preview opacity
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height); // Fill entire preview
+    ctx.restore(); // Restore before drawing indicators
+
     // Draw angle indicator
     ctx.save();
     ctx.globalAlpha = 1;
@@ -100,83 +107,23 @@ export class ConicGradientTool extends BaseTool {
     ctx.restore();
   }
   private drawGradient(ctx: CanvasRenderingContext2D, center: { x: number; y: number }, startAngle: number): void {
-    const gradientColors = [
+    const gradientColors = this.props.settings?.gradientOptions?.colors || [
       { position: 0, color: this.getToolColor() },
       { position: 1, color: '#ffffff' }
     ];
 
-    this.simulateConicGradient(ctx, center, startAngle, gradientColors, 1);
-  }
+    // Use the updated utility which calls native createConicGradient
+    const gradient = createConicGradient(ctx, startAngle, center.x, center.y, gradientColors);
 
-  private simulateConicGradient(
-    ctx: CanvasRenderingContext2D, 
-    center: { x: number; y: number }, 
-    startAngle: number, 
-    colors: Array<{ position: number; color: string }>,
-    opacity: number
-  ): void {
-    const canvas = ctx.canvas;
-    const imageData = ctx.createImageData(canvas.width, canvas.height);
-    const data = imageData.data;
-
-    // Create color interpolation function
-    const interpolateColor = (position: number) => {
-      // Find the two colors to interpolate between
-      let color1 = colors[0];
-      let color2 = colors[colors.length - 1];
-
-      for (let i = 0; i < colors.length - 1; i++) {
-        if (position >= colors[i].position && position <= colors[i + 1].position) {
-          color1 = colors[i];
-          color2 = colors[i + 1];
-          break;
-        }
-      }
-
-      // Interpolate between color1 and color2
-      const t = (position - color1.position) / (color2.position - color1.position);
-      const rgb1 = this.hexToRgb(color1.color);
-      const rgb2 = this.hexToRgb(color2.color);
-
-      return {
-        r: Math.round(rgb1.r + (rgb2.r - rgb1.r) * t),
-        g: Math.round(rgb1.g + (rgb2.g - rgb1.g) * t),
-        b: Math.round(rgb1.b + (rgb2.b - rgb1.b) * t)
-      };
-    };
-
-    // Generate gradient pixel by pixel
-    for (let y = 0; y < canvas.height; y++) {
-      for (let x = 0; x < canvas.width; x++) {
-        const dx = x - center.x;
-        const dy = y - center.y;
-        let angle = Math.atan2(dy, dx) - startAngle;
-        
-        // Normalize angle to 0-2π
-        while (angle < 0) angle += 2 * Math.PI;
-        while (angle > 2 * Math.PI) angle -= 2 * Math.PI;
-        
-        const position = angle / (2 * Math.PI);
-        const color = interpolateColor(position);
-        
-        const index = (y * canvas.width + x) * 4;
-        data[index] = color.r;     // Red
-        data[index + 1] = color.g; // Green
-        data[index + 2] = color.b; // Blue
-        data[index + 3] = Math.round(255 * opacity); // Alpha
-      }
-    }
-
-    ctx.putImageData(imageData, 0, 0);
-  }
-
-  private hexToRgb(hex: string): { r: number; g: number; b: number } {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? {
-      r: parseInt(result[1], 16),
-      g: parseInt(result[2], 16),
-      b: parseInt(result[3], 16)
-    } : { r: 0, g: 0, b: 0 };
+    ctx.save();
+    // Apply gradient to entire canvas or specific area based on settings
+    // For conic, it's typical to fill the whole canvas or a circular region.
+    // Defaulting to full canvas for now, consistent with original simulation.
+    // Opacity for final draw should be from settings or 1.
+    ctx.globalAlpha = this.props.settings?.gradientOptions?.opacity ?? 1;
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.restore();
   }
 
   private cleanup(): void {

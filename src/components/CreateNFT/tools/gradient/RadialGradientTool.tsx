@@ -73,9 +73,10 @@ export class RadialGradientTool extends BaseTool {
     }
   }
   private drawGradientPreview(ctx: CanvasRenderingContext2D, center: { x: number; y: number }, radius: number): void {
-    const gradientColors = [
+    const gradientColors = this.props.settings?.gradientOptions?.colors || [
       { position: 0, color: this.getToolColor() },
-      { position: 1, color: '#ffffff' }    ];
+      { position: 1, color: '#ffffff' }
+    ];
 
     const gradient = createRadialGradient(ctx, center.x, center.y, radius, gradientColors);
     
@@ -103,9 +104,10 @@ export class RadialGradientTool extends BaseTool {
     ctx.restore();
   }
   private drawGradient(ctx: CanvasRenderingContext2D, center: { x: number; y: number }, radius: number): void {
-    const gradientColors = [
+    const gradientColors = this.props.settings?.gradientOptions?.colors || [
       { position: 0, color: this.getToolColor() },
-      { position: 1, color: '#ffffff' }    ];
+      { position: 1, color: '#ffffff' }
+    ];
 
     const gradient = createRadialGradient(ctx, center.x, center.y, radius, gradientColors);
     

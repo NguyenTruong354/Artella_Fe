@@ -33,13 +33,13 @@ export const gradientUtils = {
 
   createConicGradient: (
     ctx: CanvasRenderingContext2D,
+    startAngle: number, // Added startAngle, radius is not directly used by native conic
     centerX: number,
     centerY: number,
-    radius: number,
     colors: Array<{ color: string; position: number }>
   ): CanvasGradient => {
-    // HTML5 Canvas doesn't support conic gradients natively, so we simulate with radial
-    const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+    // Use native createConicGradient
+    const gradient = ctx.createConicGradient(startAngle, centerX, centerY);
     colors.forEach(stop => {
       gradient.addColorStop(stop.position, stop.color);
     });

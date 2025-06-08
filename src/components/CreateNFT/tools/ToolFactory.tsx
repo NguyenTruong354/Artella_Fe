@@ -53,6 +53,9 @@ export class ToolFactory {
         ...(toolDefinition?.defaultSettings || {}),
         ...(props.settings || {})
       }
+      // TODO: If ToolProps includes an onSettingsChange callback for structured settings updates,
+      // ensure it's correctly passed through here from props.onSettingsChange.
+      // e.g., onSettingsChange: props.onSettingsChange, (if props is ToolProps & { onSettingsChange?: ... })
     };
 
     return new ToolComponent(mergedProps);
