@@ -5,6 +5,7 @@ import {
   Eraser, 
   Type, 
   Square, 
+  Circle,
   Palette,
   Layers,
   Eye,
@@ -28,9 +29,12 @@ const CreationView: React.FC<CreationViewProps> = ({
   tools,
   onStateUpdate,
   canvasRef
-}) => {  const [isDrawing, setIsDrawing] = useState(false);
+}) => {  
+  const [isDrawing, setIsDrawing] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [lastPos, setLastPos] = useState({ x: 0, y: 0 });
+  const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+  const [previewCanvas, setPreviewCanvas] = useState<HTMLCanvasElement | null>(null);
   
   const colors = [
     '#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF',
@@ -51,6 +55,38 @@ const CreationView: React.FC<CreationViewProps> = ({
     
     setIsDrawing(true);
     setLastPos({ x, y });
+    setStartPos({ x, y });
+    
+    // Handle text tool click
+    if (creationState.selectedTool.type === 'text') {
+      const text = prompt('Enter text:');
+      if (text) {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.fillStyle = creationState.selectedTool.settings?.color || '#000000';
+          ctx.font = `${creationState.selectedTool.settings?.size || 20}px Arial`;
+          ctx.fillText(text, x, y);
+        }
+      }
+      setIsDrawing(false); // Don't continue drawing for text
+      return;
+    }
+      // For shapes, save current canvas state for preview
+    if (creationState.selectedTool.type === 'shape') {
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        // Create preview canvas if it doesn't exist
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        if (tempCtx) {
+          tempCtx.drawImage(canvas, 0, 0);
+          setPreviewCanvas(tempCanvas);
+        }
+      }
+    }
     
     if (creationState.selectedTool.type === 'brush') {
       const ctx = canvas.getContext('2d');
@@ -60,6 +96,7 @@ const CreationView: React.FC<CreationViewProps> = ({
       }
     }
   };
+
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawing || !canvasRef.current) return;
     
@@ -83,10 +120,44 @@ const CreationView: React.FC<CreationViewProps> = ({
       ctx.lineTo(x, y);
       ctx.stroke();
     } else if (creationState.selectedTool.type === 'eraser') {
+      // Set eraser mode - remove pixels using destination-out
       ctx.globalCompositeOperation = 'destination-out';
+      ctx.strokeStyle = 'rgba(0,0,0,1)'; // Any color works for eraser in destination-out mode
+      ctx.lineWidth = creationState.selectedTool.settings?.size || 20;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      // Draw eraser line from last position to current position
       ctx.beginPath();
-      ctx.arc(x, y, (creationState.selectedTool.settings?.size || 10) / 2, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.moveTo(lastPos.x, lastPos.y);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      
+      // Reset composite operation back to normal for other tools
+      ctx.globalCompositeOperation = 'source-over';
+    } else if (creationState.selectedTool.type === 'shape' && previewCanvas) {
+      // Shape preview: restore original canvas and draw shape preview
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(previewCanvas, 0, 0);
+      
+      // Draw shape preview
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = creationState.selectedTool.settings?.color || '#000000';
+      ctx.lineWidth = creationState.selectedTool.settings?.size || 2;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      const width = x - startPos.x;
+      const height = y - startPos.y;
+      
+      if (creationState.selectedTool.id === 'rectangle') {
+        ctx.strokeRect(startPos.x, startPos.y, width, height);
+      } else if (creationState.selectedTool.id === 'circle') {
+        const radius = Math.sqrt(width * width + height * height);
+        ctx.beginPath();
+        ctx.arc(startPos.x, startPos.y, radius, 0, 2 * Math.PI);
+        ctx.stroke();
+      }
     }
     
     setLastPos({ x, y });
@@ -95,6 +166,12 @@ const CreationView: React.FC<CreationViewProps> = ({
   const stopDrawing = () => {
     if (!isDrawing) return;
     setIsDrawing(false);
+    
+    // For shapes, finalize the shape drawing
+    if (creationState.selectedTool.type === 'shape' && canvasRef.current) {
+      // The final shape is already drawn on canvas from the last draw call
+      // Just need to save to history
+    }
     
     // Save to history
     if (canvasRef.current) {
@@ -193,6 +270,10 @@ const CreationView: React.FC<CreationViewProps> = ({
   }, [creationState.canvasSize, canvasRef]);
 
   const getToolIcon = (toolType: string) => {
+    const tool = tools.find(t => t.type === toolType);
+    if (tool?.id === 'rectangle') return <Square className="w-5 h-5" />;
+    if (tool?.id === 'circle') return <Circle className="w-5 h-5" />;
+    
     switch (toolType) {
       case 'brush': return <Brush className="w-5 h-5" />;
       case 'eraser': return <Eraser className="w-5 h-5" />;
