@@ -28,8 +28,7 @@ const CreateNFTPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>({
     type: "split",
     isTransitioning: false,
-  });
-  const [creationState, setCreationState] = useState<CreationState>({
+  });  const [creationState, setCreationState] = useState<CreationState>({
     activeLayer: 0,
     layers: [
       {
@@ -56,6 +55,8 @@ const CreateNFTPage: React.FC = () => {
     zoom: 1,
     history: [],
     historyIndex: -1,
+    symmetryEnabled: false,
+    symmetryAxis: { x: 400, y: 400 }, // Center of 800x800 canvas
   });
 
   const [nftMetadata, setNftMetadata] = useState<NFTMetadata>({
@@ -77,7 +78,6 @@ const CreateNFTPage: React.FC = () => {
     });
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
   // Available tools
   const tools: CanvasTool[] = [
     { id: "brush", name: "Brush", icon: "brush", type: "brush" },
@@ -85,6 +85,40 @@ const CreateNFTPage: React.FC = () => {
     { id: "text", name: "Text", icon: "type", type: "text" },
     { id: "rectangle", name: "Rectangle", icon: "square", type: "shape" },
     { id: "circle", name: "Circle", icon: "circle", type: "shape" },
+    // New gradient tools
+    { id: "gradient-linear", name: "Linear Gradient", icon: "gradient", type: "gradient", 
+      settings: { gradientType: "linear", gradientColors: [
+        { color: "#FF0000", position: 0 },
+        { color: "#0000FF", position: 1 }
+      ], gradientAngle: 0 }
+    },
+    { id: "gradient-radial", name: "Radial Gradient", icon: "circle", type: "gradient",
+      settings: { gradientType: "radial", gradientColors: [
+        { color: "#FF0000", position: 0 },
+        { color: "#0000FF", position: 1 }
+      ]}
+    },
+    { id: "gradient-conic", name: "Conic Gradient", icon: "spiral", type: "gradient",
+      settings: { gradientType: "conic", gradientColors: [
+        { color: "#FF0000", position: 0 },
+        { color: "#00FF00", position: 0.5 },
+        { color: "#0000FF", position: 1 }
+      ]}
+    },
+    // Pattern tools
+    { id: "pattern-wood", name: "Wood Pattern", icon: "tree", type: "pattern",
+      settings: { patternType: "wood", patternScale: 1, opacity: 0.8 }
+    },
+    { id: "pattern-stone", name: "Stone Pattern", icon: "mountain", type: "pattern",
+      settings: { patternType: "stone", patternScale: 1, opacity: 0.8 }
+    },
+    { id: "pattern-fabric", name: "Fabric Pattern", icon: "grid", type: "pattern",
+      settings: { patternType: "fabric", patternScale: 1, opacity: 0.8 }
+    },
+    // Symmetry tool
+    { id: "symmetry", name: "Symmetry", icon: "reflect", type: "symmetry",
+      settings: { symmetryType: "bilateral", symmetryPoints: 2 }
+    }
   ];
 
   // Toggle view modes with smooth transition

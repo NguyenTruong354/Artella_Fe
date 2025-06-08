@@ -13,6 +13,11 @@ import {
   Plus,
   ZoomIn,
   ZoomOut,
+  Zap,
+  TreePine,
+  Mountain,
+  Grid3X3,
+  RotateCcw,
 } from "lucide-react";
 
 import { CreationState, CanvasTool, CanvasLayer } from "./types";
@@ -57,6 +62,143 @@ const CreationView: React.FC<CreationViewProps> = ({
   ];
 
   const sizes = [2, 5, 10, 15, 20, 30, 40, 50];
+
+  // Utility functions for gradient and patterns
+  const createGradient = (ctx: CanvasRenderingContext2D, startX: number, startY: number, endX: number, endY: number) => {
+    const settings = creationState.selectedTool.settings;
+    if (!settings || !settings.gradientColors) return null;
+
+    let gradient: CanvasGradient;
+
+    switch (settings.gradientType) {
+      case 'linear':
+        gradient = ctx.createLinearGradient(startX, startY, endX, endY);
+        break;      case 'radial': {
+        const radius = Math.sqrt((endX - startX) ** 2 + (endY - startY) ** 2);
+        gradient = ctx.createRadialGradient(startX, startY, 0, startX, startY, radius);
+        break;
+      }
+      case 'conic':
+        // HTML5 Canvas doesn't natively support conic gradients, we'll simulate with radial
+        gradient = ctx.createRadialGradient(startX, startY, 0, startX, startY, 
+          Math.sqrt((endX - startX) ** 2 + (endY - startY) ** 2));
+        break;
+      default:
+        gradient = ctx.createLinearGradient(startX, startY, endX, endY);
+    }
+
+    settings.gradientColors.forEach(stop => {
+      gradient.addColorStop(stop.position, stop.color);
+    });
+
+    return gradient;
+  };
+
+  const createPattern = (ctx: CanvasRenderingContext2D) => {
+    const settings = creationState.selectedTool.settings;
+    if (!settings || !settings.patternType) return null;
+
+    // Create pattern canvas
+    const patternCanvas = document.createElement('canvas');
+    const patternCtx = patternCanvas.getContext('2d');
+    if (!patternCtx) return null;
+
+    const scale = settings.patternScale || 1;
+    const size = 50 * scale;
+    patternCanvas.width = size;
+    patternCanvas.height = size;
+
+    // Generate pattern based on type
+    switch (settings.patternType) {
+      case 'wood':
+        // Wood grain pattern
+        patternCtx.fillStyle = '#8B4513';
+        patternCtx.fillRect(0, 0, size, size);
+        patternCtx.strokeStyle = '#654321';
+        patternCtx.lineWidth = 2;
+        for (let i = 0; i < size; i += 8) {
+          patternCtx.beginPath();
+          patternCtx.moveTo(0, i);
+          patternCtx.quadraticCurveTo(size/2, i + 5, size, i);
+          patternCtx.stroke();
+        }
+        break;
+
+      case 'stone':
+        // Stone texture pattern
+        patternCtx.fillStyle = '#696969';
+        patternCtx.fillRect(0, 0, size, size);
+        // Add random stone-like shapes
+        for (let i = 0; i < 10; i++) {
+          patternCtx.fillStyle = `hsl(0, 0%, ${40 + Math.random() * 20}%)`;
+          patternCtx.beginPath();
+          patternCtx.arc(Math.random() * size, Math.random() * size, 
+            Math.random() * 10 + 5, 0, Math.PI * 2);
+          patternCtx.fill();
+        }
+        break;      case 'fabric': {
+        // Fabric weave pattern
+        patternCtx.fillStyle = '#F5F5DC';
+        patternCtx.fillRect(0, 0, size, size);
+        patternCtx.strokeStyle = '#DEB887';
+        patternCtx.lineWidth = 1;
+        const spacing = size / 10;
+        for (let i = 0; i <= size; i += spacing) {
+          patternCtx.beginPath();
+          patternCtx.moveTo(i, 0);
+          patternCtx.lineTo(i, size);
+          patternCtx.moveTo(0, i);
+          patternCtx.lineTo(size, i);
+          patternCtx.stroke();
+        }
+        break;
+      }
+
+      default:
+        return null;
+    }
+
+    return ctx.createPattern(patternCanvas, 'repeat');
+  };
+
+  const drawWithSymmetry = (x: number, y: number, drawFunc: (x: number, y: number) => void) => {
+    const settings = creationState.selectedTool.settings;
+    if (!settings || !settings.symmetryType || !creationState.symmetryEnabled) {
+      drawFunc(x, y);
+      return;
+    }
+
+    const centerX = creationState.symmetryAxis?.x || creationState.canvasSize.width / 2;
+    const centerY = creationState.symmetryAxis?.y || creationState.canvasSize.height / 2;
+
+    switch (settings.symmetryType) {
+      case 'horizontal':
+        drawFunc(x, y);
+        drawFunc(x, 2 * centerY - y);
+        break;
+      case 'vertical':
+        drawFunc(x, y);
+        drawFunc(2 * centerX - x, y);
+        break;
+      case 'bilateral':
+        drawFunc(x, y);
+        drawFunc(2 * centerX - x, y);
+        drawFunc(x, 2 * centerY - y);
+        drawFunc(2 * centerX - x, 2 * centerY - y);
+        break;      case 'radial': {
+        const points = settings.symmetryPoints || 4;
+        const angle = (2 * Math.PI) / points;
+        for (let i = 0; i < points; i++) {
+          const rotatedX = centerX + (x - centerX) * Math.cos(angle * i) - (y - centerY) * Math.sin(angle * i);
+          const rotatedY = centerY + (x - centerX) * Math.sin(angle * i) + (y - centerY) * Math.cos(angle * i);
+          drawFunc(rotatedX, rotatedY);
+        }
+        break;
+      }
+      default:
+        drawFunc(x, y);
+    }
+  };
 
   // Canvas drawing functions
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -110,9 +252,7 @@ const CreationView: React.FC<CreationViewProps> = ({
         ctx.beginPath();
         ctx.moveTo(x, y);
       }
-    }
-
-    // Handle eraser tool - start erasing immediately on click
+    }    // Handle eraser tool - start erasing immediately on click
     if (creationState.selectedTool.type === "eraser") {
       const ctx = canvas.getContext("2d");
       if (ctx) {
@@ -131,6 +271,56 @@ const CreationView: React.FC<CreationViewProps> = ({
         ctx.restore();
       }
     }
+
+    // Handle gradient tools - save start position for gradient creation
+    if (creationState.selectedTool.type === "gradient") {
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        // Save current canvas state for preview
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+        const tempCtx = tempCanvas.getContext("2d");
+        if (tempCtx) {
+          tempCtx.drawImage(canvas, 0, 0);
+          setPreviewCanvas(tempCanvas);
+        }
+      }
+    }
+
+    // Handle pattern tools - start painting with pattern immediately
+    if (creationState.selectedTool.type === "pattern") {
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        const pattern = createPattern(ctx);
+        if (pattern) {
+          ctx.save();
+          ctx.globalCompositeOperation = "source-over";
+          ctx.fillStyle = pattern;
+          ctx.globalAlpha = creationState.selectedTool.settings?.opacity || 0.8;
+          
+          const drawPattern = (px: number, py: number) => {
+            ctx.beginPath();
+            ctx.arc(px, py, (creationState.selectedTool.settings?.size || 20) / 2, 0, Math.PI * 2);
+            ctx.fill();
+          };
+
+          drawWithSymmetry(x, y, drawPattern);
+          ctx.restore();
+        }
+      }
+    }
+
+    // Handle symmetry tool activation
+    if (creationState.selectedTool.type === "symmetry") {
+      // Toggle symmetry mode and set axis
+      onStateUpdate({
+        symmetryEnabled: !creationState.symmetryEnabled,
+        symmetryAxis: { x, y }
+      });
+      setIsDrawing(false);
+      return;
+    }
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -142,8 +332,7 @@ const CreationView: React.FC<CreationViewProps> = ({
 
     const rect = canvas.getBoundingClientRect();
     const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
-    if (creationState.selectedTool.type === "brush") {
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height);    if (creationState.selectedTool.type === "brush") {
       ctx.globalCompositeOperation = "source-over";
       ctx.strokeStyle = creationState.selectedTool.settings?.color || "#000000";
       ctx.lineWidth = creationState.selectedTool.settings?.size || 10;
@@ -151,11 +340,21 @@ const CreationView: React.FC<CreationViewProps> = ({
       ctx.lineJoin = "round";
 
       // Create smooth line from last position to current position
-      ctx.beginPath();
-      ctx.moveTo(lastPos.x, lastPos.y);
-      ctx.lineTo(x, y);
-      ctx.stroke();
-    } else if (creationState.selectedTool.type === "eraser") {
+      const drawBrushStroke = (fromX: number, fromY: number, toX: number, toY: number) => {
+        ctx.beginPath();
+        ctx.moveTo(fromX, fromY);
+        ctx.lineTo(toX, toY);
+        ctx.stroke();
+      };      if (creationState.symmetryEnabled) {
+        drawWithSymmetry(x, y, (px: number, py: number) => {
+          const lastSymX = lastPos.x;
+          const lastSymY = lastPos.y;
+          drawBrushStroke(lastSymX, lastSymY, px, py);
+        });
+      } else {
+        drawBrushStroke(lastPos.x, lastPos.y, x, y);
+      }
+    }else if (creationState.selectedTool.type === "eraser") {
       // Set eraser mode - remove pixels using destination-out
       ctx.save(); // Save current context state
       ctx.globalCompositeOperation = "destination-out";
@@ -180,9 +379,49 @@ const CreationView: React.FC<CreationViewProps> = ({
         0,
         Math.PI * 2
       );
-      ctx.fill();
+      ctx.fill();      ctx.restore(); // Restore context state
+    } else if (creationState.selectedTool.type === "gradient" && previewCanvas) {
+      // Gradient preview: restore original canvas and draw gradient preview
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(previewCanvas, 0, 0);
 
-      ctx.restore(); // Restore context state
+      // Create and apply gradient
+      const gradient = createGradient(ctx, startPos.x, startPos.y, x, y);
+      if (gradient) {
+        ctx.fillStyle = gradient;
+        ctx.globalAlpha = creationState.selectedTool.settings?.opacity || 1;
+        
+        // Fill entire canvas or specific area based on gradient type
+        if (creationState.selectedTool.settings?.gradientType === 'linear') {
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        } else {
+          // For radial and conic, fill from center
+          ctx.beginPath();
+          const radius = Math.sqrt((x - startPos.x) ** 2 + (y - startPos.y) ** 2);
+          ctx.arc(startPos.x, startPos.y, radius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        
+        ctx.globalAlpha = 1;
+      }
+    } else if (creationState.selectedTool.type === "pattern") {
+      // Pattern brush drawing
+      const pattern = createPattern(ctx);
+      if (pattern) {
+        ctx.save();
+        ctx.globalCompositeOperation = "source-over";
+        ctx.fillStyle = pattern;
+        ctx.globalAlpha = creationState.selectedTool.settings?.opacity || 0.8;
+        
+        const drawPattern = (px: number, py: number) => {
+          ctx.beginPath();
+          ctx.arc(px, py, (creationState.selectedTool.settings?.size || 20) / 2, 0, Math.PI * 2);
+          ctx.fill();
+        };
+
+        drawWithSymmetry(x, y, drawPattern);
+        ctx.restore();
+      }
     } else if (creationState.selectedTool.type === "shape" && previewCanvas) {
       // Shape preview: restore original canvas and draw shape preview
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -317,11 +556,17 @@ const CreationView: React.FC<CreationViewProps> = ({
         ctx.lineJoin = "round";
       }
     }
-  }, [creationState.canvasSize, canvasRef]);
-  const getToolIcon = (toolType: string) => {
+  }, [creationState.canvasSize, canvasRef]);  const getToolIcon = (toolType: string) => {
     const tool = tools.find((t) => t.type === toolType);
     if (tool?.id === "rectangle") return <Square className="w-5 h-5" />;
     if (tool?.id === "circle") return <Circle className="w-5 h-5" />;
+    if (tool?.id === "gradient-linear") return <Zap className="w-5 h-5" />;
+    if (tool?.id === "gradient-radial") return <Circle className="w-5 h-5" />;
+    if (tool?.id === "gradient-conic") return <RotateCcw className="w-5 h-5" />;
+    if (tool?.id === "pattern-wood") return <TreePine className="w-5 h-5" />;
+    if (tool?.id === "pattern-stone") return <Mountain className="w-5 h-5" />;
+    if (tool?.id === "pattern-fabric") return <Grid3X3 className="w-5 h-5" />;
+    if (tool?.id === "symmetry") return <RotateCcw className="w-5 h-5" />;
 
     switch (toolType) {
       case "brush":
@@ -332,6 +577,12 @@ const CreationView: React.FC<CreationViewProps> = ({
         return <Type className="w-5 h-5" />;
       case "shape":
         return <Square className="w-5 h-5" />;
+      case "gradient":
+        return <Zap className="w-5 h-5" />;
+      case "pattern":
+        return <Grid3X3 className="w-5 h-5" />;
+      case "symmetry":
+        return <RotateCcw className="w-5 h-5" />;
       default:
         return <Brush className="w-5 h-5" />;
     }
@@ -446,10 +697,158 @@ const CreationView: React.FC<CreationViewProps> = ({
                   >
                     {size}
                   </button>
+                ))}              </div>
+            </div>
+          </div>
+
+          {/* Gradient Settings */}
+          {creationState.selectedTool.type === "gradient" && (
+            <div className="col-span-2">
+              <label className="block text-sm font-medium mb-2">
+                Gradient Colors
+              </label>
+              <div className="space-y-2">
+                {creationState.selectedTool.settings?.gradientColors?.map((stop, index) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <input
+                      type="color"
+                      value={stop.color}
+                      onChange={(e) => {
+                        const newColors = [...(creationState.selectedTool.settings?.gradientColors || [])];
+                        newColors[index] = { ...stop, color: e.target.value };
+                        onStateUpdate({
+                          selectedTool: {
+                            ...creationState.selectedTool,
+                            settings: {
+                              ...creationState.selectedTool.settings,
+                              gradientColors: newColors
+                            }
+                          }
+                        });
+                      }}
+                      className="w-8 h-8 rounded border"
+                    />
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.1"
+                      value={stop.position}
+                      onChange={(e) => {
+                        const newColors = [...(creationState.selectedTool.settings?.gradientColors || [])];
+                        newColors[index] = { ...stop, position: parseFloat(e.target.value) };
+                        onStateUpdate({
+                          selectedTool: {
+                            ...creationState.selectedTool,
+                            settings: {
+                              ...creationState.selectedTool.settings,
+                              gradientColors: newColors
+                            }
+                          }
+                        });
+                      }}
+                      className="flex-1"
+                    />
+                    <span className="text-xs w-10">{Math.round(stop.position * 100)}%</span>
+                  </div>
                 ))}
               </div>
             </div>
-          </div>
+          )}
+
+          {/* Pattern Settings */}
+          {creationState.selectedTool.type === "pattern" && (
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Pattern Scale
+              </label>
+              <input
+                type="range"
+                min="0.5"
+                max="3"
+                step="0.1"
+                value={creationState.selectedTool.settings?.patternScale || 1}
+                onChange={(e) => {
+                  onStateUpdate({
+                    selectedTool: {
+                      ...creationState.selectedTool,
+                      settings: {
+                        ...creationState.selectedTool.settings,
+                        patternScale: parseFloat(e.target.value)
+                      }
+                    }
+                  });
+                }}
+                className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+              />
+              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <span>0.5x</span>
+                <span>{creationState.selectedTool.settings?.patternScale || 1}x</span>
+                <span>3x</span>
+              </div>
+            </div>
+          )}
+
+          {/* Symmetry Settings */}
+          {creationState.selectedTool.type === "symmetry" && (
+            <div className="col-span-2">
+              <label className="block text-sm font-medium mb-2">
+                Symmetry Type
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {['horizontal', 'vertical', 'bilateral', 'radial'].map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => {
+                      onStateUpdate({                        selectedTool: {
+                          ...creationState.selectedTool,
+                          settings: {
+                            ...creationState.selectedTool.settings,
+                            symmetryType: type as 'horizontal' | 'vertical' | 'radial' | 'bilateral'
+                          }
+                        }
+                      });
+                    }}
+                    className={`px-3 py-2 text-xs rounded capitalize ${
+                      creationState.selectedTool.settings?.symmetryType === type
+                        ? "bg-purple-500 text-white"
+                        : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                    }`}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+              {creationState.selectedTool.settings?.symmetryType === 'radial' && (
+                <div className="mt-2">
+                  <label className="block text-xs text-gray-500 mb-1">Points: {creationState.selectedTool.settings?.symmetryPoints || 4}</label>
+                  <input
+                    type="range"
+                    min="3"
+                    max="12"
+                    value={creationState.selectedTool.settings?.symmetryPoints || 4}
+                    onChange={(e) => {
+                      onStateUpdate({
+                        selectedTool: {
+                          ...creationState.selectedTool,
+                          settings: {
+                            ...creationState.selectedTool.settings,
+                            symmetryPoints: parseInt(e.target.value)
+                          }
+                        }
+                      });
+                    }}
+                    className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  />
+                </div>
+              )}
+              {creationState.symmetryEnabled && (
+                <div className="mt-2 p-2 bg-green-100 dark:bg-green-900/30 rounded text-xs text-green-700 dark:text-green-300">
+                  Symmetry Mode Active - Click on canvas to set axis
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </motion.div>
 

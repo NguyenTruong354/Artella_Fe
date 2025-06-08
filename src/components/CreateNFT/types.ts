@@ -22,7 +22,7 @@ export interface CanvasTool {
   id: string;
   name: string;
   icon: string;
-  type: 'brush' | 'shape' | 'text' | 'eraser' | 'fill';
+  type: 'brush' | 'shape' | 'text' | 'eraser' | 'fill' | 'gradient' | 'pattern' | 'symmetry';
   settings?: ToolSettings;
 }
 
@@ -33,6 +33,22 @@ export interface ToolSettings {
   strokeWidth?: number;
   fontFamily?: string;
   fontSize?: number;
+  // Gradient settings
+  gradientType?: 'linear' | 'radial' | 'conic';
+  gradientColors?: GradientStop[];
+  gradientAngle?: number;
+  // Pattern settings
+  patternType?: 'wood' | 'stone' | 'fabric' | 'marble' | 'metal' | 'custom';
+  patternScale?: number;
+  // Symmetry settings
+  symmetryType?: 'horizontal' | 'vertical' | 'radial' | 'bilateral';
+  symmetryPoints?: number;
+  symmetryAxis?: { x: number; y: number };
+}
+
+export interface GradientStop {
+  color: string;
+  position: number; // 0-1
 }
 
 export interface CreationState {
@@ -43,6 +59,8 @@ export interface CreationState {
   zoom: number;
   history: CanvasState[];
   historyIndex: number;
+  symmetryEnabled?: boolean;
+  symmetryAxis?: { x: number; y: number };
 }
 
 export interface CanvasLayer {
