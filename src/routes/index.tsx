@@ -5,6 +5,7 @@ import Gallery from '../pages/Gallery';
 import Auctions from '../pages/Auctions';
 import Collections from '../pages/Collections';
 import Profile from '../pages/Profile';
+import CreateNFT from '../pages/CreateNFT';
 import Login from '../pages/Login';
 import Signup from '../pages/Signup';
 import NotFound from '../pages/NotFound';
@@ -34,10 +35,13 @@ const router = createBrowserRouter([  {
       {
         path: 'collections',
         element: <Collections />,
-      },
-      {
+      },      {
         path: 'profile',
         element: <Profile />,
+      },
+      {
+        path: 'create-nft',
+        element: <CreateNFT />,
       },
     ],
   },
