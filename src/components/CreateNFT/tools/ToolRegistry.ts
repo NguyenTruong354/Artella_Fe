@@ -104,11 +104,17 @@ export class ToolRegistry {
       description: 'Apply linear gradients',
       component: LinearGradientTool,
       defaultSettings: {
-        gradientColors: [
-          { position: 0, color: '#000000' },
-          { position: 1, color: '#ffffff' }
-        ],
-        gradientArea: 'canvas'
+        gradientOptions: {
+          type: 'linear',
+          colors: [
+            { position: 0, color: '#000000' },
+            { position: 1, color: '#ffffff' }
+          ],
+          angle: 90, // Default angle for linear
+          opacity: 1,
+          // gradientArea: 'canvas' // This seems custom, not in GradientOptions type. Store top-level if needed.
+        },
+        gradientArea: 'canvas', // Example of keeping it top-level if it's a distinct setting
       }
     });
 
@@ -120,11 +126,16 @@ export class ToolRegistry {
       description: 'Apply radial gradients',
       component: RadialGradientTool,
       defaultSettings: {
-        gradientColors: [
-          { position: 0, color: '#000000' },
-          { position: 1, color: '#ffffff' }
-        ],
-        gradientArea: 'canvas'
+        gradientOptions: {
+          type: 'radial',
+          colors: [
+            { position: 0, color: '#000000' },
+            { position: 1, color: '#ffffff' }
+          ],
+          opacity: 1,
+          // gradientArea: 'canvas'
+        },
+        gradientArea: 'canvas',
       }
     });
 
@@ -136,11 +147,15 @@ export class ToolRegistry {
       description: 'Apply conic (conical) gradients',
       component: ConicGradientTool,
       defaultSettings: {
-        gradientColors: [
-          { position: 0, color: '#000000' },
-          { position: 1, color: '#ffffff' }
-        ],
-        startAngle: 0
+        gradientOptions: {
+          type: 'conic',
+          colors: [
+            { position: 0, color: '#000000' },
+            { position: 1, color: '#ffffff' }
+          ],
+          angle: 0, // Default startAngle for conic
+          opacity: 1,
+        }
       }
     });
 
@@ -153,10 +168,16 @@ export class ToolRegistry {
       description: 'Apply wood texture patterns',
       component: WoodPatternTool,
       defaultSettings: {
-        woodType: 'oak',
-        patternScale: 1,
-        patternIntensity: 0.8,
-        grainDirection: 'horizontal'
+        patternOptions: {
+          type: 'wood',
+          scale: 1,
+          opacity: 0.8, // General pattern application opacity
+          wood: {
+            woodType: 'oak',
+            grainDirection: 'horizontal',
+            patternIntensity: 0.8, // Intensity specific to the wood generation algorithm
+          }
+        }
       }
     });
 
@@ -168,12 +189,18 @@ export class ToolRegistry {
       description: 'Apply stone and rock texture patterns',
       component: StonePatternTool,
       defaultSettings: {
-        stoneType: 'granite',
-        patternScale: 1,
-        patternIntensity: 0.8,
-        roughness: 0.5,
-        addCracks: false,
-        weathered: false
+        patternOptions: {
+          type: 'stone',
+          scale: 1,
+          opacity: 0.8,
+          stone: {
+            stoneType: 'granite',
+            roughness: 0.5,
+            addCracks: false,
+            weathered: false,
+            patternIntensity: 0.8,
+          }
+        }
       }
     });
 
@@ -185,13 +212,19 @@ export class ToolRegistry {
       description: 'Apply fabric and textile patterns',
       component: FabricPatternTool,
       defaultSettings: {
-        fabricType: 'cotton',
-        patternScale: 1,
-        patternIntensity: 0.8,
-        weaveDensity: 1,
-        colorVariation: 0.3,
-        showWarp: true,
-        showWeft: true
+        patternOptions: {
+          type: 'fabric',
+          scale: 1,
+          opacity: 0.8,
+          fabric: {
+            fabricType: 'cotton',
+            weaveDensity: 1,
+            colorVariation: 0.3,
+            showWarp: true,
+            showWeft: true,
+            patternIntensity: 0.8,
+          }
+        }
       }
     });
 
@@ -204,8 +237,13 @@ export class ToolRegistry {
       description: 'Draw with symmetry effects',
       component: SymmetryTool,
       defaultSettings: {
-        symmetryMode: 'horizontal',
-        radialSegments: 8,
+        symmetryOptions: {
+          type: 'horizontal', // Was 'symmetryMode'
+          points: 8,          // Was 'radialSegments', applicable for radial type
+          enabled: true,
+          // axis: { x: 0, y: 0 } // Default axis usually calculated based on canvas
+        },
+        // UI-specific settings can remain top-level if not part of core SymmetryOptions
         showAxis: true,
         axisColor: '#ff0000'
       }
