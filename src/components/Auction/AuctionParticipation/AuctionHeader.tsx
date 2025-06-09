@@ -1,6 +1,7 @@
 import React from 'react';
 import { IoArrowBack } from 'react-icons/io5';
 import { FaVolumeUp, FaVolumeMute } from 'react-icons/fa';
+import { HiChartBar } from 'react-icons/hi';
 
 interface AuctionHeaderProps {
   id: number;
@@ -11,6 +12,7 @@ interface AuctionHeaderProps {
   onNavigateBack: () => void;
   onToggleWatch: () => void;
   onToggleSound: () => void;
+  onShowAnalytics: () => void;
 }
 
 const AuctionHeader: React.FC<AuctionHeaderProps> = ({
@@ -22,6 +24,7 @@ const AuctionHeader: React.FC<AuctionHeaderProps> = ({
   onNavigateBack,
   onToggleWatch,
   onToggleSound,
+  onShowAnalytics,
 }) => {
   // Format time function
   const formatTime = (seconds: number): string => {
@@ -49,12 +52,18 @@ const AuctionHeader: React.FC<AuctionHeaderProps> = ({
               <p className="text-sm text-gray-400">{auctionHouse}</p>
             </div>
           </div>
-          
-          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4">
             <div className="text-center">
               <div className="text-xl font-bold">{timeLeft}</div>
               <div className="text-xs text-gray-400">Time Remaining</div>
             </div>
+            <button
+              onClick={onShowAnalytics}
+              className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+              title="View Analytics"
+            >
+              <HiChartBar className="w-5 h-5 text-gold-400" />
+            </button>
             <button
               onClick={onToggleSound}
               className="p-2 hover:bg-gray-800 rounded-full transition-colors"

@@ -23,18 +23,18 @@ const BiddersList: React.FC<BiddersListProps> = ({ bidders, activeBidder }) => {
 
   return (
     <motion.div className="lg:col-span-2" variants={itemVariants}>
-      <h3 className="text-xl font-bold text-gold-400 mb-6 text-center">
+      <h3 className="text-xl font-bold text-gold-400 mb-20 text-center">
         AUCTION THEATER
       </h3>
 
       {/* Theater Rows */}
-      <div className="space-y-6">
+      <div className="space-y-4">
         {[1, 2, 3].map((row) => (
           <motion.div
             key={row}
             className="flex justify-center"
             style={{
-              transform: `perspective(1000px) rotateX(${5 * row}deg)`,
+              transform: `perspective(1000px) rotateX(${3 * row}deg)`,
               marginBottom: row === 1 ? "2rem" : "1rem",
             }}
           >
@@ -74,7 +74,7 @@ const BiddersList: React.FC<BiddersListProps> = ({ bidders, activeBidder }) => {
 
                       {/* Avatar */}
                       <motion.div
-                        className={`absolute -top-6 left-1/2 transform -translate-x-1/2 w-10 h-10 rounded-full border-2 overflow-hidden transition-all ${
+                        className={`absolute -top-4 left-1/2 transform -translate-x-1/2 w-10 h-10 rounded-full border-2 overflow-hidden transition-all ${
                           bidder.isActive || activeBidder === bidder.id
                             ? "border-gold-400 shadow-lg shadow-gold-400/50"
                             : bidder.isVIP
@@ -129,7 +129,7 @@ const BiddersList: React.FC<BiddersListProps> = ({ bidders, activeBidder }) => {
                                 repeat: 2,
                               },
                             }}
-                            className="absolute -right-8 -top-8 z-20"
+                            className="absolute -right-6 -top-6 z-20"
                           >
                             {/* Paddle Handle */}
                             <div className="w-1 h-8 bg-gradient-to-b from-yellow-600 to-yellow-800 rounded-full border border-yellow-500 shadow-lg" />
@@ -172,7 +172,7 @@ const BiddersList: React.FC<BiddersListProps> = ({ bidders, activeBidder }) => {
                                 repeatType: "reverse",
                               },
                             }}
-                            className="absolute -top-12 left-1/2 transform -translate-x-1/2 z-10"
+                            className="absolute -top-10 left-1/2 transform -translate-x-1/2 z-10"
                           >
                             {/* Reaction Emojis */}
                             {bidder.reactionType === "clapping" && (
@@ -249,7 +249,7 @@ const BiddersList: React.FC<BiddersListProps> = ({ bidders, activeBidder }) => {
       </div>
 
       {/* Theater Floor Pattern */}
-      <div className="mt-8 text-center">
+      <div className="mt-10 text-center">
         <div className="inline-block w-64 h-2 bg-gradient-to-r from-transparent via-gold-500/30 to-transparent rounded" />
         <p className="text-xs text-gray-500 mt-2">AUCTION FLOOR</p>
       </div>

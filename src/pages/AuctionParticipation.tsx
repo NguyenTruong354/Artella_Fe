@@ -10,6 +10,7 @@ import {
   BiddersList,
   AuctionEndOverlay,
 } from "../components/Auction/AuctionParticipation";
+import AuctionAnalytics from "../components/Auction/AuctionParticipation/AuctionAnalytics";
 import AuctionSound from "../components/Auction/AuctionSound";
 import {
   BidHistory,
@@ -283,6 +284,7 @@ const AuctionParticipation: React.FC = () => {
   const [hasNewBid, setHasNewBid] = useState(false);
   const [hasApplause, setHasApplause] = useState(false);
   const [isSoundActive, setIsSoundActive] = useState(true);
+  const [showAnalytics, setShowAnalytics] = useState(false);
   // Countdown timer
   useEffect(() => {
     const timer = setInterval(() => {
@@ -611,6 +613,14 @@ const AuctionParticipation: React.FC = () => {
     setIsSoundActive(!isSoundActive);
   };
 
+  const handleShowAnalytics = () => {
+    setShowAnalytics(true);
+  };
+
+  const handleCloseAnalytics = () => {
+    setShowAnalytics(false);
+  };
+
   return (
     <motion.div
       className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white overflow-hidden"
@@ -634,6 +644,7 @@ const AuctionParticipation: React.FC = () => {
         onNavigateBack={() => navigate(-1)}
         onToggleWatch={() => setIsWatched(!isWatched)}
         onToggleSound={handleToggleSound}
+        onShowAnalytics={handleShowAnalytics}
       />
       {/* Gallery Wall - Upper Theater */}{" "}
       <AuctionGallery image={auctionData.image} />
@@ -679,6 +690,25 @@ const AuctionParticipation: React.FC = () => {
       <AnimatePresence>
         <AuctionEndOverlay show={timeLeft <= 0} />
       </AnimatePresence>
+
+      {/* Analytics Modal */}
+      <AuctionAnalytics
+        isOpen={showAnalytics}
+        onClose={handleCloseAnalytics}
+        auctionId={auctionData.id}
+        productData={{
+          name: auctionData.title,
+          artist: auctionData.artist,
+          category: auctionData.category,
+          startingPrice: 5000,
+          currentPrice: auctionData.currentBidValue,
+          estimatedValue: auctionData.estimatedValue,
+          rarity: "Ultra Rare",
+          views: 15420,
+          likes: 3847,
+          watchlist: auctionData.watchers,
+        }}
+      />
     </motion.div>
   );
 };
