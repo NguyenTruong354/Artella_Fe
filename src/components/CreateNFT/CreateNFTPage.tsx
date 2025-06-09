@@ -8,6 +8,8 @@ import {
   Brush,
   Download,
   Save,
+  HelpCircle, // Import HelpCircle icon for the shortcut button
+  X, // Import X icon for closing the shortcut guide
 } from "lucide-react";
 
 import {
@@ -76,8 +78,37 @@ const CreateNFTPage: React.FC = () => {
       lighting: "spotlight",
       environment: "gallery",
     });
-
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [showShortcutGuide, setShowShortcutGuide] = useState(false); // State for shortcut guide visibility
+
+  // Initialize history when canvas is ready
+  useEffect(() => {
+    if (canvasRef.current && creationState.history.length === 0) {
+      // Initialize with empty canvas state
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        // Clear canvas and set up initial state
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const initialImageData = canvas.toDataURL();
+        
+        setCreationState(prev => ({
+          ...prev,
+          layers: prev.layers.map((layer, index) =>
+            index === 0 ? { ...layer, content: initialImageData } : layer
+          ),
+          history: [{
+            layers: prev.layers.map((layer, index) =>
+              index === 0 ? { ...layer, content: initialImageData } : layer
+            ),
+            timestamp: Date.now(),
+          }],
+          historyIndex: 0,
+        }));
+      }
+    }
+  }, [creationState.history.length]);
+  
   // Available tools
   const tools: CanvasTool[] = [
     { id: "brush", name: "Brush", icon: "brush", type: "brush" },
@@ -142,36 +173,76 @@ const CreateNFTPage: React.FC = () => {
       setNftMetadata((prev) => ({ ...prev, image: imageData }));
     }
   }, []);
-
   // Undo/Redo functionality
   const handleUndo = useCallback(() => {
     setCreationState((prev) => {
       if (prev.historyIndex > 0) {
         const newIndex = prev.historyIndex - 1;
         const historyState = prev.history[newIndex];
-        return {
+        
+        // Apply the state from history
+        const newState = {
           ...prev,
           layers: historyState.layers,
           historyIndex: newIndex,
         };
+
+        // Redraw canvas with the previous state
+        setTimeout(() => {
+          if (canvasRef.current && historyState.layers[prev.activeLayer]) {
+            const canvas = canvasRef.current;
+            const ctx = canvas.getContext("2d");
+            if (ctx && historyState.layers[prev.activeLayer].content) {
+              const img = new Image();
+              img.onload = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+              };
+              img.src = historyState.layers[prev.activeLayer].content;
+            }
+          }
+        }, 0);
+
+        return newState;
       }
       return prev;
     });
-  }, []);
+  }, [canvasRef]);
+
   const handleRedo = useCallback(() => {
     setCreationState((prev) => {
       if (prev.historyIndex < prev.history.length - 1) {
         const newIndex = prev.historyIndex + 1;
         const historyState = prev.history[newIndex];
-        return {
+        
+        // Apply the state from history
+        const newState = {
           ...prev,
           layers: historyState.layers,
           historyIndex: newIndex,
         };
+
+        // Redraw canvas with the next state
+        setTimeout(() => {
+          if (canvasRef.current && historyState.layers[prev.activeLayer]) {
+            const canvas = canvasRef.current;
+            const ctx = canvas.getContext("2d");
+            if (ctx && historyState.layers[prev.activeLayer].content) {
+              const img = new Image();
+              img.onload = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+              };
+              img.src = historyState.layers[prev.activeLayer].content;
+            }
+          }
+        }, 0);
+
+        return newState;
       }
       return prev;
     });
-  }, []);
+  }, [canvasRef]);
 
   // Export canvas functionality
   const handleExportCanvas = useCallback(() => {
@@ -333,10 +404,15 @@ const CreateNFTPage: React.FC = () => {
               <div className="text-sm text-gray-500 dark:text-gray-400">
                 Dual-Reality Studio
               </div>
-              <div className="hidden lg:block text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
-                Shortcuts: Ctrl+Z/Y (Undo/Redo), Ctrl+S (Save), Ctrl+E (Export),
-                B/E/T (Tools)
-              </div>
+              {/* Shortcut Button */}
+              <button
+                onClick={() => setShowShortcutGuide(!showShortcutGuide)}
+                className="hidden lg:flex items-center space-x-1 text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                title="View Shortcuts"
+              >
+                <HelpCircle className="w-3 h-3" />
+                <span>Shortcuts</span>
+              </button>
             </div>
             {/* View Mode Controls */}
             <div className="flex items-center space-x-2 backdrop-blur-sm rounded-2xl p-2 bg-white/80 dark:bg-[#1A1A1A]/80 border border-gray-200/50 dark:border-gray-800/50">
@@ -415,6 +491,41 @@ const CreateNFTPage: React.FC = () => {
               </button>
             </div>
           </motion.header>
+
+          {/* Shortcut Guide Modal/Panel */}
+          <AnimatePresence>
+            {showShortcutGuide && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2 }}
+                className="fixed top-20 right-8 lg:right-1/4 lg:left-1/4 xl:right-1/3 xl:left-1/3 z-50 p-6 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700"
+              >
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                    Keyboard Shortcuts
+                  </h3>
+                  <button
+                    onClick={() => setShowShortcutGuide(false)}
+                    className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
+                    title="Close"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                  <li><strong>Ctrl + Z:</strong> Undo</li>
+                  <li><strong>Ctrl + Y / Ctrl + Shift + Z:</strong> Redo</li>
+                  <li><strong>Ctrl + S:</strong> Save Project</li>
+                  <li><strong>Ctrl + E:</strong> Export as PNG</li>
+                  <li className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-700"><strong>B:</strong> Select Brush Tool</li>
+                  <li><strong>E:</strong> Select Eraser Tool</li>
+                  <li><strong>T:</strong> Select Text Tool</li>
+                </ul>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Main Content Area */}
           <motion.main

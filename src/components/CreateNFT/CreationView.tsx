@@ -1,5 +1,5 @@
-import React, { useEffect, useState, RefObject } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useEffect, useState, RefObject, useCallback } from "react";
+import { motion, AnimatePresence, Reorder } from "framer-motion"; // Added Reorder
 import {
   Layers,
   Eye,
@@ -108,9 +108,9 @@ const CreationView: React.FC<CreationViewProps> = ({
       y = y / zoomFactor;
     }
     
-    // Round to nearest pixel and clamp to canvas bounds
-    x = Math.round(Math.max(0, Math.min(x, logicalWidth - 1)));
-    y = Math.round(Math.max(0, Math.min(y, logicalHeight - 1)));
+    // Clamp to canvas bounds, but do not round here to preserve precision
+    x = Math.max(0, Math.min(x, logicalWidth - 1));
+    y = Math.max(0, Math.min(y, logicalHeight - 1));
     
     return { x, y };
   };
@@ -149,6 +149,30 @@ const CreationView: React.FC<CreationViewProps> = ({
 
     setLastPos({ x, y });
   };
+  // Helper function to save current state to history
+  const saveToHistory = useCallback(() => {
+    if (canvasRef.current) {
+      const imageData = canvasRef.current.toDataURL();
+      const updatedLayers = creationState.layers.map((layer, index) =>
+        index === creationState.activeLayer
+          ? { ...layer, content: imageData }
+          : layer
+      );
+
+      // Save current state to history
+      onStateUpdate({
+        layers: updatedLayers,
+        history: [
+          ...creationState.history.slice(0, creationState.historyIndex + 1),
+          {
+            layers: updatedLayers,
+            timestamp: Date.now(),
+          },
+        ],
+        historyIndex: creationState.historyIndex + 1,
+      });
+    }
+  }, [canvasRef, creationState, onStateUpdate]);
 
   const stopDrawing = () => {
     if (!isDrawing || !activeToolInstance) return;
@@ -161,26 +185,9 @@ const CreationView: React.FC<CreationViewProps> = ({
       console.error("Error in tool onMouseUp:", error);
     }
 
-    // Save to history
-    if (canvasRef.current) {
-      const imageData = canvasRef.current.toDataURL();
-      onStateUpdate({
-        layers: creationState.layers.map((layer, index) =>
-          index === creationState.activeLayer
-            ? { ...layer, content: imageData }
-            : layer
-        ),
-        history: [
-          ...creationState.history.slice(0, creationState.historyIndex + 1),
-          {
-            layers: creationState.layers,
-            timestamp: Date.now(),
-          },
-        ],
-        historyIndex: creationState.historyIndex + 1,
-      });
-    }
-  };  // Tool selection
+    // Save to history after drawing is complete
+    saveToHistory();
+  };// Tool selection
   const selectTool = (toolId: string) => {
     const toolDefinition = ToolRegistry.getTool(toolId);
     if (toolDefinition) {
@@ -231,7 +238,37 @@ const CreationView: React.FC<CreationViewProps> = ({
 
   const selectLayer = (layerIndex: number) => {
     onStateUpdate({ activeLayer: layerIndex });
-  };  // Canvas setup
+  };
+
+  const handleReorderLayers = useCallback((newOrderOfLayers: CanvasLayer[]) => {
+    const activeLayerId = creationState.layers[creationState.activeLayer]?.id;
+    let newActiveLayerIndex = creationState.activeLayer;
+
+    if (activeLayerId) {
+      const foundIndex = newOrderOfLayers.findIndex(layer => layer.id === activeLayerId);
+      if (foundIndex !== -1) {
+        newActiveLayerIndex = foundIndex;
+      }
+    } else if (newOrderOfLayers.length > 0) {
+      newActiveLayerIndex = 0; // Default to first layer if no active layer ID or not found
+    }
+
+
+    onStateUpdate({
+      layers: newOrderOfLayers,
+      activeLayer: newActiveLayerIndex,
+      history: [
+        ...creationState.history.slice(0, creationState.historyIndex + 1),
+        {
+          layers: newOrderOfLayers.map(l => ({ ...l })), // Store a copy of layers
+          timestamp: Date.now(),
+        },
+      ],
+      historyIndex: creationState.historyIndex + 1,
+    });
+  }, [creationState.layers, creationState.activeLayer, creationState.history, creationState.historyIndex, onStateUpdate]);
+
+  // Canvas setup
   useEffect(() => {
     if (canvasRef.current) {
       const canvas = canvasRef.current;
@@ -440,21 +477,28 @@ const CreationView: React.FC<CreationViewProps> = ({
                   </button>
                 </div>
 
-                <div className="flex-1 space-y-1 overflow-y-auto">
+                <Reorder.Group
+                  axis="y"
+                  values={creationState.layers}
+                  onReorder={handleReorderLayers}
+                  className="flex-1 space-y-1 overflow-y-auto"
+                >
                   {creationState.layers.map((layer, index) => (
-                    <div
+                    <Reorder.Item
                       key={layer.id}
-                      className={`flex items-center justify-between p-2 rounded border cursor-pointer transition-all duration-200 ${
+                      value={layer}
+                      className={`flex items-center justify-between p-2 rounded border cursor-grab transition-all duration-200 ${
                         index === creationState.activeLayer
-                          ? "bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-700"
+                          ? "bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-700 shadow-md"
                           : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
                       }`}
-                      onClick={() => selectLayer(index)}
+                      onClick={() => selectLayer(index)} // Keep onClick for selection
+                      whileDrag={{ backgroundColor: "rgba(128, 128, 128, 0.2)" }}
                     >
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={(e) => {
-                            e.stopPropagation();
+                            e.stopPropagation(); // Prevent layer selection when toggling visibility
                             toggleLayerVisibility(index);
                           }}
                           className="p-0.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
@@ -473,9 +517,9 @@ const CreationView: React.FC<CreationViewProps> = ({
                       <span className="text-xs text-gray-500">
                         {Math.round(layer.opacity * 100)}%
                       </span>
-                    </div>
+                    </Reorder.Item>
                   ))}
-                </div>
+                </Reorder.Group>
               </div>
             </motion.div>
           )}
