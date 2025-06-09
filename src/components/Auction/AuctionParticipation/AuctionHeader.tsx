@@ -26,16 +26,6 @@ const AuctionHeader: React.FC<AuctionHeaderProps> = ({
   onToggleSound,
   onShowAnalytics,
 }) => {
-  // Format time function
-  const formatTime = (seconds: number): string => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hours.toString().padStart(2, "0")}:${minutes
-      .toString()
-      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
-
   return (
     <div className="bg-gray-900/50 backdrop-blur-sm border-b border-gray-800">
       <div className="max-w-7xl mx-auto px-4 py-4">

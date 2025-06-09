@@ -7,6 +7,7 @@ import AuctionParticipation from '../pages/AuctionParticipation';
 import Collections from '../pages/Collections';
 import Profile from '../pages/Profile';
 import CreateNFT from '../pages/CreateNFT';
+import DetailNFT from '../pages/DetailNFT';
 import Login from '../pages/Login';
 import Signup from '../pages/Signup';
 import NotFound from '../pages/NotFound';
@@ -24,11 +25,14 @@ const router = createBrowserRouter([  {
       {
         index: true,
         element: <HomeSection />,
-      },
-      {
+      },      {
         path: 'gallery',
         element: <Gallery />,
-      },      {
+      },
+      {
+        path: 'nft/:id',
+        element: <DetailNFT />,
+      },{
         path: 'auctions',
         element: <Auctions />,
       },
