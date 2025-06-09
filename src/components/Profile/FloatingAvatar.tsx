@@ -1,71 +1,56 @@
-import React, { Suspense, useRef, useCallback } from 'react';
+import React, { Suspense, useRef } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Sphere } from '@react-three/drei';
-import Particles from 'react-tsparticles';
-import { loadSlim } from "tsparticles-slim";
-import { Engine } from "tsparticles-engine";
 import useDarkMode from '../../hooks/useDarkMode';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+// Custom Particles Component using CSS animations
+const CustomParticles: React.FC<{ isDark: boolean }> = ({ isDark }) => {
+  const particles = Array.from({ length: 50 }, (_, i) => i);
+  
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {particles.map((particle) => (
+        <div
+          key={particle}
+          className={`absolute w-1 h-1 rounded-full animate-pulse ${
+            isDark ? 'bg-blue-400' : 'bg-orange-400'
+          }`}
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            animationDelay: `${Math.random() * 3}s`,
+            animationDuration: `${2 + Math.random() * 3}s`,
+            opacity: 0.3 + Math.random() * 0.4,
+          }}
+        />
+      ))}
+      
+      {/* Floating connecting lines effect */}
+      <svg className="absolute inset-0 w-full h-full opacity-20">
+        {Array.from({ length: 10 }, (_, i) => (
+          <line
+            key={i}
+            x1={`${Math.random() * 100}%`}
+            y1={`${Math.random() * 100}%`}
+            x2={`${Math.random() * 100}%`}
+            y2={`${Math.random() * 100}%`}
+            stroke={isDark ? '#64B5F6' : '#FFB74D'}
+            strokeWidth="1"
+            className="animate-pulse"
+            style={{
+              animationDelay: `${Math.random() * 2}s`,
+              animationDuration: `${3 + Math.random() * 2}s`,
+            }}
+          />
+        ))}
+      </svg>
+    </div>
+  );
+};
 
-// Custom interface để bypass TypeScript errors
-interface ParticlesConfig {
-  fpsLimit: number;
-  interactivity: {
-    events: {
-      onHover: {
-        enable: boolean;
-        mode: string;
-      };
-      resize: boolean;
-    };
-    modes: {
-      repulse: {
-        distance: number;
-        duration: number;
-      };
-    };
-  };
-  particles: {
-    color: {
-      value: string;
-    };
-    links: {
-      color: string;
-      distance: number;
-      enable: boolean;
-      opacity: number;
-      width: number;
-    };
-    move: {
-      direction: string;
-      enable: boolean;
-      outModes: {
-        default: string;
-      };
-      random: boolean;
-      speed: number;
-      straight: boolean;
-    };
-    number: {
-      value: number;
-    };
-    opacity: {
-      value: number;
-    };
-    shape: {
-      type: string;
-    };
-    size: {
-      value: {
-        min: number;
-        max: number;
-      };
-    };
-  };
-  detectRetina: boolean;
-}
+// Custom interface để bypass TypeScript errors - không cần nữa vì đã bỏ tsparticles
+// interface ParticlesConfig { ... }
 
 const AvatarMesh: React.FC = () => {
   const meshRef = useRef<THREE.Mesh>(null!);
@@ -92,87 +77,9 @@ const AvatarMesh: React.FC = () => {
 const FloatingAvatar: React.FC = () => {
   const { isDark } = useDarkMode();
 
-  const particlesInit = useCallback(async (engine: Engine) => {
-    await loadSlim(engine);
-  }, []);
-
-  // Sử dụng custom interface thay vì any
-  const particlesOptionsLight: ParticlesConfig = {
-    fpsLimit: 60,
-    interactivity: {
-      events: {
-        onHover: {
-          enable: true,
-          mode: "repulse"
-        },
-        resize: true
-      },
-      modes: {
-        repulse: {
-          distance: 80,
-          duration: 0.4
-        }
-      }
-    },
-    particles: {
-      color: {
-        value: "#FF9800"
-      },
-      links: {
-        color: "#FFB74D",
-        distance: 150,
-        enable: true,
-        opacity: 0.3,
-        width: 1
-      },
-      move: {
-        direction: "none",
-        enable: true,
-        outModes: {
-          default: "bounce"
-        },
-        random: true,
-        speed: 0.5,
-        straight: false
-      },
-      number: {
-        value: 50
-      },
-      opacity: {
-        value: 0.4
-      },
-      shape: {
-        type: "circle"
-      },
-      size: {
-        value: { min: 1, max: 3 }
-      }
-    },
-    detectRetina: true
-  };
-
-  const particlesOptionsDark: ParticlesConfig = {
-    ...particlesOptionsLight,
-    particles: {
-      ...particlesOptionsLight.particles,
-      color: {
-        value: "#007BFF"
-      },
-      links: {
-        ...particlesOptionsLight.particles.links,
-        color: "#64B5F6"
-      }
-    }
-  };
-
   return (
     <div className="relative w-48 h-48 md:w-64 md:h-64 rounded-full overflow-hidden shadow-2xl">
-      <Particles
-        id="tsparticles"
-        init={particlesInit}
-        options={(isDark ? particlesOptionsDark : particlesOptionsLight) as any}
-        className="absolute inset-0 z-0"
-      />
+      <CustomParticles isDark={isDark} />
       <Canvas
         shadows
         camera={{ position: [0, 0, 3.5], fov: 50 }}
