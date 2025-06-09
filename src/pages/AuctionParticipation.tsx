@@ -10,6 +10,7 @@ import {
   BiddersList,
   AuctionEndOverlay,
 } from "../components/Auction/AuctionParticipation";
+import AuctionSound from "../components/Auction/AuctionSound";
 import {
   BidHistory,
   Bidder,
@@ -279,6 +280,9 @@ const AuctionParticipation: React.FC = () => {
   const [bidSuccess, setBidSuccess] = useState(false);
   // Zoom level is now managed by the AuctionGallery component
   const [activeBidder, setActiveBidder] = useState<number | null>(null);
+  const [hasNewBid, setHasNewBid] = useState(false);
+  const [hasApplause, setHasApplause] = useState(false);
+  const [isSoundActive, setIsSoundActive] = useState(true);
   // Countdown timer
   useEffect(() => {
     const timer = setInterval(() => {
@@ -491,6 +495,10 @@ const AuctionParticipation: React.FC = () => {
       .toString()
       .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
+
+  // Format time for display
+  const formattedTimeLeft = formatTime(timeLeft);
+
   const handlePlaceBid = async () => {
     const bidValue = parseInt(bidAmount.replace(/[^0-9]/g, ""));
 
@@ -500,6 +508,7 @@ const AuctionParticipation: React.FC = () => {
     }
 
     setIsPlacingBid(true);
+    setHasNewBid(true); // Trigger bid success sound
 
     // Simulate bidder paddle action and reactions
     const randomBidder = bidders[Math.floor(Math.random() * bidders.length)];
@@ -529,6 +538,7 @@ const AuctionParticipation: React.FC = () => {
               bidder.id !== randomBidder.id ? "clapping" : bidder.reactionType,
           }))
         );
+        setHasApplause(true); // Trigger applause sound
       }, 500);
     }
 
@@ -560,6 +570,8 @@ const AuctionParticipation: React.FC = () => {
             reactionType: "none" as const,
           }))
         );
+        setHasNewBid(false); // Reset bid sound
+        setHasApplause(false); // Reset applause sound
       }, 2000);
 
       setTimeout(() => setBidSuccess(false), 3000);
@@ -594,6 +606,11 @@ const AuctionParticipation: React.FC = () => {
       },
     },
   };
+
+  const handleToggleSound = () => {
+    setIsSoundActive(!isSoundActive);
+  };
+
   return (
     <motion.div
       className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white overflow-hidden"
@@ -601,14 +618,22 @@ const AuctionParticipation: React.FC = () => {
       initial="hidden"
       animate="visible"
     >
+      {/* Sound System */}
+      <AuctionSound
+        isActive={isSoundActive}
+        hasNewBid={hasNewBid}
+        hasApplause={hasApplause}
+      />
       {/* Header */}
       <AuctionHeader
         id={auctionData.id}
         auctionHouse={auctionData.auctionHouse}
-        timeLeft={timeLeft}
+        timeLeft={formattedTimeLeft}
         isWatched={isWatched}
+        isSoundActive={isSoundActive}
         onNavigateBack={() => navigate(-1)}
         onToggleWatch={() => setIsWatched(!isWatched)}
+        onToggleSound={handleToggleSound}
       />
       {/* Gallery Wall - Upper Theater */}{" "}
       <AuctionGallery image={auctionData.image} />

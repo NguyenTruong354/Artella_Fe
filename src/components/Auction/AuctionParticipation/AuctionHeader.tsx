@@ -1,14 +1,16 @@
-import React from "react";
-import { motion } from "framer-motion";
-import { ArrowLeft, Heart } from "lucide-react";
+import React from 'react';
+import { IoArrowBack } from 'react-icons/io5';
+import { FaVolumeUp, FaVolumeMute } from 'react-icons/fa';
 
 interface AuctionHeaderProps {
   id: number;
   auctionHouse: string;
-  timeLeft: number;
+  timeLeft: string;
   isWatched: boolean;
+  isSoundActive: boolean;
   onNavigateBack: () => void;
   onToggleWatch: () => void;
+  onToggleSound: () => void;
 }
 
 const AuctionHeader: React.FC<AuctionHeaderProps> = ({
@@ -16,8 +18,10 @@ const AuctionHeader: React.FC<AuctionHeaderProps> = ({
   auctionHouse,
   timeLeft,
   isWatched,
+  isSoundActive,
   onNavigateBack,
   onToggleWatch,
+  onToggleSound,
 }) => {
   // Format time function
   const formatTime = (seconds: number): string => {
@@ -30,54 +34,52 @@ const AuctionHeader: React.FC<AuctionHeaderProps> = ({
   };
 
   return (
-    <motion.div
-      className="sticky top-0 z-50 bg-black/80 backdrop-blur-xl border-b border-gold-500/30"
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 100, damping: 15 }}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <div className="bg-gray-900/50 backdrop-blur-sm border-b border-gray-800">
+      <div className="max-w-7xl mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <motion.button
+            <button
               onClick={onNavigateBack}
-              className="p-2 rounded-xl bg-gold-500/20 hover:bg-gold-500/30 border border-gold-500/50 transition-all"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              className="p-2 hover:bg-gray-800 rounded-full transition-colors"
             >
-              <ArrowLeft className="w-5 h-5 text-gold-400" />
-            </motion.button>
+              <IoArrowBack className="w-6 h-6" />
+            </button>
             <div>
-              <h1 className="text-lg font-bold text-gold-400">AUCTION HOUSE</h1>
-              <p className="text-sm text-gray-400">
-                Lot #{id} • {auctionHouse}
-              </p>
+              <h1 className="text-lg font-semibold">Auction #{id}</h1>
+              <p className="text-sm text-gray-400">{auctionHouse}</p>
             </div>
           </div>
-
+          
           <div className="flex items-center space-x-4">
-            <div className="text-right">
-              <div className="text-xl font-bold text-red-400 font-mono">
-                {formatTime(timeLeft)}
-              </div>
+            <div className="text-center">
+              <div className="text-xl font-bold">{timeLeft}</div>
               <div className="text-xs text-gray-400">Time Remaining</div>
             </div>
-            <motion.button
-              onClick={onToggleWatch}
-              className={`p-3 rounded-xl transition-all border ${
-                isWatched
-                  ? "bg-pink-500 text-white shadow-lg shadow-pink-500/25 border-pink-500"
-                  : "bg-gray-800 text-gray-400 border-gray-600 hover:border-pink-500/50"
-              }`}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+            <button
+              onClick={onToggleSound}
+              className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+              title={isSoundActive ? "Mute Sound" : "Unmute Sound"}
             >
-              <Heart className="w-5 h-5" />
-            </motion.button>
+              {isSoundActive ? (
+                <FaVolumeUp className="w-5 h-5" />
+              ) : (
+                <FaVolumeMute className="w-5 h-5" />
+              )}
+            </button>
+            <button
+              onClick={onToggleWatch}
+              className={`px-4 py-2 rounded-full transition-colors ${
+                isWatched
+                  ? "bg-blue-600 hover:bg-blue-700"
+                  : "bg-gray-800 hover:bg-gray-700"
+              }`}
+            >
+              {isWatched ? "Watching" : "Watch"}
+            </button>
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
