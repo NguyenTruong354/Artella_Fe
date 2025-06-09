@@ -33,6 +33,9 @@ export interface ToolSettings {
   strokeWidth?: number;
   fontFamily?: string;
   fontSize?: number;
+  // Shape settings
+  shapeType?: 'rectangle' | 'circle' | 'line' | 'triangle';
+  filled?: boolean;
   // Gradient settings
   gradientType?: 'linear' | 'radial' | 'conic';
   gradientColors?: GradientStop[];
@@ -40,6 +43,23 @@ export interface ToolSettings {
   // Pattern settings
   patternType?: 'wood' | 'stone' | 'fabric' | 'marble' | 'metal' | 'custom';
   patternScale?: number;
+  // Wood pattern specific settings (flat)
+  woodType?: 'oak' | 'pine' | 'mahogany' | 'birch';
+  grainDirection?: 'horizontal' | 'vertical' | 'diagonal';
+  woodPatternIntensity?: number;
+  // Stone pattern specific settings (flat)
+  stoneType?: 'granite' | 'marble' | 'slate' | 'sandstone';
+  roughness?: number;
+  addCracks?: boolean;
+  weathered?: boolean;
+  stonePatternIntensity?: number;
+  // Fabric pattern specific settings (flat)
+  fabricType?: 'cotton' | 'silk' | 'wool' | 'linen';
+  weaveDensity?: number;
+  colorVariation?: number;
+  showWarp?: boolean;
+  showWeft?: boolean;
+  fabricPatternIntensity?: number;
   // Symmetry settings
   symmetryType?: 'horizontal' | 'vertical' | 'radial' | 'bilateral';
   symmetryPoints?: number;

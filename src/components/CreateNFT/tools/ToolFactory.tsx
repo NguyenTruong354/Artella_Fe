@@ -38,7 +38,6 @@ export class ToolFactory {
     const toolDefinition = ToolRegistry.getTool(toolId);
     return toolDefinition ? toolDefinition.component : null;
   }
-
   static createToolInstance(toolId: string, props: ToolProps): ToolHandler | null {
     const ToolComponent = this.getToolComponent(toolId);
     
@@ -52,10 +51,9 @@ export class ToolFactory {
       settings: {
         ...(toolDefinition?.defaultSettings || {}),
         ...(props.settings || {})
-      }
-      // TODO: If ToolProps includes an onSettingsChange callback for structured settings updates,
-      // ensure it's correctly passed through here from props.onSettingsChange.
-      // e.g., onSettingsChange: props.onSettingsChange, (if props is ToolProps & { onSettingsChange?: ... })
+      },
+      // Pass through the onSettingsChange callback if provided
+      onSettingsChange: props.onSettingsChange,
     };
 
     return new ToolComponent(mergedProps);

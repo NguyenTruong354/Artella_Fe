@@ -14,8 +14,13 @@ export interface ToolProps {
     patternOptions?: PatternOptions;
     symmetryOptions?: SymmetryOptions;
     shapeType?: ShapeType;
+    fontFamily?: string;
+    fontSize?: number;
+    strokeWidth?: number;
+    filled?: boolean;
     [key: string]: unknown;
   };
+  onSettingsChange?: (structuredUpdate: Partial<ToolProps['settings']>) => void;
 }
 
 export interface DrawingContext {

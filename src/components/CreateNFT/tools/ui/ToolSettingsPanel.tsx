@@ -14,104 +14,117 @@ interface ToolSettingsPanelProps {
 export const ToolSettingsPanel: React.FC<ToolSettingsPanelProps> = ({
   toolId,
   settings, // These are the FLAT settings from the parent component
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onSettingsChange: onFlatSettingsChange, // Renamed for clarity: this expects FLAT Partial<ToolSettings>
   className = '',
   compact = false
 }) => {
-  // TODO: CRITICAL - To make settings updates functional, the following are needed:
-  // 1. `ToolProps` (in `../types.ts`) needs an `onSettingsChange?: (structuredUpdate: Partial<ToolProps['settings']>) => void;` callback.
-  // 2. `ToolFactory.createToolInstance` must accept this callback and pass it to tool instances.
-  //    (e.g., toolInstance = ToolFactory.createToolInstance(toolId, { ..., onSettingsChange: handleStructuredSettingsChange }) )
-  // 3. Individual tools' settings UI (e.g., SizeSlider, ColorPicker used within a tool's render method)
-  //    must call `this.props.onSettingsChange(structuredUpdate)` when a setting changes.
-  // 4. This panel then needs a handler function, `handleStructuredSettingsChange`, which will:
-  //    a. Accept `structuredUpdate: Partial<ToolProps['settings']>`.
-  //    b. Transform this `structuredUpdate` back into a `flatUpdate: Partial<ToolSettings>`.
-  //       This involves mapping all fields, including flattening nested options like
-  //       `gradientOptions`, `patternOptions` (and its sub-objects like `wood`, `stone`), etc.
-  //    c. Call `onFlatSettingsChange(flatUpdate)` to notify the parent.
-  // 5. The destructuring below and the `structuredSettings` object need to be comprehensive
-  //    to include ALL specific tool options (e.g., patternOptions.wood.woodType, stoneType, roughness, etc.)
-  //    This requires that the flat `settings` prop (type ToolSettings from `../../types`)
-  //    actually contains these fields, and they are destructured here.
-
+  // Settings transformation and change handling system is now implemented:
   const {
     // Basic settings
     size,
     color,
-    opacity, // General opacity for brush, text, shapes, and can be a default for gradients/patterns
+    opacity,
 
-    // Text-specific (example, if they were flat)
-    // textValue,
+    // Text-specific settings
     fontFamily,
     fontSize,
 
-    // Shape-specific (example, if they were flat)
-    // shapeType,
+    // Shape-specific settings
+    shapeType,
     strokeWidth,
-    // fillType, // (e.g., 'solid', 'gradient', 'pattern')
+    filled,
 
     // Gradient-specific (flat representation)
     gradientType,
-    gradientColors, // Array of { color: string, position: number }
+    gradientColors,
     gradientAngle,
-    // gradientOpacity is covered by general opacity for now in structuredSettings
 
     // Pattern-specific (flat representation)
     patternType,
     patternScale,
-    // patternOpacity is covered by general opacity for now in structuredSettings
-    // Detailed flat pattern props (examples, assuming they exist in ToolSettings from ../../types)
-    // woodType, grainDirection, woodPatternIntensity,
-    // stoneType, roughness, addCracks, stonePatternIntensity,
-    // fabricType, weaveDensity, fabricPatternIntensity,
+    // Wood pattern specific
+    woodType,
+    grainDirection,
+    woodPatternIntensity,
+    // Stone pattern specific
+    stoneType,
+    roughness,
+    addCracks,
+    weathered,
+    stonePatternIntensity,
+    // Fabric pattern specific
+    fabricType,
+    weaveDensity,
+    colorVariation,
+    showWarp,
+    showWeft,
+    fabricPatternIntensity,
 
     // Symmetry-specific (flat representation)
     symmetryType,
-    symmetryPoints, // For radial
-    symmetryAxis,   // For custom axis {x, y}
-    // showSymmetryAxis, // UI toggle, not a core setting for the tool logic itself usually
+    symmetryPoints,
+    symmetryAxis,
 
   } = settings;
-
   // Transform flat settings to the structured format expected by ToolProps['settings']
   const structuredSettings: ToolProps['settings'] = {
     size,
     color,
-    opacity, // General opacity
+    opacity,
 
     // Text settings
     ...(fontFamily && { fontFamily }),
     ...(fontSize !== undefined && { fontSize }),
-    // ...(textValue && { textValue }), // if applicable
 
     // Shape settings
-    // ...(shapeType && { shapeType }), // if applicable
+    ...(shapeType && { shapeType }),
     ...(strokeWidth !== undefined && { strokeWidth }),
+    ...(filled !== undefined && { filled }),
 
     gradientOptions: (gradientType || gradientColors || gradientAngle !== undefined)
       ? {
           type: gradientType || 'linear',
           colors: gradientColors || [],
           angle: gradientAngle,
-          opacity: opacity !== undefined ? opacity : 1, // Default to general opacity
+          opacity: opacity !== undefined ? opacity : 1,
         }
       : undefined,
 
     patternOptions: (patternType || patternScale !== undefined)
       ? {
-          type: patternType || 'wood', // Default type
+          type: patternType || 'wood',
           scale: patternScale || 1,
-          opacity: opacity !== undefined ? opacity : 1, // Default to general opacity
-          color: color, // Pass main color as a base/tint for the pattern
-          // TODO: Map specific flat pattern settings (woodType, stoneType, etc.) to nested structured options
-          // e.g., wood: { woodType: settings.woodType, grainDirection: settings.grainDirection }
-          // This requires `settings` (flat) to have these properties and for them to be destructured above.
-          // Example (assuming flat settings like settings.woodType exist):
-          // wood: settings.woodType ? { woodType: settings.woodType, grainDirection: settings.grainDirection, patternIntensity: settings.woodPatternIntensity } : undefined,
-          // stone: settings.stoneType ? { stoneType: settings.stoneType, roughness: settings.roughness, addCracks: settings.addCracks, patternIntensity: settings.stonePatternIntensity } : undefined,
-          // fabric: settings.fabricType ? { fabricType: settings.fabricType, weaveDensity: settings.weaveDensity, patternIntensity: settings.fabricPatternIntensity } : undefined,
+          opacity: opacity !== undefined ? opacity : 1,
+          color: color,
+          // Wood pattern specific options
+          wood: (woodType || grainDirection || woodPatternIntensity !== undefined) 
+            ? {
+                woodType: woodType || 'oak',
+                grainDirection: grainDirection || 'horizontal',
+                patternIntensity: woodPatternIntensity || 0.8,
+              }
+            : undefined,
+          // Stone pattern specific options
+          stone: (stoneType || roughness !== undefined || addCracks !== undefined || weathered !== undefined || stonePatternIntensity !== undefined)
+            ? {
+                stoneType: stoneType || 'granite',
+                roughness: roughness !== undefined ? roughness : 0.5,
+                addCracks: addCracks !== undefined ? addCracks : false,
+                weathered: weathered !== undefined ? weathered : false,
+                patternIntensity: stonePatternIntensity || 0.8,
+              }
+            : undefined,
+          // Fabric pattern specific options
+          fabric: (fabricType || weaveDensity !== undefined || colorVariation !== undefined || showWarp !== undefined || showWeft !== undefined || fabricPatternIntensity !== undefined)
+            ? {
+                fabricType: fabricType || 'cotton',
+                weaveDensity: weaveDensity !== undefined ? weaveDensity : 1,
+                colorVariation: colorVariation !== undefined ? colorVariation : 0.3,
+                showWarp: showWarp !== undefined ? showWarp : true,
+                showWeft: showWeft !== undefined ? showWeft : true,
+                patternIntensity: fabricPatternIntensity || 0.8,
+              }
+            : undefined,
         }
       : undefined,
 
@@ -120,34 +133,87 @@ export const ToolSettingsPanel: React.FC<ToolSettingsPanelProps> = ({
           type: symmetryType || 'bilateral',
           points: symmetryPoints,
           axis: symmetryAxis,
-          enabled: true, // If any symmetry setting is present, assume enabled for panel display
+          enabled: true,
         }
       : undefined,
+  };  // Handle structured settings changes from tool instances
+  const handleStructuredSettingsChange = (structuredUpdate: Partial<ToolProps['settings']>) => {
+    if (!structuredUpdate) return;
+    
+    const flatUpdate: Partial<ToolSettings> = {};
+
+    // Map basic settings
+    if (structuredUpdate.size !== undefined) flatUpdate.size = structuredUpdate.size;
+    if (structuredUpdate.color !== undefined) flatUpdate.color = structuredUpdate.color;
+    if (structuredUpdate.opacity !== undefined) flatUpdate.opacity = structuredUpdate.opacity;
+    
+    // Map text settings
+    if (structuredUpdate.fontFamily !== undefined) flatUpdate.fontFamily = structuredUpdate.fontFamily;
+    if (structuredUpdate.fontSize !== undefined) flatUpdate.fontSize = structuredUpdate.fontSize;
+    
+    // Map shape settings
+    if (structuredUpdate.shapeType !== undefined) flatUpdate.shapeType = structuredUpdate.shapeType;
+    if (structuredUpdate.strokeWidth !== undefined) flatUpdate.strokeWidth = structuredUpdate.strokeWidth;
+    if (structuredUpdate.filled !== undefined) flatUpdate.filled = structuredUpdate.filled;
+
+    // Map gradient settings
+    if (structuredUpdate.gradientOptions) {
+      const gradOpts = structuredUpdate.gradientOptions;
+      if (gradOpts.type !== undefined) flatUpdate.gradientType = gradOpts.type;
+      if (gradOpts.colors !== undefined) flatUpdate.gradientColors = gradOpts.colors;
+      if (gradOpts.angle !== undefined) flatUpdate.gradientAngle = gradOpts.angle;
+    }
+
+    // Map pattern settings
+    if (structuredUpdate.patternOptions) {
+      const patOpts = structuredUpdate.patternOptions;
+      if (patOpts.type !== undefined) flatUpdate.patternType = patOpts.type;
+      if (patOpts.scale !== undefined) flatUpdate.patternScale = patOpts.scale;
+      
+      // Map wood pattern specific settings
+      if (patOpts.wood) {
+        if (patOpts.wood.woodType !== undefined) flatUpdate.woodType = patOpts.wood.woodType;
+        if (patOpts.wood.grainDirection !== undefined) flatUpdate.grainDirection = patOpts.wood.grainDirection;
+        if (patOpts.wood.patternIntensity !== undefined) flatUpdate.woodPatternIntensity = patOpts.wood.patternIntensity;
+      }
+      
+      // Map stone pattern specific settings
+      if (patOpts.stone) {
+        if (patOpts.stone.stoneType !== undefined) flatUpdate.stoneType = patOpts.stone.stoneType;
+        if (patOpts.stone.roughness !== undefined) flatUpdate.roughness = patOpts.stone.roughness;
+        if (patOpts.stone.addCracks !== undefined) flatUpdate.addCracks = patOpts.stone.addCracks;
+        if (patOpts.stone.weathered !== undefined) flatUpdate.weathered = patOpts.stone.weathered;
+        if (patOpts.stone.patternIntensity !== undefined) flatUpdate.stonePatternIntensity = patOpts.stone.patternIntensity;
+      }
+      
+      // Map fabric pattern specific settings
+      if (patOpts.fabric) {
+        if (patOpts.fabric.fabricType !== undefined) flatUpdate.fabricType = patOpts.fabric.fabricType;
+        if (patOpts.fabric.weaveDensity !== undefined) flatUpdate.weaveDensity = patOpts.fabric.weaveDensity;
+        if (patOpts.fabric.colorVariation !== undefined) flatUpdate.colorVariation = patOpts.fabric.colorVariation;
+        if (patOpts.fabric.showWarp !== undefined) flatUpdate.showWarp = patOpts.fabric.showWarp;
+        if (patOpts.fabric.showWeft !== undefined) flatUpdate.showWeft = patOpts.fabric.showWeft;
+        if (patOpts.fabric.patternIntensity !== undefined) flatUpdate.fabricPatternIntensity = patOpts.fabric.patternIntensity;
+      }
+    }
+
+    // Map symmetry settings
+    if (structuredUpdate.symmetryOptions) {
+      const symOpts = structuredUpdate.symmetryOptions;
+      if (symOpts.type !== undefined) flatUpdate.symmetryType = symOpts.type;
+      if (symOpts.points !== undefined) flatUpdate.symmetryPoints = symOpts.points;
+      if (symOpts.axis !== undefined) flatUpdate.symmetryAxis = symOpts.axis;
+    }
+
+    // Call the parent's flat settings change handler
+    onFlatSettingsChange(flatUpdate);
   };
-
-  // Placeholder for the function that would handle updates from the tool's UI
-  // const handleStructuredSettingsChange = (structuredUpdate: Partial<ToolProps['settings']>) => {
-  //   // TODO: Implement transformation from structuredUpdate to flatUpdate
-  //   // const flatUpdate: Partial<ToolSettings> = {};
-  //   // ... map fields ...
-  //   // e.g., if (structuredUpdate.size !== undefined) flatUpdate.size = structuredUpdate.size;
-  //   // if (structuredUpdate.patternOptions) {
-  //   //   flatUpdate.patternType = structuredUpdate.patternOptions.type;
-  //   //   flatUpdate.patternScale = structuredUpdate.patternOptions.scale;
-  //   //   if (structuredUpdate.patternOptions.wood) {
-  //   //      flatUpdate.woodType = structuredUpdate.patternOptions.wood.woodType;
-  //   //      ...
-  //   //   }
-  //   // }
-  //   // onFlatSettingsChange(flatUpdate);
-  // };
-
   const toolInstance = ToolFactory.createToolInstance(toolId, {
     creationState: {} as CreationState, // Mocked for UI rendering
     onStateUpdate: () => {},          // Mocked
     canvasRef: { current: document.createElement('canvas') }, // Mocked
     settings: structuredSettings, // Pass the transformed settings
-    // onSettingsChange: handleStructuredSettingsChange, // This would be passed if the system was complete
+    onSettingsChange: handleStructuredSettingsChange, // Pass the settings change handler
   });
 
   if (!toolInstance) {
