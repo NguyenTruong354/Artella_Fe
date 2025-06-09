@@ -20,14 +20,12 @@ import { ToolFactory } from "./tools/ToolFactory";
 
 interface CreationViewProps {
   creationState: CreationState;
-  tools: CanvasTool[];
   onStateUpdate: (newState: Partial<CreationState>) => void;
   canvasRef: RefObject<HTMLCanvasElement | null>;
 }
 
 const CreationView: React.FC<CreationViewProps> = ({
   creationState,
-  tools,
   onStateUpdate,
   canvasRef,
 }) => {
@@ -182,15 +180,21 @@ const CreationView: React.FC<CreationViewProps> = ({
         historyIndex: creationState.historyIndex + 1,
       });
     }
-  };
-
-  // Tool selection
+  };  // Tool selection
   const selectTool = (toolId: string) => {
-    const tool = tools.find(t => t.id === toolId);
-    if (tool) {
+    const toolDefinition = ToolRegistry.getTool(toolId);
+    if (toolDefinition) {
+      // Convert ToolDefinition to CanvasTool format
+      const tool = {
+        id: toolDefinition.id,
+        name: toolDefinition.name,
+        icon: toolDefinition.icon,
+        type: toolDefinition.category as CanvasTool['type'], // Map category to type
+        settings: toolDefinition.defaultSettings || {}
+      };
       onStateUpdate({ selectedTool: tool });
     }
-  };  // Handle tool settings update
+  };// Handle tool settings update
   const handleToolSettingsUpdate = (settings: Record<string, unknown>) => {
     onStateUpdate({
       selectedTool: {
@@ -249,10 +253,9 @@ const CreationView: React.FC<CreationViewProps> = ({
       }
     }
   }, [creationState.canvasSize, canvasRef]);
-
   // Get cursor style based on selected tool
   const getCursorStyle = () => {
-    switch (creationState.selectedTool.type) {
+    switch (creationState.selectedTool.id) {
       case "eraser":
         return "cursor-cell";
       case "text":

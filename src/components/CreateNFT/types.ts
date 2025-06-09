@@ -22,7 +22,7 @@ export interface CanvasTool {
   id: string;
   name: string;
   icon: string;
-  type: 'brush' | 'shape' | 'text' | 'eraser' | 'fill' | 'gradient' | 'pattern' | 'symmetry';
+  type: 'brush' | 'eraser' | 'text' | 'shape' | 'gradient' | 'pattern' | 'symmetry';
   settings?: ToolSettings;
 }
 

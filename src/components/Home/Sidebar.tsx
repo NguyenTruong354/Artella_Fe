@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useReducedMotion } from "../../hooks/useReducedMotion";
 
 // Constants
@@ -97,6 +97,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState("");
   const [time, setTime] = useState(new Date());
   const prefersReducedMotion = useReducedMotion();
@@ -225,12 +226,30 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
           },
         },
   };
-
   useEffect(() => {
     setActiveSection(location.pathname);
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, [location]);
+
+  // Handle quick action clicks
+  const handleQuickAction = (action: string) => {
+    switch (action) {
+      case "create":
+        navigate("/Home/create-nft");
+        break;
+      case "sell":
+        // TODO: Add sell functionality
+        console.log("Sell action clicked");
+        break;
+      case "analytics":
+        // TODO: Add analytics functionality
+        console.log("Analytics action clicked");
+        break;
+      default:
+        break;
+    }
+  };
 
   return (
     <>
@@ -514,12 +533,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
                 className="space-y-3"
                 role="group"
                 aria-labelledby="quick-actions-heading"
-              >
-                {quickActions.map((action, index) => (
+              >                {quickActions.map((action, index) => (
                   <motion.button
                     key={action.action}
                     title={action.description}
                     aria-label={action.description}
+                    onClick={() => handleQuickAction(action.action)}
                     className="w-full group relative flex items-center space-x-4 p-4 rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-600 dark:from-amber-500 dark:to-orange-600 hover:from-blue-600 hover:to-cyan-700 dark:hover:from-amber-600 dark:hover:to-orange-600 text-white transition-all duration-300 overflow-hidden shadow-lg hover:shadow-xl"
                     variants={itemVariants}
                     custom={index}
