@@ -33,7 +33,7 @@ const router = createBrowserRouter([  {
         element: <Auctions />,
       },
       {
-        path: 'auction/:id',
+        path: 'auction/1',
         element: <AuctionParticipation />,
       },
       {

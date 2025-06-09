@@ -2,8 +2,19 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 // All imports are now in components
-import { AuctionHeader, AuctionGallery, BiddingArea, AuctionDetails, BiddersList, AuctionEndOverlay } from "../components/Auction/AuctionParticipation";
-import { BidHistory, Bidder, AuctionDetails as AuctionDetailsType } from "../types/auction";
+import {
+  AuctionHeader,
+  AuctionGallery,
+  BiddingArea,
+  AuctionDetails,
+  BiddersList,
+  AuctionEndOverlay,
+} from "../components/Auction/AuctionParticipation";
+import {
+  BidHistory,
+  Bidder,
+  AuctionDetails as AuctionDetailsType,
+} from "../types/auction";
 
 const AuctionParticipation: React.FC = () => {
   const navigate = useNavigate();
@@ -599,10 +610,8 @@ const AuctionParticipation: React.FC = () => {
         onNavigateBack={() => navigate(-1)}
         onToggleWatch={() => setIsWatched(!isWatched)}
       />
-      
-      {/* Gallery Wall - Upper Theater */}      <AuctionGallery
-        image={auctionData.image}
-      />
+      {/* Gallery Wall - Upper Theater */}{" "}
+      <AuctionGallery image={auctionData.image} />
       {/* Include AuctionDetails within the gallery section */}
       <AuctionDetails
         currentBid={auctionData.currentBid}
@@ -611,7 +620,6 @@ const AuctionParticipation: React.FC = () => {
         watchers={auctionData.watchers}
         bidHistory={bidHistory}
       />
-      
       {/* Rest of the component remains unchanged */}
       {/* Theater Audience - Lower Section */}
       <motion.div
@@ -623,12 +631,12 @@ const AuctionParticipation: React.FC = () => {
           <div className="absolute top-0 left-1/4 w-2 h-8 bg-gradient-to-b from-yellow-400 to-transparent opacity-60" />
           <div className="absolute top-0 right-1/4 w-2 h-8 bg-gradient-to-b from-yellow-400 to-transparent opacity-60" />
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">            {/* Theater Seating - Left Side */}
-            <BiddersList
-              bidders={bidders}
-              activeBidder={activeBidder}
-            />{/* Bidding Panel - Right Side */}
-            <BiddingArea 
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {" "}
+            {/* Theater Seating - Left Side */}
+            <BiddersList bidders={bidders} activeBidder={activeBidder} />
+            {/* Bidding Panel - Right Side */}
+            <BiddingArea
               bidAmount={bidAmount}
               setBidAmount={setBidAmount}
               handlePlaceBid={handlePlaceBid}
@@ -640,7 +648,9 @@ const AuctionParticipation: React.FC = () => {
             />
           </div>
         </div>
-      </motion.div>      {/* Success Toast is now handled by BiddingArea component */}      {/* Auction Ended Overlay */}
+      </motion.div>{" "}
+      {/* Success Toast is now handled by BiddingArea component */}{" "}
+      {/* Auction Ended Overlay */}
       <AnimatePresence>
         <AuctionEndOverlay show={timeLeft <= 0} />
       </AnimatePresence>
