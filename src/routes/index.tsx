@@ -3,6 +3,7 @@ import HomeSection from '../components/Home/HomeSection';
 import Landing from '../pages/Landing';
 import Gallery from '../pages/Gallery';
 import Auctions from '../pages/Auctions';
+import AuctionParticipation from '../pages/AuctionParticipation';
 import Collections from '../pages/Collections';
 import Profile from '../pages/Profile';
 import CreateNFT from '../pages/CreateNFT';
@@ -27,10 +28,13 @@ const router = createBrowserRouter([  {
       {
         path: 'gallery',
         element: <Gallery />,
-      },
-      {
+      },      {
         path: 'auctions',
         element: <Auctions />,
+      },
+      {
+        path: 'auction/:id',
+        element: <AuctionParticipation />,
       },
       {
         path: 'collections',

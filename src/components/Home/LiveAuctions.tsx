@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { Heart, Users, Clock, ArrowUpRight } from 'lucide-react';
 
 interface ArtworkData {
@@ -30,6 +31,7 @@ const LiveAuctions: React.FC<LiveAuctionsProps> = ({
   watchedItems,
   toggleWatch,
 }) => {
+  const navigate = useNavigate();
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
     visible: {
@@ -126,8 +128,8 @@ const LiveAuctions: React.FC<LiveAuctionsProps> = ({
                   </span>
                 </div>
               </div>
-              <div className="flex items-center space-x-3">
-                <motion.button
+              <div className="flex items-center space-x-3">                <motion.button
+                  onClick={() => navigate(`/Home/auction/${auction.id}`)}
                   className="flex-1 min-w-0 text-xs bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white px-4 py-2.5 rounded-lg transition-all font-semibold shadow-lg hover:shadow-pink-500/25"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
