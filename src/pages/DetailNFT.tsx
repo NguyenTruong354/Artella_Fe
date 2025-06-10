@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { motion, useAnimation, useInView } from "framer-motion";
 import {
   ArrowLeft,
@@ -75,6 +75,209 @@ interface AudioGuideInfo {
   duration: string;
 }
 
+interface Particle {
+  id: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  size: number;
+  opacity: number;
+  color: string;
+  life: number;
+  maxLife: number;
+}
+
+// Particle System Component
+const ParticleSystem: React.FC<{ 
+  isHovered: boolean; 
+  mousePosition: { x: number; y: number };
+  isDark: boolean;
+}> = ({ isHovered, mousePosition, isDark }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationRef = useRef<number | null>(null);
+  const particlesRef = useRef<Particle[]>([]);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+  const createParticle = useCallback((x?: number, y?: number): Particle => {
+    const canvas = canvasRef.current;
+    if (!canvas) return {} as Particle;
+
+    // Particle colors based on theme
+    const particleColors = isDark 
+      ? ['#F59E0B', '#FCD34D', '#FBBF24', '#F3E8FF', '#E5E7EB']
+      : ['#3B82F6', '#60A5FA', '#93C5FD', '#DBEAFE', '#F3F4F6'];
+
+    return {
+      id: Math.random(),
+      x: x ?? Math.random() * canvas.width,
+      y: y ?? Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.5,
+      vy: (Math.random() - 0.5) * 0.5,
+      size: Math.random() * 3 + 1,
+      opacity: Math.random() * 0.6 + 0.2,
+      color: particleColors[Math.floor(Math.random() * particleColors.length)],
+      life: 0,
+      maxLife: 120 + Math.random() * 240,
+    };
+  }, [isDark]);
+
+  const updateParticles = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    particlesRef.current = particlesRef.current.filter(particle => {
+      // Update position
+      particle.x += particle.vx;
+      particle.y += particle.vy;
+      particle.life++;
+
+      // Mouse attraction when hovered
+      if (isHovered && mousePosition.x !== 0 && mousePosition.y !== 0) {
+        const dx = mousePosition.x - particle.x;
+        const dy = mousePosition.y - particle.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < 100) {
+          const force = (100 - distance) / 100 * 0.02;
+          particle.vx += dx / distance * force;
+          particle.vy += dy / distance * force;
+        }
+      }
+
+      // Fade out towards end of life
+      const lifeRatio = particle.life / particle.maxLife;
+      particle.opacity = Math.max(0, (1 - lifeRatio) * 0.8);
+
+      // Boundary wrapping
+      if (particle.x < 0) particle.x = canvas.width;
+      if (particle.x > canvas.width) particle.x = 0;
+      if (particle.y < 0) particle.y = canvas.height;
+      if (particle.y > canvas.height) particle.y = 0;
+
+      return particle.life < particle.maxLife;
+    });
+
+    // Add new particles
+    const targetCount = isHovered ? 25 : 15;
+    while (particlesRef.current.length < targetCount) {
+      particlesRef.current.push(createParticle());
+    }
+
+    // Add extra particles near mouse when hovered with random burst patterns
+    if (isHovered && Math.random() < 0.3) {
+      const burstCount = Math.random() < 0.1 ? 3 : 1; // Occasional burst of multiple particles
+      for (let i = 0; i < burstCount; i++) {
+        const offsetX = (Math.random() - 0.5) * 80;
+        const offsetY = (Math.random() - 0.5) * 80;
+        particlesRef.current.push(createParticle(
+          mousePosition.x + offsetX,
+          mousePosition.y + offsetY
+        ));
+      }
+    }
+
+    // Add ambient particles around the edges for mystical effect
+    if (Math.random() < 0.05) {
+      const edge = Math.floor(Math.random() * 4);
+      let x, y;
+      switch (edge) {
+        case 0: x = 0; y = Math.random() * canvas.height; break;
+        case 1: x = canvas.width; y = Math.random() * canvas.height; break;
+        case 2: x = Math.random() * canvas.width; y = 0; break;
+        default: x = Math.random() * canvas.width; y = canvas.height; break;
+      }
+      particlesRef.current.push(createParticle(x, y));
+    }
+  }, [isHovered, mousePosition, createParticle]);
+
+  const drawParticles = useCallback(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    particlesRef.current.forEach(particle => {
+      ctx.save();
+      ctx.globalAlpha = particle.opacity;
+      
+      // Create a radial gradient for each particle
+      const gradient = ctx.createRadialGradient(
+        particle.x, particle.y, 0,
+        particle.x, particle.y, particle.size * 3
+      );
+      gradient.addColorStop(0, particle.color);
+      gradient.addColorStop(0.7, particle.color + '80'); // Add some transparency
+      gradient.addColorStop(1, particle.color + '00'); // Fully transparent
+      
+      ctx.fillStyle = gradient;
+      ctx.shadowBlur = particle.size * 4;
+      ctx.shadowColor = particle.color;
+      
+      // Draw main particle
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Add a smaller bright core
+      ctx.globalAlpha = particle.opacity * 1.5;
+      ctx.fillStyle = particle.color;
+      ctx.shadowBlur = particle.size;
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.size * 0.3, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.restore();
+    });
+  }, []);
+
+  const animate = useCallback(() => {
+    updateParticles();
+    drawParticles();
+    animationRef.current = requestAnimationFrame(animate);
+  }, [updateParticles, drawParticles]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const updateDimensions = () => {
+      const rect = canvas.getBoundingClientRect();
+      setDimensions({ width: rect.width, height: rect.height });
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+
+    return () => {
+      window.removeEventListener('resize', updateDimensions);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (dimensions.width > 0 && dimensions.height > 0) {
+      animate();
+    }
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [animate, dimensions]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 pointer-events-none z-10"
+      style={{ width: '100%', height: '100%' }}
+    />
+  );
+};
+
 const DetailNFT: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -89,6 +292,10 @@ const DetailNFT: React.FC = () => {
   const [newComment, setNewComment] = useState("");
   const [newCommentName, setNewCommentName] = useState("");
   const [newCommentLocation, setNewCommentLocation] = useState("");
+  
+  // Particle system state
+  const [isArtworkHovered, setIsArtworkHovered] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   // Dark mode hook
   const darkMode = useDarkMode();
@@ -111,7 +318,40 @@ const DetailNFT: React.FC = () => {
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 500);
+    
+    // Museum experience console showcase
+    console.log("🏛️ Welcome to the Digital Museum Experience!");
+    console.log("✨ Particle System: Active");
+    console.log("🎧 Audio Guide: Ready");
+    console.log("🖱️ Interactive Features: Enabled");
+    console.log("💫 Hover over the artwork to see magical particles!");
+    
     return () => clearTimeout(timer);
+  }, []);
+
+  // Mouse tracking for particles
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMousePosition({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  }, []);
+
+  // Particle burst effect on artwork click
+  const handleArtworkClick = useCallback(() => {
+    // This will trigger a burst of particles from the click position
+    // The ParticleSystem component will handle the burst effect
+    setIsArtworkHovered(true);
+    setTimeout(() => setIsArtworkHovered(false), 200);
+    
+    // Play a subtle sound effect (simulation)
+    console.log("🎵 Museum ambient sound: Gentle gallery echo");
+  }, []);
+
+  // Audio guide sound simulation
+  const playAudioGuideSound = useCallback((type: string) => {
+    console.log(`🎧 Audio Guide: Playing ${type} information`);
   }, []);
 
   // Mock NFT data
@@ -264,6 +504,9 @@ const DetailNFT: React.FC = () => {
 
   const handleAudioGuide = (section: string) => {
     setActiveAudioGuide(activeAudioGuide === section ? null : section);
+    if (activeAudioGuide !== section) {
+      playAudioGuideSound(section);
+    }
   };
 
   const handleAddComment = (e: React.FormEvent) => {
@@ -309,6 +552,7 @@ const DetailNFT: React.FC = () => {
       },
     },
   };
+
   if (isLoading) {
     return (
       <>
@@ -333,7 +577,7 @@ const DetailNFT: React.FC = () => {
       <WaveTransition
         isTransitioning={darkMode.isTransitioning}
         isDark={darkMode.isDark}
-      />{" "}
+      />
       {/* Museum Exhibition Layout */}
       <div
         ref={sectionRef}
@@ -349,7 +593,6 @@ const DetailNFT: React.FC = () => {
         </div>
 
         <div className="container mx-auto px-4 py-8 relative z-10">
-          {" "}
           {/* Museum Navigation */}
           <motion.nav
             className="flex items-center space-x-3 text-sm text-gray-600 dark:text-amber-300/80 mb-8 font-serif"
@@ -379,6 +622,7 @@ const DetailNFT: React.FC = () => {
               <span className="sm:hidden">Details</span>
             </span>
           </motion.nav>
+
           {/* Back to Gallery */}
           <motion.button
             onClick={() => navigate(-1)}
@@ -393,6 +637,7 @@ const DetailNFT: React.FC = () => {
             <span className="hidden sm:inline">Return to Main Gallery</span>
             <span className="sm:hidden">Back</span>
           </motion.button>
+
           {/* Main Exhibition Layout */}
           <motion.div
             className="grid grid-cols-1 lg:grid-cols-3 gap-12 mb-16"
@@ -403,21 +648,34 @@ const DetailNFT: React.FC = () => {
             {/* Artwork Display - Museum Style */}
             <motion.div className="lg:col-span-2" variants={itemVariants}>
               <div className="relative">
-                {" "}
                 {/* Artwork Frame */}
                 <div className="relative bg-gradient-to-br from-gray-100/80 to-gray-200/60 dark:bg-gradient-to-br dark:from-amber-900/20 dark:to-amber-800/10 p-8 rounded-lg border-4 border-gray-300/50 dark:border-amber-700/40 transition-all duration-500">
                   {/* Spotlight effect on artwork */}
                   <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-gray-100/20 dark:bg-gradient-radial dark:from-transparent dark:via-transparent dark:to-black/30 pointer-events-none"></div>
-
-                  <div className="aspect-square rounded-lg overflow-hidden bg-white/50 dark:bg-black/50 shadow-2xl relative group transition-all duration-500">
+                  
+                  <div 
+                    className="aspect-square rounded-lg overflow-hidden bg-white/50 dark:bg-black/50 shadow-2xl relative group transition-all duration-500 cursor-pointer"
+                    onMouseEnter={() => setIsArtworkHovered(true)}
+                    onMouseLeave={() => setIsArtworkHovered(false)}
+                    onMouseMove={handleMouseMove}
+                    onClick={handleArtworkClick}
+                  >
+                    {/* Particle System */}
+                    <ParticleSystem 
+                      isHovered={isArtworkHovered}
+                      mousePosition={mousePosition}
+                      isDark={darkMode.isDark}
+                    />
+                    
                     <img
                       src={nftData.image}
                       alt={nftData.title}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 relative z-5"
                     />
+                    
                     {/* Museum Glass Effect */}
                     <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent dark:bg-gradient-to-br dark:from-white/5 dark:via-transparent dark:to-transparent pointer-events-none"></div>
-
+                    
                     {/* Security/Preservation Indicators */}
                     <div className="absolute top-4 left-4 flex gap-2">
                       <div className="p-2 bg-white/70 dark:bg-black/70 backdrop-blur-sm rounded-full text-green-500 dark:text-green-400 transition-all duration-500">
@@ -430,7 +688,7 @@ const DetailNFT: React.FC = () => {
 
                     {/* Audio Guide Buttons */}
                     <div className="absolute top-4 right-4 flex flex-col gap-2">
-                      <button
+                      <motion.button
                         onClick={() => handleAudioGuide("artwork")}
                         className={`p-3 rounded-full backdrop-blur-sm transition-all duration-300 ${
                           activeAudioGuide === "artwork"
@@ -438,14 +696,21 @@ const DetailNFT: React.FC = () => {
                             : "bg-white/70 dark:bg-black/70 text-blue-600 dark:text-amber-300 hover:bg-blue-50 dark:hover:bg-amber-900/50"
                         }`}
                         title="Audio Guide: About the Artwork"
+                        whileHover={{ scale: 1.1, rotate: 5 }}
+                        whileTap={{ scale: 0.95 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 17 }}
                       >
                         <Volume2 className="w-5 h-5" />
-                      </button>
+                      </motion.button>
                     </div>
                   </div>
 
                   {/* Museum Placard */}
-                  <div className="mt-6 bg-gradient-to-r from-white/80 to-gray-50/60 dark:bg-gradient-to-r dark:from-amber-900/30 dark:to-amber-800/20 p-6 rounded-lg border border-gray-300/50 dark:border-amber-700/30 transition-all duration-500">
+                  <motion.div 
+                    className="mt-6 bg-gradient-to-r from-white/80 to-gray-50/60 dark:bg-gradient-to-r dark:from-amber-900/30 dark:to-amber-800/20 p-6 rounded-lg border border-gray-300/50 dark:border-amber-700/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10 dark:hover:shadow-amber-500/20"
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  >
                     <div className="text-center space-y-2">
                       <h1 className="text-2xl font-serif text-gray-900 dark:text-amber-100 tracking-wide">
                         {nftData.title}
@@ -460,10 +725,11 @@ const DetailNFT: React.FC = () => {
                         <p>Token ID: {nftData.tokenId}</p>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 </div>
               </div>
-            </motion.div>{" "}
+            </motion.div>
+
             {/* Exhibition Information Panel */}
             <motion.div className="space-y-8" variants={itemVariants}>
               {/* Curatorial Notes */}
@@ -475,7 +741,7 @@ const DetailNFT: React.FC = () => {
                 <p className="text-gray-700 dark:text-amber-200/80 leading-relaxed font-serif text-sm transition-colors duration-500">
                   {nftData.description}
                 </p>
-
+                
                 {/* Audio Guide for Artist */}
                 <button
                   onClick={() => handleAudioGuide("artist")}
@@ -497,25 +763,15 @@ const DetailNFT: React.FC = () => {
                 </h3>
                 <div className="space-y-3 text-sm font-serif">
                   <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-amber-300/70 transition-colors duration-500">
-                      Current Valuation:
-                    </span>
-                    <span className="text-gray-900 dark:text-amber-100 font-semibold transition-colors duration-500">
-                      {nftData.price}
-                    </span>
+                    <span className="text-gray-600 dark:text-amber-300/70 transition-colors duration-500">Current Valuation:</span>
+                    <span className="text-gray-900 dark:text-amber-100 font-semibold transition-colors duration-500">{nftData.price}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-amber-300/70 transition-colors duration-500">
-                      Highest Bid:
-                    </span>
-                    <span className="text-gray-900 dark:text-amber-100 transition-colors duration-500">
-                      {nftData.highestBid}
-                    </span>
+                    <span className="text-gray-600 dark:text-amber-300/70 transition-colors duration-500">Highest Bid:</span>
+                    <span className="text-gray-900 dark:text-amber-100 transition-colors duration-500">{nftData.highestBid}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-amber-300/70 transition-colors duration-500">
-                      Exhibition Ends:
-                    </span>
+                    <span className="text-gray-600 dark:text-amber-300/70 transition-colors duration-500">Exhibition Ends:</span>
                     <div className="flex items-center gap-1 text-gray-900 dark:text-amber-100 transition-colors duration-500">
                       <Clock className="w-4 h-4" />
                       <span className="font-mono">{nftData.timeLeft}</span>
@@ -552,39 +808,28 @@ const DetailNFT: React.FC = () => {
                     <div className="flex items-center justify-center mb-1">
                       <Eye className="w-4 h-4 text-blue-500 dark:text-amber-400 transition-colors duration-500" />
                     </div>
-                    <p className="text-gray-900 dark:text-amber-100 font-semibold transition-colors duration-500">
-                      {nftData.views.toLocaleString()}
-                    </p>
-                    <p className="text-xs text-gray-600 dark:text-amber-300/70 font-serif transition-colors duration-500">
-                      Visitors
-                    </p>
+                    <p className="text-gray-900 dark:text-amber-100 font-semibold transition-colors duration-500">{nftData.views.toLocaleString()}</p>
+                    <p className="text-xs text-gray-600 dark:text-amber-300/70 font-serif transition-colors duration-500">Visitors</p>
                   </div>
                   <div>
                     <div className="flex items-center justify-center mb-1">
                       <Heart className="w-4 h-4 text-blue-500 dark:text-amber-400 transition-colors duration-500" />
                     </div>
-                    <p className="text-gray-900 dark:text-amber-100 font-semibold transition-colors duration-500">
-                      {nftData.likes}
-                    </p>
-                    <p className="text-xs text-gray-600 dark:text-amber-300/70 font-serif transition-colors duration-500">
-                      Admirers
-                    </p>
+                    <p className="text-gray-900 dark:text-amber-100 font-semibold transition-colors duration-500">{nftData.likes}</p>
+                    <p className="text-xs text-gray-600 dark:text-amber-300/70 font-serif transition-colors duration-500">Admirers</p>
                   </div>
                   <div>
                     <div className="flex items-center justify-center mb-1">
                       <Share2 className="w-4 h-4 text-blue-500 dark:text-amber-400 transition-colors duration-500" />
                     </div>
-                    <p className="text-gray-900 dark:text-amber-100 font-semibold transition-colors duration-500">
-                      {nftData.shares}
-                    </p>
-                    <p className="text-xs text-gray-600 dark:text-amber-300/70 font-serif transition-colors duration-500">
-                      Shared
-                    </p>
+                    <p className="text-gray-900 dark:text-amber-100 font-semibold transition-colors duration-500">{nftData.shares}</p>
+                    <p className="text-xs text-gray-600 dark:text-amber-300/70 font-serif transition-colors duration-500">Shared</p>
                   </div>
                 </div>
               </div>
             </motion.div>
-          </motion.div>{" "}
+          </motion.div>
+
           {/* Technical Details & Provenance */}
           <motion.div
             className="mb-16"
@@ -620,7 +865,7 @@ const DetailNFT: React.FC = () => {
                     </div>
                   ))}
                 </div>
-
+                
                 <button
                   onClick={() => handleAudioGuide("technique")}
                   className={`mt-4 flex items-center gap-2 text-sm px-4 py-2 rounded-lg transition-all duration-300 ${
@@ -672,7 +917,8 @@ const DetailNFT: React.FC = () => {
                 </div>
               </div>
             </div>
-          </motion.div>{" "}
+          </motion.div>
+
           {/* Visitor Book Section */}
           <motion.div
             className="mb-16"
@@ -684,12 +930,10 @@ const DetailNFT: React.FC = () => {
               <MessageSquare className="w-6 h-6 text-blue-500 dark:text-amber-400 transition-colors duration-500" />
               Visitor Book
             </h2>
-
+            
             {/* Add New Comment Form */}
             <div className="bg-gradient-to-b from-gray-100/80 to-gray-200/60 border border-gray-300/50 dark:bg-gradient-to-b dark:from-amber-900/20 dark:to-amber-800/10 dark:border-amber-700/30 p-8 rounded-lg mb-8 transition-all duration-500">
-              <h3 className="text-lg font-serif text-gray-900 dark:text-amber-100 mb-6 transition-colors duration-500">
-                Leave Your Mark
-              </h3>
+              <h3 className="text-lg font-serif text-gray-900 dark:text-amber-100 mb-6 transition-colors duration-500">Leave Your Mark</h3>
               <form onSubmit={handleAddComment} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <input
@@ -766,7 +1010,8 @@ const DetailNFT: React.FC = () => {
                 </div>
               ))}
             </div>
-          </motion.div>{" "}
+          </motion.div>
+
           {/* Related Exhibitions */}
           <motion.div
             variants={itemVariants}
@@ -805,7 +1050,8 @@ const DetailNFT: React.FC = () => {
                 </motion.div>
               ))}
             </div>
-          </motion.div>{" "}
+          </motion.div>
+
           {/* Audio Guide Information Panel */}
           {activeAudioGuide && (
             <motion.div
@@ -830,9 +1076,7 @@ const DetailNFT: React.FC = () => {
               </p>
               <div className="flex items-center gap-2 text-gray-600 dark:text-amber-300/70 text-xs transition-colors duration-500">
                 <Volume2 className="w-4 h-4" />
-                <span>
-                  Duration: {audioGuideInfo[activeAudioGuide]?.duration}
-                </span>
+                <span>Duration: {audioGuideInfo[activeAudioGuide]?.duration}</span>
               </div>
             </motion.div>
           )}
