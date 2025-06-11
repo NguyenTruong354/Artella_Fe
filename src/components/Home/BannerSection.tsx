@@ -1,8 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowUpRight, Palette } from 'lucide-react';
+import { ArrowUpRight, Palette, Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const BannerSection: React.FC = () => {
+  const navigate = useNavigate();
   const bannerArtworkImage = "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80";
   return (
     <motion.section
@@ -61,7 +63,26 @@ const BannerSection: React.FC = () => {
               <ArrowUpRight className="w-4 h-4 ml-2 transition-transform group-hover:rotate-45" />
             </span>
             <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300 rounded-2xl"></div>
-          </motion.button>          <motion.button
+          </motion.button>
+          
+          <motion.button
+            onClick={() => navigate('/Home/explore-more')}
+            className="relative overflow-hidden bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-800 hover:from-purple-700 hover:via-purple-800 hover:to-indigo-900 text-white font-bold px-6 sm:px-8 md:px-10 py-3 md:py-4 rounded-xl sm:rounded-2xl transition-all duration-300 text-xs sm:text-sm md:text-base shadow-2xl hover:shadow-purple-500/25 group border border-purple-500/20"
+            whileHover={{ scale: 1.05, y: -3 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <span className="relative z-10 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 mr-2 animate-pulse" />
+              Explore Cosmic
+              <div className="ml-2 relative">
+                <div className="absolute inset-0 bg-white/20 rounded-full animate-ping"></div>
+                <ArrowUpRight className="w-4 h-4 relative z-10 transition-transform group-hover:rotate-45" />
+              </div>
+            </span>
+            <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-transparent to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
+          </motion.button>
+
+          <motion.button
             className="relative bg-transparent font-semibold px-6 sm:px-8 md:px-10 py-3 md:py-4 rounded-xl sm:rounded-2xl transition-all duration-300 text-xs sm:text-sm md:text-base backdrop-blur-sm group border-2 hover:bg-gradient-to-r hover:from-blue-500/20 hover:to-cyan-500/20 text-blue-600 border-blue-500/70 hover:border-blue-400 dark:hover:bg-gradient-to-r dark:hover:from-amber-500/20 dark:hover:to-orange-500/20 dark:text-amber-400 dark:border-amber-500/70 dark:hover:border-amber-400"
             whileHover={{ scale: 1.05, y: -3 }}
             whileTap={{ scale: 0.95 }}

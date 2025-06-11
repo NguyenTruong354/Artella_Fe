@@ -97,14 +97,21 @@ export default {
             transform: 'translate(-49%, -50%) scale(1.02)',  // Tăng từ 1.01 lên 1.02
             boxShadow: '0 0 20px 5px rgba(255, 255, 255, 0.3)' 
           }
-        },
-        'wave-pulse': {
+        },        'wave-pulse': {
           '0%, 100%': {
             boxShadow: '0 0 15px 4px rgba(255, 255, 255, 0.25)'
           },
           '50%': {
             boxShadow: '0 0 25px 8px rgba(255, 255, 255, 0.4)'
           }
+        },
+        'spin-slow': {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' }
+        },
+        'spin-reverse': {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(-360deg)' }
         }},      animation: {
         'gentle-shine': 'gentle-shine 3s ease-in-out infinite',
         'shine': 'shine 2s ease-in-out infinite',
@@ -113,11 +120,12 @@ export default {
         'tracking-in': 'tracking-in 0.8s ease-out',
         'fade-up': 'fade-up 0.8s ease-out',
         'slideInLeft': 'slideInLeft 0.8s ease-out',
-        'slideInRight': 'slideInRight 0.8s ease-out',        'water-ripple': 'water-ripple 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards', // Tăng thời gian từ 2.2s lên 2.5s
-        'wave-wobble': 'wave-wobble 3s ease-in-out infinite',
+        'slideInRight': 'slideInRight 0.8s ease-out',        'water-ripple': 'water-ripple 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards', // Tăng thời gian từ 2.2s lên 2.5s        'wave-wobble': 'wave-wobble 3s ease-in-out infinite',
         'wave-pulse': 'wave-pulse 2.5s ease-in-out infinite', // Tăng từ 2s lên 2.5s
         'ripple-opacity': 'ripple-opacity 3s ease-in-out infinite',
-        'ripple-shimmer': 'ripple-shimmer 4s ease-in-out infinite'
+        'ripple-shimmer': 'ripple-shimmer 4s ease-in-out infinite',
+        'spin-slow': 'spin-slow 8s linear infinite',
+        'spin-reverse': 'spin-reverse 6s linear infinite'
       },
       translate: {
         '30': '7.5rem',
