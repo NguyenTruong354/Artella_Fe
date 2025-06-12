@@ -1,64 +1,72 @@
-import { createBrowserRouter } from 'react-router-dom';
-import HomeSection from '../components/Home/HomeSection';
-import Landing from '../pages/Landing';
-import Gallery from '../pages/Gallery';
-import Auctions from '../pages/Auctions';
-import AuctionParticipation from '../pages/AuctionParticipation';
-import Collections from '../pages/Collections';
-import Profile from '../pages/Profile';
-import CreateNFT from '../pages/CreateNFT';
-import DetailNFT from '../pages/DetailNFT';
-import ExploreMore from '../pages/ExploreMore';
-import Login from '../pages/Login';
-import Signup from '../pages/Signup';
-import NotFound from '../pages/NotFound';
-import MainLayout from '../layouts/MainLayout';
-import HomeLayout from '../layouts/HomeLayout';
+import { createBrowserRouter } from "react-router-dom";
+import HomeSection from "../components/Home/HomeSection";
+import Landing from "../pages/Landing";
+import Gallery from "../pages/Gallery";
+import Auctions from "../pages/Auctions";
+import AuctionParticipation from "../pages/AuctionParticipation";
+import Collections from "../pages/Collections";
+import Profile from "../pages/Profile";
+import CreateNFT from "../pages/CreateNFT";
+import DetailNFT from "../pages/DetailNFT";
+import ExploreMore from "../pages/ExploreMore";
+import Login from "../pages/Login";
+import Signup from "../pages/Signup";
+import Verification from "../pages/Verification";
+import NotFound from "../pages/NotFound";
+import HtmlPage from "../pages/HtmlPage";
+import MainLayout from "../layouts/MainLayout";
+import HomeLayout from "../layouts/HomeLayout";
+import ProtectedRoute from "../components/ProtectedRoute";
 
-const HtmlPage = () => {
-  return <iframe src="/SendMyLove.html" width="100%" height="650px" style={{ border: "none" }}></iframe>;
-};
-
-const router = createBrowserRouter([  {
-    path: '/Home',
-    element: <HomeLayout />,
+const router = createBrowserRouter([
+  {
+    path: "/Home",
+    element: (
+      <ProtectedRoute>
+        <HomeLayout />
+      </ProtectedRoute>
+    ),
     children: [
       {
         index: true,
         element: <HomeSection />,
-      },      {
-        path: 'gallery',
+      },
+      {
+        path: "gallery",
         element: <Gallery />,
       },
       {
-        path: 'nft/:id',
+        path: "nft/:id",
         element: <DetailNFT />,
-      },{
-        path: 'auctions',
+      },
+      {
+        path: "auctions",
         element: <Auctions />,
       },
       {
-        path: 'auction/1',
+        path: "auction/1",
         element: <AuctionParticipation />,
       },
       {
-        path: 'collections',
+        path: "collections",
         element: <Collections />,
-      },      {
-        path: 'profile',
+      },
+      {
+        path: "profile",
         element: <Profile />,
-      },      {
-        path: 'create-nft',
+      },
+      {
+        path: "create-nft",
         element: <CreateNFT />,
       },
       {
-        path: 'explore-more',
+        path: "explore-more",
         element: <ExploreMore />,
       },
     ],
   },
   {
-    path: '/',
+    path: "/",
     element: <MainLayout />,
     children: [
       {
@@ -68,19 +76,31 @@ const router = createBrowserRouter([  {
     ],
   },
   {
-    path: '/login',
-    element: <Login />,
+    path: "/login",
+    element: (
+      <ProtectedRoute requireAuth={false}>
+        <Login />
+      </ProtectedRoute>
+    ),
   },
   {
-    path: '/signup',
-    element: <Signup />,
+    path: "/signup",
+    element: (
+      <ProtectedRoute requireAuth={false}>
+        <Signup />
+      </ProtectedRoute>
+    ),
   },
   {
-    path: '/MinhAnh/SendMyLove',
-    element: <HtmlPage/>,
+    path: "/verification",
+    element: <Verification />,
   },
   {
-    path: '*',
+    path: "/MinhAnh/SendMyLove",
+    element: <HtmlPage />,
+  },
+  {
+    path: "*",
     element: <NotFound />,
   },
 ]);
