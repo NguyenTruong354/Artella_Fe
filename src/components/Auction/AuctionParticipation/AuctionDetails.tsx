@@ -13,7 +13,6 @@ interface AuctionDetailsProps {
 
 const AuctionDetails: React.FC<AuctionDetailsProps> = ({
   currentBid,
-  currentBidValue, 
   bidCount,
   watchers,
   bidHistory
