@@ -1,5 +1,5 @@
 import React, { useReducer, useEffect, ReactNode } from 'react';
-import { AuthState, AuthUser, EmailLoginData, WalletLoginData } from '../types';
+import { AuthState, AuthUser, EmailLoginData, WalletLoginData, UserRegistrationRequest, RegisterResponse } from '../types';
 import { authService } from '../services';
 import { AuthContext, AuthContextType } from './authContext';
 
@@ -65,11 +65,10 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
       return {
         ...state,
         error: null,
-      };
-    default:
+      };    default:
       return state;
   }
-;
+}
 
 // Auth provider props
 interface AuthProviderProps {
@@ -177,12 +176,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       throw error;
     }
   };
-
   // Logout
   const logout = async (): Promise<void> => {
     try {
-      await authService.logout();
+      const response = await authService.logout();
+      
+      if (response.success) {
+        console.log('Logout successful:', response.message);
+      } else {
+        console.warn('Logout had issues:', response.message);
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
     } finally {
+      // Always update local state regardless of server response
       dispatch({ type: 'LOGOUT' });
     }
   };
@@ -192,10 +199,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     dispatch({ type: 'CLEAR_ERROR' });
   };
 
+  // Register user
+  const register = async (data: UserRegistrationRequest): Promise<RegisterResponse> => {
+    dispatch({ type: 'SET_LOADING', payload: true });
+    
+    try {
+      const response = await authService.register(data);
+      dispatch({ type: 'SET_LOADING', payload: false });
+      return response;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Registration failed';
+      dispatch({
+        type: 'LOGIN_FAILURE',
+        payload: errorMessage,
+      });
+      throw error;
+    }
+  };
   const contextValue: AuthContextType = {
     state,
     loginWithEmail,
     loginWithWallet,
+    register,
     logout,
     clearError,
   };

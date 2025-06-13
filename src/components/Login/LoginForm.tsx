@@ -4,6 +4,16 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../api/auth";
 import { formatErrorMessage, isValidEmail } from "../../api/utils";
 
+// Extend window interface for MetaMask
+declare global {
+  interface Window {
+    ethereum?: {
+      request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+      isMetaMask?: boolean;
+    };
+  }
+}
+
 const LoginForm = () => {
   const controls = useAnimation();
   const formRef = useRef(null);
@@ -19,16 +29,60 @@ const LoginForm = () => {
     email: "",
     password: "",
     rememberMe: false,
-  });
-
-  const [isLoading, setIsLoading] = useState(false);
+  });  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [loginMethod, setLoginMethod] = useState<'email' | 'wallet'>('email');
-  const [walletData, setWalletData] = useState({
-    walletAddress: "",
-    signedMessage: "",
-  });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  // MetaMask connection and login function
+  const connectMetaMask = async () => {
+    setIsLoading(true);
+    try {
+      if (typeof window.ethereum !== 'undefined') {
+        // Step 1: Request account access
+        const accounts = await window.ethereum.request({
+          method: 'eth_requestAccounts',
+        }) as string[];
+        
+        if (accounts && accounts.length > 0) {
+          const walletAddress = accounts[0];
+          console.log('Connected to MetaMask:', walletAddress);
+          
+          // Step 2: Create message to sign
+          const message = `Welcome to Smart Market!\n\nPlease sign this message to authenticate your wallet.\n\nWallet: ${walletAddress}\nTimestamp: ${Date.now()}`;
+          
+          // Step 3: Request signature
+          const signedMessage = await window.ethereum.request({
+            method: 'personal_sign',
+            params: [message, walletAddress],
+          }) as string;
+          
+          console.log('Message signed:', signedMessage);
+          
+          // Step 4: Login with wallet credentials
+          await loginWithWallet({
+            walletAddress,
+            signedMessage,
+          });
+          
+          // Step 5: Redirect to intended destination or home
+          const from = location.state?.from?.pathname || '/Home';
+          navigate(from);
+          
+        }
+      } else {
+        alert('MetaMask is not installed. Please install MetaMask to continue.');
+        window.open('https://metamask.io/download/', '_blank');
+      }    } catch (error: unknown) {
+      console.error('Error with MetaMask login:', error);
+      if (error && typeof error === 'object' && 'code' in error && error.code === 4001) {
+        alert('Please approve the connection and signature to continue.');
+      } else {
+        alert('Failed to login with MetaMask. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Animation variants
   const containerVariants = {
@@ -127,29 +181,19 @@ const LoginForm = () => {
       }));
     }
   };
-
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
 
-    if (loginMethod === 'email') {
-      if (!formData.email) {
-        errors.email = "Email is required";
-      } else if (!isValidEmail(formData.email)) {
-        errors.email = "Please enter a valid email address";
-      }
+    if (!formData.email) {
+      errors.email = "Email is required";
+    } else if (!isValidEmail(formData.email)) {
+      errors.email = "Please enter a valid email address";
+    }
 
-      if (!formData.password) {
-        errors.password = "Password is required";
-      } else if (formData.password.length < 6) {
-        errors.password = "Password must be at least 6 characters";
-      }
-    } else {
-      if (!walletData.walletAddress) {
-        errors.walletAddress = "Wallet address is required";
-      }
-      if (!walletData.signedMessage) {
-        errors.signedMessage = "Signed message is required";
-      }
+    if (!formData.password) {
+      errors.password = "Password is required";
+    } else if (formData.password.length < 6) {
+      errors.password = "Password must be at least 6 characters";
     }
 
     setFormErrors(errors);
@@ -166,24 +210,15 @@ const LoginForm = () => {
       return;
     }
 
-    setIsLoading(true);
-
-    try {
-      if (loginMethod === 'email') {
-        await loginWithEmail({
-          email: formData.email,
-          password: formData.password,
-        });
-      } else {
-        await loginWithWallet({
-          walletAddress: walletData.walletAddress,
-          signedMessage: walletData.signedMessage,
-        });
-      }
+    setIsLoading(true);    try {
+      await loginWithEmail({
+        email: formData.email,
+        password: formData.password,
+      });
 
       // Redirect to intended destination or home
       const from = location.state?.from?.pathname || '/Home';
-      navigate(from);    } catch (error: unknown) {
+      navigate(from);} catch (error: unknown) {
       console.error('Login failed:', error);
       // Error is handled by auth context
     } finally {
@@ -319,36 +354,15 @@ const LoginForm = () => {
                 hidden: { scaleX: 0 },
                 visible: { scaleX: 1, transition: { duration: 1.5, delay: 1 } },
               }}
-            />
-
-            {/* Login Method Tabs */}
+            />            {/* Login Method - Email Only */}
             <motion.div
-              className="flex justify-center space-x-2 mt-8 mb-6"
+              className="flex justify-center mt-8 mb-6"
               variants={itemVariants}
               custom={3}
-            >              <button
-                type="button"
-                onClick={() => setLoginMethod('email')}
-                className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                  loginMethod === 'email'
-                    ? 'bg-[#c2a792] text-white shadow-lg'
-                    : 'bg-white/60 text-[#6d7f75] hover:bg-white/80'
-                }`}
-              >
+            >
+              <div className="px-6 py-2 rounded-full text-sm font-medium bg-[#c2a792] text-white shadow-lg">
                 Email Login
-              </button>
-              <button
-                type="button"
-                onClick={() => setLoginMethod('wallet')}
-                className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center space-x-2 ${
-                  loginMethod === 'wallet'
-                    ? 'bg-[#c2a792] text-white shadow-lg'
-                    : 'bg-white/60 text-[#6d7f75] hover:bg-white/80'
-                }`}
-              >
-                <span>🦊</span>
-                <span>Connect with MetaMask</span>
-              </button>
+              </div>
             </motion.div>
 
             {/* Error Display */}
@@ -370,168 +384,100 @@ const LoginForm = () => {
             className="space-y-6 relative z-10"
             variants={itemVariants}
             custom={3}
-          >            {/* Conditional Form Fields */}
-            {loginMethod === 'email' ? (
-              <>
-                {/* Email field */}
-                <motion.div variants={itemVariants} custom={4}>
-                  <label className="block text-[#46594f] font-medium mb-2 text-sm">
-                    Email Address
-                  </label>
-                  <motion.div className="relative">
-                    <motion.input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      placeholder="Enter your email"
-                      className={`w-full px-4 py-3 bg-white/60 backdrop-blur-sm border-2 rounded-2xl 
-                                 focus:outline-none focus:bg-white/80 transition-all duration-300 
-                                 text-[#46594f] placeholder-[#8a9690] ${
-                                   formErrors.email 
-                                     ? 'border-red-300 focus:border-red-400' 
-                                     : 'border-[#e2d6c3] focus:border-[#c2a792]'
-                                 }`}
-                      whileFocus={{
-                        borderColor: formErrors.email ? "#f87171" : "#c2a792",
-                        backgroundColor: "rgba(255,255,255,0.8)",
-                        transition: { duration: 0.3 },
-                      }}
-                      required
-                    />
-                    <motion.div
-                      className="absolute right-3 top-1/2 text-[#c2a792] text-lg flex items-center justify-center w-6 h-6"
-                      animate={{
-                        opacity: formData.email ? 1 : 0.5,
-                      }}
-                      transition={{ duration: 0.3 }}
-                      style={{ transform: 'translateY(-50%)' }}
-                    >
-                      📧
-                    </motion.div>
+          >            {/* Email Login Form */}
+            <>
+              {/* Email field */}
+              <motion.div variants={itemVariants} custom={4}>
+                <label className="block text-[#46594f] font-medium mb-2 text-sm">
+                  Email Address
+                </label>
+                <motion.div className="relative">
+                  <motion.input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="Enter your email"
+                    className={`w-full px-4 py-3 bg-white/60 backdrop-blur-sm border-2 rounded-2xl 
+                               focus:outline-none focus:bg-white/80 transition-all duration-300 
+                               text-[#46594f] placeholder-[#8a9690] ${
+                                 formErrors.email 
+                                   ? 'border-red-300 focus:border-red-400' 
+                                   : 'border-[#e2d6c3] focus:border-[#c2a792]'
+                               }`}
+                    whileFocus={{
+                      borderColor: formErrors.email ? "#f87171" : "#c2a792",
+                      backgroundColor: "rgba(255,255,255,0.8)",
+                      transition: { duration: 0.3 },
+                    }}
+                    required
+                  />
+                  <motion.div
+                    className="absolute right-3 top-1/2 text-[#c2a792] text-lg flex items-center justify-center w-6 h-6"
+                    animate={{
+                      opacity: formData.email ? 1 : 0.5,
+                    }}
+                    transition={{ duration: 0.3 }}
+                    style={{ transform: 'translateY(-50%)' }}
+                  >
+                    📧
                   </motion.div>
-                  {formErrors.email && (
-                    <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>
-                  )}
                 </motion.div>
+                {formErrors.email && (
+                  <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>
+                )}
+              </motion.div>
 
-                {/* Password field */}
-                <motion.div variants={itemVariants} custom={5}>
-                  <label className="block text-[#46594f] font-medium mb-2 text-sm">
-                    Password
-                  </label>
-                  <motion.div className="relative">
-                    <motion.input
-                      type={showPassword ? "text" : "password"}
-                      name="password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      placeholder="Enter your password"
-                      className={`w-full px-4 py-3 bg-white/60 backdrop-blur-sm border-2 rounded-2xl 
-                                 focus:outline-none focus:bg-white/80 transition-all duration-300 
-                                 text-[#46594f] placeholder-[#8a9690] pr-12 ${
-                                   formErrors.password 
-                                     ? 'border-red-300 focus:border-red-400' 
-                                     : 'border-[#e2d6c3] focus:border-[#c2a792]'
-                                 }`}
-                      whileFocus={{
-                        borderColor: formErrors.password ? "#f87171" : "#c2a792",
-                        backgroundColor: "rgba(255,255,255,0.8)",
-                        transition: { duration: 0.3 },
-                      }}
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 text-[#c2a792] text-lg 
-                                flex items-center justify-center w-6 h-6 rounded-full 
-                                hover:bg-[#c2a792]/10 transition-colors duration-200 
-                                focus:outline-none focus:ring-2 focus:ring-[#c2a792]/30"
-                      style={{ transform: 'translateY(-50%)' }}
-                    >
-                      {showPassword ? "🙈" : "👁️"}
-                    </button>
-                  </motion.div>
-                  {formErrors.password && (
-                    <p className="text-red-500 text-xs mt-1">{formErrors.password}</p>
-                  )}
+              {/* Password field */}
+              <motion.div variants={itemVariants} custom={5}>
+                <label className="block text-[#46594f] font-medium mb-2 text-sm">
+                  Password
+                </label>
+                <motion.div className="relative">
+                  <motion.input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    placeholder="Enter your password"
+                    className={`w-full px-4 py-3 bg-white/60 backdrop-blur-sm border-2 rounded-2xl 
+                               focus:outline-none focus:bg-white/80 transition-all duration-300 
+                               text-[#46594f] placeholder-[#8a9690] pr-12 ${
+                                 formErrors.password 
+                                   ? 'border-red-300 focus:border-red-400' 
+                                   : 'border-[#e2d6c3] focus:border-[#c2a792]'
+                               }`}
+                    whileFocus={{
+                      borderColor: formErrors.password ? "#f87171" : "#c2a792",
+                      backgroundColor: "rgba(255,255,255,0.8)",
+                      transition: { duration: 0.3 },
+                    }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 text-[#c2a792] text-lg 
+                              flex items-center justify-center w-6 h-6 rounded-full 
+                              hover:bg-[#c2a792]/10 transition-colors duration-200 
+                              focus:outline-none focus:ring-2 focus:ring-[#c2a792]/30"
+                    style={{ transform: 'translateY(-50%)' }}
+                  >
+                    {showPassword ? "🙈" : "👁️"}
+                  </button>
                 </motion.div>
-              </>
-            ) : (
-              <>
-                {/* Wallet Address field */}
-                <motion.div variants={itemVariants} custom={4}>
-                  <label className="block text-[#46594f] font-medium mb-2 text-sm">
-                    Wallet Address
-                  </label>
-                  <motion.div className="relative">
-                    <motion.input
-                      type="text"
-                      name="walletAddress"
-                      value={walletData.walletAddress}
-                      onChange={(e) => setWalletData(prev => ({ ...prev, walletAddress: e.target.value }))}
-                      placeholder="0x..."
-                      className={`w-full px-4 py-3 bg-white/60 backdrop-blur-sm border-2 rounded-2xl 
-                                 focus:outline-none focus:bg-white/80 transition-all duration-300 
-                                 text-[#46594f] placeholder-[#8a9690] ${
-                                   formErrors.walletAddress 
-                                     ? 'border-red-300 focus:border-red-400' 
-                                     : 'border-[#e2d6c3] focus:border-[#c2a792]'
-                                 }`}
-                      whileFocus={{
-                        borderColor: formErrors.walletAddress ? "#f87171" : "#c2a792",
-                        backgroundColor: "rgba(255,255,255,0.8)",
-                        transition: { duration: 0.3 },
-                      }}
-                      required
-                    />
-                    <motion.div
-                      className="absolute right-3 top-1/2 text-[#c2a792] text-lg flex items-center justify-center w-6 h-6"
-                      style={{ transform: 'translateY(-50%)' }}
-                    >
-                      💰
-                    </motion.div>
-                  </motion.div>
-                  {formErrors.walletAddress && (
-                    <p className="text-red-500 text-xs mt-1">{formErrors.walletAddress}</p>
-                  )}
-                </motion.div>
+                {formErrors.password && (
+                  <p className="text-red-500 text-xs mt-1">{formErrors.password}</p>
+                )}
+              </motion.div>
+            </>
 
-                {/* Signed Message field */}
-                <motion.div variants={itemVariants} custom={5}>
-                  <label className="block text-[#46594f] font-medium mb-2 text-sm">
-                    Signed Message
-                  </label>
-                  <motion.div className="relative">
-                    <motion.textarea
-                      name="signedMessage"
-                      value={walletData.signedMessage}
-                      onChange={(e) => setWalletData(prev => ({ ...prev, signedMessage: e.target.value }))}
-                      placeholder="Enter your signed message"
-                      rows={3}
-                      className={`w-full px-4 py-3 bg-white/60 backdrop-blur-sm border-2 rounded-2xl 
-                                 focus:outline-none focus:bg-white/80 transition-all duration-300 
-                                 text-[#46594f] placeholder-[#8a9690] resize-none ${
-                                   formErrors.signedMessage 
-                                     ? 'border-red-300 focus:border-red-400' 
-                                     : 'border-[#e2d6c3] focus:border-[#c2a792]'
-                                 }`}
-                      required
-                    />
-                  </motion.div>
-                  {formErrors.signedMessage && (
-                    <p className="text-red-500 text-xs mt-1">{formErrors.signedMessage}</p>
-                  )}
-                </motion.div>
-              </>
-            )}            {/* Remember me and Forgot password - Only for email login */}
-            {loginMethod === 'email' && (
-              <motion.div
-                className="flex items-center justify-between"
-                variants={itemVariants}
-                custom={6}
-              >
+            {/* Remember me and Forgot password */}
+            <motion.div
+              className="flex items-center justify-between"
+              variants={itemVariants}
+              custom={6}
+            >
                 <motion.label
                   className="flex items-center space-x-3 cursor-pointer group"
                   whileHover={{ scale: 1.02 }}
@@ -555,12 +501,10 @@ const LoginForm = () => {
                   href="#forgot"
                   className="text-[#c2a792] text-sm font-medium hover:text-[#b8956f] transition-colors duration-200"
                   whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
+                  whileTap={{ scale: 0.95 }}                >
                   Forgot password?
                 </motion.a>
               </motion.div>
-            )}
 
             {/* Submit button */}
             <motion.button
@@ -598,19 +542,11 @@ const LoginForm = () => {
                         repeat: Infinity,
                         ease: "linear",
                       }}
-                    />
-                    <span>
-                      {loginMethod === 'email' ? 'Signing In...' : 'Connecting Wallet...'}
-                    </span>
-                  </>
-                ) : (
+                    />                    <span>Signing In...</span>
+                  </>                ) : (
                   <>
-                    <span>
-                      {loginMethod === 'email' ? 'Sign In' : 'Connect Wallet'}
-                    </span>
-                    <span className="text-lg">
-                      {loginMethod === 'email' ? '🎨' : '💰'}
-                    </span>
+                    <span>Sign In</span>
+                    <span className="text-lg">🎨</span>
                   </>
                 )}
               </span>
@@ -637,24 +573,43 @@ const LoginForm = () => {
               className="grid grid-cols-2 gap-4"
               variants={itemVariants}
               custom={9}
-            >
-              <motion.button
+            >              <motion.button
                 type="button"
-                className="flex items-center justify-center space-x-2 py-3 px-4 bg-white/60 backdrop-blur-sm 
+                onClick={connectMetaMask}
+                disabled={isLoading}
+                className={`flex items-center justify-center space-x-2 py-3 px-4 bg-white/60 backdrop-blur-sm 
                           border-2 border-[#e2d6c3] rounded-2xl hover:bg-white/80 hover:border-[#c2a792] 
-                          transition-all duration-300 text-[#46594f] font-medium text-sm group"
-                whileHover={{
+                          transition-all duration-300 text-[#46594f] font-medium text-sm group 
+                          ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                whileHover={!isLoading ? {
                   scale: 1.02,
                   borderColor: "#c2a792",
                   backgroundColor: "rgba(255,255,255,0.8)",
                   transition: { duration: 0.3 },
-                }}
-                whileTap={{ scale: 0.98 }}
+                } : {}}
+                whileTap={!isLoading ? { scale: 0.98 } : {}}
               >
-                <span className="text-xl group-hover:scale-110 transition-transform duration-200">
-                  🔗
-                </span>
-                <span>MetaMask</span>
+                {isLoading ? (
+                  <>
+                    <motion.div
+                      className="w-4 h-4 border-2 border-[#c2a792] border-t-transparent rounded-full"
+                      animate={{ rotate: 360 }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        ease: "linear",
+                      }}
+                    />
+                    <span>Connecting...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-xl group-hover:scale-110 transition-transform duration-200">
+                      🔗
+                    </span>
+                    <span>MetaMask</span>
+                  </>
+                )}
               </motion.button>
 
               <motion.button

@@ -217,12 +217,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       throw error;
     }
   };
-
   // Logout
   const logout = async (): Promise<void> => {
     try {
-      await authService.logout();
+      const response = await authService.logout();
+      
+      if (response.success) {
+        console.log('Logout successful:', response.message);
+      } else {
+        console.warn('Logout had issues:', response.message);
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
     } finally {
+      // Always update local state regardless of server response
       dispatch({ type: 'LOGOUT' });
     }
   };

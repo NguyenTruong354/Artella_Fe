@@ -112,18 +112,54 @@ export class AuthService {  private readonly endpoints = {
       };
     }
   }
-
   /**
-   * Logout user
+   * Logout user by invalidating JWT token
+   * 
+   * Even though JWT tokens are stateless, the backend maintains a blacklist of invalidated tokens
+   * to ensure proper logout functionality
    */
-  async logout(): Promise<void> {
+  async logout(): Promise<ApiResponse<boolean>> {
     try {
-      await apiClient.post(this.endpoints.logout);
-    } catch {
-      // Even if logout fails on server, clear local storage
-      console.warn('Logout request failed, but clearing local storage anyway');
-    } finally {
+      // Get the current token
+      const token = this.getToken();
+      
+      if (!token) {
+        console.warn('No token found during logout');
+        // Clear any local auth data
+        apiClient.clearAuthToken();
+        return {
+          message: 'Already logged out',
+          data: true,
+          success: true
+        };
+      }
+      
+      // Call logout API with the token
+      const response = await apiClient.post<boolean>(this.endpoints.logout);
+      
+      if (response.success) {
+        // Clear local storage on successful logout
+        apiClient.clearAuthToken();
+        return {
+          message: response.message || 'Logged out successfully',
+          data: true,
+          success: true
+        };
+      } else {
+        throw new Error(response.message || 'Logout failed');
+      }
+    } catch (error: unknown) {
+      // Even if logout fails on server, clear local storage for security
       apiClient.clearAuthToken();
+      
+      const errorMessage = error instanceof Error ? error.message : 'Logout failed';
+      console.warn('Logout error:', errorMessage);
+      
+      return {
+        message: errorMessage,
+        data: false,
+        success: false
+      };
     }
   }
 
