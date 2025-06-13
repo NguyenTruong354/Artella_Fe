@@ -9,7 +9,9 @@ import {
   User, 
   ApiResponse,
   VerificationRequest,
-  AuthUser 
+  AuthUser,
+  PasswordResetRequest,
+  PasswordResetConfirmRequest
 } from '../types';
 
 export class AuthService {  private readonly endpoints = {
@@ -20,6 +22,8 @@ export class AuthService {  private readonly endpoints = {
     verify: '/api/users/verify',
     verifyEmail: '/api/users/verify',
     resendVerification: '/api/users/resend-verification',
+    forgotPassword: '/api/users/forgot-password',
+    resetPassword: '/api/users/reset-password',
   };
 
   /**
@@ -287,9 +291,84 @@ export class AuthService {  private readonly endpoints = {
         data: response.data || false,
         success: response.success
       };
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to resend verification code';
+    } catch (error: unknown) {      const errorMessage = error instanceof Error ? error.message : 'Failed to resend verification code';
       console.error('❌ Resend verification code error:', errorMessage);
+      
+      return {
+        message: errorMessage,
+        data: false,
+        success: false
+      };
+    }
+  }
+
+  /**
+   * Request password reset email
+   * 
+   * @param email User's email address
+   * @returns ApiResponse with success/error message
+   */
+  async forgotPassword(email: string): Promise<ApiResponse<boolean>> {
+    const request: PasswordResetRequest = {
+      email
+    };
+
+    try {
+      // Debug log
+      console.log('🔍 Forgot Password Request:', JSON.stringify(request, null, 2));
+      
+      const response = await apiClient.post<boolean>(this.endpoints.forgotPassword, request);
+      
+      return {
+        message: response.message,
+        data: response.data || false,
+        success: response.success
+      };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send password reset email';
+      console.error('❌ Forgot password error:', errorMessage);
+      
+      return {
+        message: errorMessage,
+        data: false,
+        success: false
+      };
+    }
+  }
+
+  /**
+   * Reset password with verification code
+   * 
+   * @param email User's email address
+   * @param code Verification code from email
+   * @param newPassword New password to set
+   * @returns ApiResponse with success/error message
+   */
+  async resetPassword(email: string, code: string, newPassword: string): Promise<ApiResponse<boolean>> {
+    const request: PasswordResetConfirmRequest = {
+      email,
+      code,
+      newPassword
+    };
+
+    try {
+      // Debug log (excluding password for security)
+      console.log('🔍 Reset Password Request:', JSON.stringify({
+        email: request.email,
+        code: request.code,
+        newPassword: '[HIDDEN]'
+      }, null, 2));
+      
+      const response = await apiClient.post<boolean>(this.endpoints.resetPassword, request);
+      
+      return {
+        message: response.message,
+        data: response.data || false,
+        success: response.success
+      };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to reset password';
+      console.error('❌ Reset password error:', errorMessage);
       
       return {
         message: errorMessage,

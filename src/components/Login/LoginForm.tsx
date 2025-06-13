@@ -495,15 +495,15 @@ const LoginForm = () => {
                   <span className="text-[#6d7f75] text-sm font-light group-hover:text-[#46594f] transition-colors duration-200">
                     Remember me
                   </span>
-                </motion.label>
-
-                <motion.a
-                  href="#forgot"
+                </motion.label>                <motion.button
+                  type="button"
+                  onClick={() => navigate('/forgot-password')}
                   className="text-[#c2a792] text-sm font-medium hover:text-[#b8956f] transition-colors duration-200"
                   whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}                >
+                  whileTap={{ scale: 0.95 }}
+                >
                   Forgot password?
-                </motion.a>
+                </motion.button>
               </motion.div>
 
             {/* Submit button */}

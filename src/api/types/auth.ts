@@ -97,3 +97,14 @@ export interface VerificationRequest {
 export interface VerificationResponse extends ApiResponse<boolean> {
   // Extends ApiResponse with boolean data
 }
+
+// Password Reset related types
+export interface PasswordResetRequest {
+  email: string;
+}
+
+export interface PasswordResetConfirmRequest {
+  email: string;
+  code: string;
+  newPassword: string;
+}

@@ -12,6 +12,8 @@ import ExploreMore from "../pages/ExploreMore";
 import Login from "../pages/Login";
 import Signup from "../pages/Signup";
 import Verification from "../pages/Verification";
+import ForgotPassword from "../pages/ForgotPassword";
+import ResetPassword from "../pages/ResetPassword";
 import NotFound from "../pages/NotFound";
 import HtmlPage from "../pages/HtmlPage";
 import MainLayout from "../layouts/MainLayout";
@@ -88,6 +90,21 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute requireAuth={false}>
         <Signup />
+      </ProtectedRoute>
+    ),
+  },  {
+    path: "/forgot-password",
+    element: (
+      <ProtectedRoute requireAuth={false}>
+        <ForgotPassword />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/reset-password",
+    element: (
+      <ProtectedRoute requireAuth={false}>
+        <ResetPassword />
       </ProtectedRoute>
     ),
   },
