@@ -326,8 +326,7 @@ const LoginForm = () => {
               className="flex justify-center space-x-2 mt-8 mb-6"
               variants={itemVariants}
               custom={3}
-            >
-              <button
+            >              <button
                 type="button"
                 onClick={() => setLoginMethod('email')}
                 className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
@@ -341,13 +340,14 @@ const LoginForm = () => {
               <button
                 type="button"
                 onClick={() => setLoginMethod('wallet')}
-                className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center space-x-2 ${
                   loginMethod === 'wallet'
                     ? 'bg-[#c2a792] text-white shadow-lg'
                     : 'bg-white/60 text-[#6d7f75] hover:bg-white/80'
                 }`}
               >
-                Wallet Login
+                <span>🦊</span>
+                <span>Connect with MetaMask</span>
               </button>
             </motion.div>
 

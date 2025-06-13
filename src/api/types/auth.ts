@@ -47,6 +47,35 @@ export interface EmailLoginData {
   password: string;
 }
 
+// Registration related types
+export interface UserRegistrationRequest {
+  email: string;
+  password: string;
+  role: 'USER' | 'ADMIN' | 'ARTIST';
+  walletAddress?: string;
+  fullName: string;
+  phoneNumber?: string;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  fullName: string;
+  phoneNumber?: string;
+  role: 'USER' | 'ADMIN' | 'ARTIST';
+  walletAddress?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RegisterResponse {
+  message: string;
+  data: User;
+  success: boolean;
+  timestamp?: string;
+  path?: string;
+}
+
 // Error types
 export interface ApiError {
   message: string;

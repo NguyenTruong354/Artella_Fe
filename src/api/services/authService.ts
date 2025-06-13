@@ -1,9 +1,9 @@
 import { apiClient } from '../client';
-import { LoginRequest, LoginResponse, EmailLoginData, WalletLoginData } from '../types';
+import { LoginRequest, LoginResponse, EmailLoginData, WalletLoginData, UserRegistrationRequest, RegisterResponse, User, ApiResponse } from '../types';
 
-export class AuthService {
-  private readonly endpoints = {
+export class AuthService {  private readonly endpoints = {
     login: '/api/users/login',
+    register: '/register',
     logout: '/api/users/logout',
     refresh: '/api/users/refresh',
     verify: '/api/users/verify',
@@ -81,7 +81,38 @@ export class AuthService {
         success: false,
       };
     }
+  }  /**
+   * Register new user
+   */
+  async register(userData: UserRegistrationRequest): Promise<RegisterResponse> {
+    // Debug log để kiểm tra request body
+    console.log('🔍 Register Request Body:', JSON.stringify(userData, null, 2));
+
+    try {
+      // Spring Boot trả về ApiResponse<User> format
+      const response = await apiClient.post<ApiResponse<User>>(this.endpoints.register, userData);
+      
+      if (response.success && response.data) {
+        // Response từ Spring Boot đã là ApiResponse<User> format
+        return {
+          message: response.data.message,
+          data: response.data.data,
+          success: response.data.success,
+          timestamp: response.data.timestamp,
+          path: response.data.path,
+        };
+      } else {
+        throw new Error(response.message || 'Registration failed');
+      }
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Registration failed';
+      throw {
+        message: errorMessage,
+        success: false,
+      };
+    }
   }
+
   /**
    * Logout user
    */

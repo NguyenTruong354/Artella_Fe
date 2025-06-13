@@ -104,30 +104,26 @@ interface AuthProviderProps {
 // Auth provider component
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
+
   // Initialize auth state from localStorage
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
     if (token) {
       // Auto-verify token on app start
       authService.verifyToken()
-        .then((isValid) => {
-          if (isValid) {
-            // For now, create a minimal user object since we don't have user data from verification
-            const user: AuthUser = {
-              id: 'verified_user',
-              loginMethod: 'email', // Default, will be updated when we have actual user data
-              isAuthenticated: true,
-            };
-            
-            dispatch({
-              type: 'LOGIN_SUCCESS',
-              payload: { token, user },
-            });
-          } else {
-            // Invalid token, clear it
-            localStorage.removeItem('auth_token');
-            dispatch({ type: 'LOGOUT' });
-          }
+        .then((userData) => {
+          const user: AuthUser = {
+            id: userData.id,
+            email: userData.email,
+            walletAddress: userData.walletAddress,
+            loginMethod: userData.email ? 'email' : 'wallet',
+            isAuthenticated: true,
+          };
+          
+          dispatch({
+            type: 'LOGIN_SUCCESS',
+            payload: { token, user },
+          });
         })
         .catch(() => {
           // Invalid token, clear it
@@ -251,6 +247,3 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-
-// Default export
-export default AuthProvider;
