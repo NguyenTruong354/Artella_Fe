@@ -1,5 +1,5 @@
 import React, { useReducer, useEffect, ReactNode } from 'react';
-import { AuthState, AuthUser, EmailLoginData, WalletLoginData, UserRegistrationRequest, RegisterResponse } from '../types';
+import { AuthState, AuthUser, EmailLoginData, WalletLoginData, UserRegistrationRequest, RegisterResponse, ApiResponse } from '../types';
 import { authService } from '../services';
 import { AuthContext, AuthContextType } from './authContext';
 
@@ -11,6 +11,9 @@ type AuthAction =
   | { type: 'REGISTER_START' }
   | { type: 'REGISTER_SUCCESS'; payload: string }
   | { type: 'REGISTER_FAILURE'; payload: string }
+  | { type: 'VERIFICATION_START' }
+  | { type: 'VERIFICATION_SUCCESS' }
+  | { type: 'VERIFICATION_FAILURE'; payload: string }
   | { type: 'LOGOUT' }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'CLEAR_ERROR' };
@@ -73,6 +76,24 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         user: null,
         isAuthenticated: false,
       };
+    case 'VERIFICATION_START':
+      return {
+        ...state,
+        isLoading: true,
+        error: null,
+      };
+    case 'VERIFICATION_SUCCESS':
+      return {
+        ...state,
+        isLoading: false,
+        error: null,
+      };
+    case 'VERIFICATION_FAILURE':
+      return {
+        ...state,
+        isLoading: false,
+        error: action.payload,
+      };
     case 'LOGOUT':
       return {
         ...state,
@@ -104,7 +125,6 @@ interface AuthProviderProps {
 // Auth provider component
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
-
   // Initialize auth state from localStorage
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
@@ -112,18 +132,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Auto-verify token on app start
       authService.verifyToken()
         .then((userData) => {
-          const user: AuthUser = {
-            id: userData.id,
-            email: userData.email,
-            walletAddress: userData.walletAddress,
-            loginMethod: userData.email ? 'email' : 'wallet',
-            isAuthenticated: true,
-          };
-          
-          dispatch({
-            type: 'LOGIN_SUCCESS',
-            payload: { token, user },
-          });
+          if (userData && typeof userData !== 'boolean') {
+            const user: AuthUser = {
+              id: userData.id,
+              email: userData.email,
+              walletAddress: userData.walletAddress,
+              loginMethod: userData.email ? 'email' : 'wallet',
+              isAuthenticated: true,
+            };
+            
+            dispatch({
+              type: 'LOGIN_SUCCESS',
+              payload: { token, user },
+            });
+          } else {
+            // Invalid token, clear it
+            localStorage.removeItem('auth_token');
+            dispatch({ type: 'LOGOUT' });
+          }
         })
         .catch(() => {
           // Invalid token, clear it
@@ -240,6 +266,69 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     dispatch({ type: 'CLEAR_ERROR' });
   };
 
+  // Verify email with verification code
+  const verifyEmail = async (email: string, code: string): Promise<ApiResponse<boolean>> => {
+    dispatch({ type: 'VERIFICATION_START' });
+    
+    try {
+      const response = await authService.verifyEmail(email, code);
+      
+      if (response.success) {
+        dispatch({ type: 'VERIFICATION_SUCCESS' });
+      } else {
+        dispatch({
+          type: 'VERIFICATION_FAILURE',
+          payload: response.message,
+        });
+      }
+      
+      return response;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Email verification failed';
+      dispatch({
+        type: 'VERIFICATION_FAILURE',
+        payload: errorMessage,
+      });
+      
+      return {
+        message: errorMessage,
+        data: false,
+        success: false
+      };
+    }
+  };
+  
+  // Resend verification code
+  const resendVerificationCode = async (email: string): Promise<ApiResponse<boolean>> => {
+    dispatch({ type: 'VERIFICATION_START' });
+    
+    try {
+      const response = await authService.resendVerificationCode(email);
+      
+      if (response.success) {
+        dispatch({ type: 'VERIFICATION_SUCCESS' });
+      } else {
+        dispatch({
+          type: 'VERIFICATION_FAILURE',
+          payload: response.message,
+        });
+      }
+      
+      return response;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to resend verification code';
+      dispatch({
+        type: 'VERIFICATION_FAILURE',
+        payload: errorMessage,
+      });
+      
+      return {
+        message: errorMessage,
+        data: false,
+        success: false      };
+    }
+  };
+  
   const contextValue: AuthContextType = {
     state,
     loginWithEmail,
@@ -247,8 +336,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     clearError,
+    verifyEmail,
+    resendVerificationCode,
   };
-
   return (
     <AuthContext.Provider value={contextValue}>
       {children}
@@ -256,4 +346,5 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   );
 };
 
+// Thêm export default
 export default AuthProvider;

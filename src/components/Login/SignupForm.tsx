@@ -1,21 +1,88 @@
 import { motion, useAnimation } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../api/auth";
 import { formatErrorMessage, isValidEmail } from "../../api/utils";
 import type { UserRegistrationRequest } from "../../api/types";
 
-const SignupForm = () => {
-  const controls = useAnimation();
+// Password strength indicator component
+const PasswordStrengthIndicator = ({ password }: { password: string }) => {
+  // Only show indicator if password has content
+  if (!password) {
+    return null;
+  }
+
+  const hasMin = password.length >= 8;
+  const hasUpper = /[A-Z]/.test(password);
+  const hasLower = /[a-z]/.test(password);
+  const hasNumber = /\d/.test(password);
+  const hasSpecial = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password);
+  
+  const requirements = [
+    { text: "At least 8 characters", met: hasMin },
+    { text: "One uppercase letter", met: hasUpper },
+    { text: "One lowercase letter", met: hasLower },
+    { text: "One number", met: hasNumber },
+    { text: "One special character", met: hasSpecial },
+  ];
+  
+  const strength = [hasMin, hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean).length;
+  const strengthText = ["Very Weak", "Weak", "Fair", "Good", "Strong"];
+  const strengthColor = [
+    "bg-red-500", 
+    "bg-orange-500", 
+    "bg-yellow-500", 
+    "bg-green-400", 
+    "bg-green-600"
+  ];
+  
+  return (
+    <div className="mt-2 text-xs animate-fadeIn">
+      {/* Strength bar */}
+      <div className="flex mb-1">
+        {[0, 1, 2, 3, 4].map((index) => (
+          <div 
+            key={index} 
+            className={`h-1 flex-1 mx-0.5 rounded-full ${
+              index < strength ? strengthColor[strength - 1] : "bg-gray-200"
+            }`}
+          />
+        ))}
+      </div>
+      
+      {/* Strength text */}
+      <div className="mb-1.5 font-medium" style={{ 
+        color: strength === 0 ? "#f87171" : strength < 3 ? "#f59e0b" : "#10b981" 
+      }}>
+        {strengthText[strength - 1] || "Very Weak"}
+      </div>
+      
+      {/* Requirements list */}
+      <div className="space-y-1 mt-1">
+        {requirements.map((req, index) => (
+          <div key={index} className="flex items-center">
+            <span className={`mr-2 text-xs ${req.met ? 'text-green-600' : 'text-gray-500'}`}>
+              {req.met ? '✓' : '○'}
+            </span>
+            <span className={`text-xs ${req.met ? 'text-green-600' : 'text-gray-500'}`}>
+              {req.text}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const SignupForm = () => {  const controls = useAnimation();
   const formRef = useRef(null);
   const navigate = useNavigate();
-  const location = useLocation();
+  // Không cần dùng location vì đã chuyển thẳng đến trang verification
   const { state: authState, register, clearError } = useAuth();
 
   useEffect(() => {
     controls.start("visible");
   }, [controls]);
-
   // Form state
   const [formData, setFormData] = useState({
     fullName: "",
@@ -23,16 +90,50 @@ const SignupForm = () => {
     password: "",
     confirmPassword: "",
     phoneNumber: "",
-    walletAddress: "",
-    role: 'USER' as 'USER' | 'ADMIN' | 'ARTIST',
+    role: 'Buyer' as 'Buyer' | 'Seller' | 'Admin', // Updated with correct backend roles
     agreeToTerms: false,
   });
 
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  
+  // Realtime validation state  
+  const [passwordTouched, setPasswordTouched] = useState(false);
+  const [confirmPasswordTouched, setConfirmPasswordTouched] = useState(false);
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [fullNameTouched, setFullNameTouched] = useState(false);
+  const [phoneNumberTouched, setPhoneNumberTouched] = useState(false);
+  
+  // Handler for full name validation
+  const handleFullNameBlur = () => {
+    setFullNameTouched(true);
+    
+    if (!formData.fullName.trim()) {
+      setFormErrors((prev: Record<string, string>) => ({ 
+        ...prev, 
+        fullName: 'Full name is required' 
+      }));
+    } else if (formData.fullName.trim().length < 2) {
+      setFormErrors((prev: Record<string, string>) => ({ 
+        ...prev, 
+        fullName: 'Full name must be at least 2 characters' 
+      }));
+    } else if (formData.fullName.trim().length > 50) {
+      setFormErrors((prev: Record<string, string>) => ({ 
+        ...prev, 
+        fullName: 'Full name must not exceed 50 characters' 
+      }));
+    } else if (!/^[a-zA-ZÀ-ỹ\s.''-]+$/.test(formData.fullName.trim())) {
+      setFormErrors((prev: Record<string, string>) => ({ 
+        ...prev, 
+        fullName: 'Full name can only contain letters, spaces, and common punctuation' 
+      }));
+    } else {
+      setFormErrors((prev: Record<string, string>) => ({ ...prev, fullName: '' }));
+    }
+  };
 
   // Animation variants - similar to LoginForm
   const containerVariants = {
@@ -118,31 +219,87 @@ const SignupForm = () => {
       },
     },
   };
+  // Password validation helpers
+  const hasMinLength = (password: string): boolean => password.length >= 8;
+  const hasUpperCase = (password: string): boolean => /[A-Z]/.test(password);
+  const hasLowerCase = (password: string): boolean => /[a-z]/.test(password);
+  const hasNumber = (password: string): boolean => /\d/.test(password);
+  const hasSpecialChar = (password: string): boolean => /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password);
+  // Phone number validation helper
+  const isValidPhoneNumber = (phone: string): boolean => {
+    // Allow empty or validate if provided
+    if (!phone) return true;
+    
+    // International phone number format: Allow +, spaces, dashes, parentheses, and numbers
+    // Generally should have 7-15 digits total (not counting separators)
+    // Remove all non-digit characters to count actual digits
+    const digitsOnly = phone.replace(/\D/g, '');
+    if (digitsOnly.length < 7 || digitsOnly.length > 15) return false;
+    
+    // Basic phone validation format
+    return /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,3}[-\s.]?[0-9]{2,4}[-\s.]?[0-9]{2,4}$/.test(phone);
+  };
 
   // Form validation
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
 
+    // Full name validation
     if (!formData.fullName.trim()) {
       errors.fullName = "Full name is required";
+    } else if (formData.fullName.trim().length < 2) {
+      errors.fullName = "Full name must be at least 2 characters";
+    } else if (formData.fullName.trim().length > 50) {
+      errors.fullName = "Full name must not exceed 50 characters";
+    } else if (!/^[a-zA-ZÀ-ỹ\s.''-]+$/.test(formData.fullName.trim())) {
+      errors.fullName = "Full name can only contain letters, spaces, and common punctuation";
     }
 
+    // Email validation
     if (!formData.email.trim()) {
       errors.email = "Email is required";
     } else if (!isValidEmail(formData.email)) {
       errors.email = "Please enter a valid email address";
-    }
-
+    }    // Password validation
     if (!formData.password) {
       errors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      errors.password = "Password must be at least 6 characters";
+    } else {
+      const passwordErrors: string[] = [];
+      
+      if (!hasMinLength(formData.password)) {
+        passwordErrors.push("at least 8 characters");
+      }
+      if (!hasUpperCase(formData.password)) {
+        passwordErrors.push("one uppercase letter");
+      }
+      if (!hasLowerCase(formData.password)) {
+        passwordErrors.push("one lowercase letter");
+      }
+      if (!hasNumber(formData.password)) {
+        passwordErrors.push("one number");
+      }
+      if (!hasSpecialChar(formData.password)) {
+        passwordErrors.push("one special character");
+      }
+      
+      if (passwordErrors.length > 0) {
+        errors.password = `Password must contain ${passwordErrors.join(", ")}`;
+      }
     }
 
-    if (formData.password !== formData.confirmPassword) {
+    // Confirm password validation
+    if (!formData.confirmPassword) {
+      errors.confirmPassword = "Please confirm your password";
+    } else if (formData.password !== formData.confirmPassword) {
       errors.confirmPassword = "Passwords do not match";
     }
 
+    // Phone number validation
+    if (formData.phoneNumber && !isValidPhoneNumber(formData.phoneNumber)) {
+      errors.phoneNumber = "Please enter a valid phone number";
+    }
+
+    // Terms and conditions
     if (!formData.agreeToTerms) {
       errors.agreeToTerms = "You must agree to the terms and conditions";
     }
@@ -150,7 +307,6 @@ const SignupForm = () => {
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
-
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,44 +323,165 @@ const SignupForm = () => {
       const registrationData: UserRegistrationRequest = {
         email: formData.email.trim(),
         password: formData.password,
-        role: formData.role,
+        role: formData.role, // Now correctly matches backend: 'Buyer' | 'Seller' | 'Admin'
         fullName: formData.fullName.trim(),
         phoneNumber: formData.phoneNumber.trim() || undefined,
-        walletAddress: formData.walletAddress.trim() || undefined,
       };
 
+      console.log('🔍 Registration data:', registrationData);
+      
       const response = await register(registrationData);
       
-      if (response.success) {
-        setRegistrationSuccess(true);
-          // Redirect to login after 2 seconds
-        setTimeout(() => {
-          const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/login';
-          navigate(from, { 
-            state: { 
-              message: 'Registration successful! Please login with your credentials.',
-              email: formData.email 
-            }
-          });
-        }, 2000);
-      }
+      console.log('✅ Registration response:', response);
+      
+      // If we reach here, registration was successful (no error thrown)
+      setRegistrationSuccess(true);
+      
+      // Redirect to verification page after 2 seconds
+      setTimeout(() => {
+        navigate('/verification', { 
+          state: { 
+            message: 'Registration successful! Please verify your account.',
+            email: formData.email 
+          }
+        });
+      }, 2000);
+      
     } catch (error) {
-      console.error('Registration failed:', error);
-      // Error is handled by AuthContext
+      console.error('❌ Registration failed:', error);
+      // Error is handled by AuthContext and will be displayed in UI
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Handle input changes
+  };// Handle input changes
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Mark field as touched based on which field is being edited    // Mark field as touched based on which field is being edited
+    switch(field) {
+      case 'email':
+        if (!emailTouched) setEmailTouched(true);
+        break;
+      case 'password':
+        if (!passwordTouched) setPasswordTouched(true);
+        break;
+      case 'confirmPassword':
+        if (!confirmPasswordTouched) setConfirmPasswordTouched(true);
+        break;
+      case 'fullName':
+        if (!fullNameTouched) setFullNameTouched(true);
+        break;
+      case 'phoneNumber':
+        if (!phoneNumberTouched) setPhoneNumberTouched(true);
+        break;
+    }
+    
+    // Perform realtime validation for password and confirm password
+    if (field === 'password' || field === 'confirmPassword') {
+      const newPassword = field === 'password' ? value as string : formData.password;
+      const newConfirmPassword = field === 'confirmPassword' ? value as string : formData.confirmPassword;
+      
+      // Only validate match if both fields have values
+      if (newPassword && newConfirmPassword && newPassword !== newConfirmPassword) {
+        setFormErrors(prev => ({ 
+          ...prev, 
+          confirmPassword: 'Passwords do not match'
+        }));
+      } else {
+        // Clear the error if they match now
+        setFormErrors(prev => ({ 
+          ...prev, 
+          confirmPassword: ''
+        }));
+      }
+    }
     
     // Clear field error when user starts typing
     if (formErrors[field]) {
       setFormErrors(prev => ({ ...prev, [field]: '' }));
     }
+  };  // Realtime validation handlers
+  const handlePasswordBlur = () => {
+    setPasswordTouched(true);
+      // Validate password on blur if there's any input
+    if (formData.password) {
+      const passwordErrors: string[] = [];
+      
+      if (!hasMinLength(formData.password)) {
+        passwordErrors.push("at least 8 characters");
+      }
+      if (!hasUpperCase(formData.password)) {
+        passwordErrors.push("one uppercase letter");
+      }
+      if (!hasLowerCase(formData.password)) {
+        passwordErrors.push("one lowercase letter");
+      }
+      if (!hasNumber(formData.password)) {
+        passwordErrors.push("one number");
+      }
+      if (!hasSpecialChar(formData.password)) {
+        passwordErrors.push("one special character");
+      }
+      
+      if (passwordErrors.length > 0) {
+        setFormErrors(prev => ({ 
+          ...prev, 
+          password: `Password must contain ${passwordErrors.join(", ")}`
+        }));
+      } else {
+        setFormErrors(prev => ({ ...prev, password: '' }));
+      }
+    }
   };
+  
+  const handleConfirmPasswordBlur = () => {
+    setConfirmPasswordTouched(true);
+    
+    // Validate confirm password on blur
+    if (formData.confirmPassword && formData.password !== formData.confirmPassword) {
+      setFormErrors(prev => ({ 
+        ...prev, 
+        confirmPassword: 'Passwords do not match' 
+      }));
+    } else {
+      setFormErrors(prev => ({ ...prev, confirmPassword: '' }));
+    }
+  };
+  
+  const handleEmailBlur = () => {
+    setEmailTouched(true);
+    
+    // Validate email on blur
+    if (!formData.email) {
+      setFormErrors(prev => ({ 
+        ...prev, 
+        email: 'Email is required' 
+      }));
+    } else if (!isValidEmail(formData.email)) {
+      setFormErrors(prev => ({ 
+        ...prev, 
+        email: 'Please enter a valid email address' 
+      }));
+    } else {
+      setFormErrors(prev => ({ ...prev, email: '' }));
+    }
+  };
+  
+  // New handler for phone number validation  
+  const handlePhoneNumberBlur = () => {
+    setPhoneNumberTouched(true);
+    
+    // Validate phone number on blur only if provided
+    if (formData.phoneNumber && !isValidPhoneNumber(formData.phoneNumber)) {
+      setFormErrors(prev => ({ 
+        ...prev, 
+        phoneNumber: 'Please enter a valid phone number' 
+      }));
+    } else {
+      setFormErrors(prev => ({ ...prev, phoneNumber: '' }));
+    }  };
+  // Handler for full name validation - already defined above
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f8ede3] via-[#f0e6d8] to-[#e8ddd0] relative overflow-hidden flex items-center justify-center py-12 px-6">
       {/* Enhanced atmospheric background */}
@@ -359,12 +636,10 @@ const SignupForm = () => {
                 {formatErrorMessage(authState.error)}
               </motion.div>
             )}
-          </motion.div>
-
-          {/* Registration form */}
+          </motion.div>          {/* Registration form */}
           <motion.form
             onSubmit={handleSubmit}
-            className="space-y-4 relative z-10"
+            className="space-y-3 relative z-10"
             variants={itemVariants}
             custom={3}
           >
@@ -372,11 +647,11 @@ const SignupForm = () => {
             <motion.div variants={itemVariants} custom={4}>
               <label className="block text-[#46594f] font-medium mb-2 text-sm">
                 Full Name *
-              </label>
-              <motion.input
+              </label>              <motion.input
                 type="text"
                 value={formData.fullName}
                 onChange={(e) => handleInputChange('fullName', e.target.value)}
+                onBlur={handleFullNameBlur}
                 placeholder="Enter your full name"
                 className={`w-full px-4 py-3 bg-white/60 backdrop-blur-sm border-2 rounded-2xl 
                            focus:outline-none focus:bg-white/80 transition-all duration-300 
@@ -387,8 +662,7 @@ const SignupForm = () => {
                            }`}
                 disabled={isLoading}
                 required
-              />
-              {formErrors.fullName && (
+              />              {fullNameTouched && formErrors.fullName && (
                 <p className="text-red-500 text-xs mt-1">{formErrors.fullName}</p>
               )}
             </motion.div>
@@ -402,6 +676,7 @@ const SignupForm = () => {
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
+                onBlur={handleEmailBlur}
                 placeholder="Enter your email"
                 className={`w-full px-4 py-3 bg-white/60 backdrop-blur-sm border-2 rounded-2xl 
                            focus:outline-none focus:bg-white/80 transition-all duration-300 
@@ -412,8 +687,7 @@ const SignupForm = () => {
                            }`}
                 disabled={isLoading}
                 required
-              />
-              {formErrors.email && (
+              />              {emailTouched && formErrors.email && (
                 <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>
               )}
             </motion.div>
@@ -422,51 +696,40 @@ const SignupForm = () => {
             <motion.div variants={itemVariants} custom={6}>
               <label className="block text-[#46594f] font-medium mb-2 text-sm">
                 Phone Number
-              </label>
-              <motion.input
+              </label>              <motion.input
                 type="tel"
                 value={formData.phoneNumber}
                 onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+                onBlur={handlePhoneNumberBlur}
                 placeholder="Enter your phone number"
-                className="w-full px-4 py-3 bg-white/60 backdrop-blur-sm border-2 rounded-2xl 
+                className={`w-full px-4 py-3 bg-white/60 backdrop-blur-sm border-2 rounded-2xl 
                          focus:outline-none focus:bg-white/80 transition-all duration-300 
-                         text-[#46594f] placeholder-[#8a9690] border-[#e2d6c3] focus:border-[#c2a792]"
-                disabled={isLoading}
-              />
+                         text-[#46594f] placeholder-[#8a9690] ${
+                           formErrors.phoneNumber 
+                             ? 'border-red-300 focus:border-red-400' 
+                             : 'border-[#e2d6c3] focus:border-[#c2a792]'
+                         }`}                disabled={isLoading}
+              />              {phoneNumberTouched && formErrors.phoneNumber && (
+                <p className="text-red-500 text-xs mt-1">{formErrors.phoneNumber}</p>
+              )}
             </motion.div>
 
             {/* Wallet Address */}
-            <motion.div variants={itemVariants} custom={7}>
-              <label className="block text-[#46594f] font-medium mb-2 text-sm">
-                Wallet Address (Optional)
-              </label>
-              <motion.input
-                type="text"
-                value={formData.walletAddress}
-                onChange={(e) => handleInputChange('walletAddress', e.target.value)}
-                placeholder="Enter your wallet address"
-                className="w-full px-4 py-3 bg-white/60 backdrop-blur-sm border-2 rounded-2xl 
-                         focus:outline-none focus:bg-white/80 transition-all duration-300 
-                         text-[#46594f] placeholder-[#8a9690] border-[#e2d6c3] focus:border-[#c2a792]"
-                disabled={isLoading}
-              />
-            </motion.div>
 
             {/* Account Type */}
             <motion.div variants={itemVariants} custom={8}>
               <label className="block text-[#46594f] font-medium mb-2 text-sm">
                 Account Type
-              </label>
-              <select
+              </label>              <select
                 value={formData.role}
-                onChange={(e) => handleInputChange('role', e.target.value)}
+                onChange={(e) => handleInputChange('role', e.target.value as 'Buyer' | 'Seller' | 'Admin')} // Updated with correct backend roles
                 className="w-full px-4 py-3 bg-white/60 backdrop-blur-sm border-2 rounded-2xl 
                          focus:outline-none focus:bg-white/80 transition-all duration-300 
                          text-[#46594f] border-[#e2d6c3] focus:border-[#c2a792]"
-                disabled={isLoading}
-              >
-                <option value="USER">User</option>
-                <option value="ARTIST">Artist</option>
+                disabled={isLoading}              >
+                <option value="Buyer">Buyer</option>
+                <option value="Seller">Seller</option>
+                <option value="Admin">Admin</option>
               </select>
             </motion.div>
 
@@ -480,6 +743,7 @@ const SignupForm = () => {
                   type={showPassword ? "text" : "password"}
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
+                  onBlur={handlePasswordBlur}
                   placeholder="Enter your password"
                   className={`w-full px-4 py-3 bg-white/60 backdrop-blur-sm border-2 rounded-2xl 
                              focus:outline-none focus:bg-white/80 transition-all duration-300 
@@ -499,10 +763,12 @@ const SignupForm = () => {
                 >
                   {showPassword ? '👁️' : '👁️‍🗨️'}
                 </button>
-              </div>
-              {formErrors.password && (
+              </div>              {passwordTouched && formErrors.password && (
                 <p className="text-red-500 text-xs mt-1">{formErrors.password}</p>
               )}
+
+              {/* Password strength indicator - new component usage */}
+              <PasswordStrengthIndicator password={formData.password} />
             </motion.div>
 
             {/* Confirm Password */}
@@ -515,6 +781,7 @@ const SignupForm = () => {
                   type={showConfirmPassword ? "text" : "password"}
                   value={formData.confirmPassword}
                   onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                  onBlur={handleConfirmPasswordBlur}
                   placeholder="Confirm your password"
                   className={`w-full px-4 py-3 bg-white/60 backdrop-blur-sm border-2 rounded-2xl 
                              focus:outline-none focus:bg-white/80 transition-all duration-300 
@@ -534,8 +801,7 @@ const SignupForm = () => {
                 >
                   {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
                 </button>
-              </div>
-              {formErrors.confirmPassword && (
+              </div>              {confirmPasswordTouched && formErrors.confirmPassword && (
                 <p className="text-red-500 text-xs mt-1">{formErrors.confirmPassword}</p>
               )}
             </motion.div>

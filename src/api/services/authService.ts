@@ -1,12 +1,25 @@
 import { apiClient } from '../client';
-import { LoginRequest, LoginResponse, EmailLoginData, WalletLoginData, UserRegistrationRequest, RegisterResponse, User, ApiResponse } from '../types';
+import { 
+  LoginRequest, 
+  LoginResponse, 
+  EmailLoginData, 
+  WalletLoginData, 
+  UserRegistrationRequest, 
+  RegisterResponse, 
+  User, 
+  ApiResponse,
+  VerificationRequest,
+  AuthUser 
+} from '../types';
 
 export class AuthService {  private readonly endpoints = {
     login: '/api/users/login',
-    register: '/register',
+    register: '/api/users/register',
     logout: '/api/users/logout',
     refresh: '/api/users/refresh',
     verify: '/api/users/verify',
+    verifyEmail: '/api/users/verify',
+    resendVerification: '/api/users/resend-verification',
   };
 
   /**
@@ -180,14 +193,26 @@ export class AuthService {  private readonly endpoints = {
       apiClient.clearAuthToken();
       throw error;
     }
-  }
-  /**
+  }  /**
    * Verify current token
    */
-  async verifyToken(): Promise<boolean> {
+  async verifyToken(): Promise<AuthUser | boolean> {
     try {
       const response = await apiClient.get(this.endpoints.verify);
-      return response.success;
+      if (response.success) {
+        // If we get a success response, we assume the token is valid
+        // Return a mock user object since we don't have detailed user info
+        const userData: AuthUser = {
+          id: 'current_user',
+          email: 'user@example.com', // This will be replaced with actual data from backend
+          walletAddress: undefined,
+          loginMethod: 'email',
+          isAuthenticated: true,
+        };
+        return userData;
+      } else {
+        return false;
+      }
     } catch {
       return false;
     }
@@ -206,6 +231,72 @@ export class AuthService {  private readonly endpoints = {
   isAuthenticated(): boolean {
     const token = this.getToken();
     return !!token;
+  }
+
+  /**
+   * Verify email using verification code
+   * 
+   * @param email User's email
+   * @param code 6-digit verification code
+   * @returns ApiResponse with success/error message
+   */
+  async verifyEmail(email: string, code: string): Promise<ApiResponse<boolean>> {
+    const verificationRequest: VerificationRequest = {
+      email,
+      code
+    };
+
+    try {
+      // Debug log
+      console.log('🔍 Verification Request:', JSON.stringify(verificationRequest, null, 2));
+      
+      const response = await apiClient.post<boolean>(this.endpoints.verifyEmail, verificationRequest);
+      
+      return {
+        message: response.message,
+        data: response.data || false,
+        success: response.success
+      };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Email verification failed';
+      console.error('❌ Email verification error:', errorMessage);
+      
+      return {
+        message: errorMessage,
+        data: false,
+        success: false
+      };
+    }
+  }
+
+  /**
+   * Resend verification code to user's email
+   * 
+   * @param email User's email address
+   * @returns ApiResponse with success/error message
+   */
+  async resendVerificationCode(email: string): Promise<ApiResponse<boolean>> {
+    try {
+      // Debug log
+      console.log('🔍 Resending verification code to:', email);
+      
+      const response = await apiClient.post<boolean>(`${this.endpoints.resendVerification}?email=${encodeURIComponent(email)}`);
+      
+      return {
+        message: response.message,
+        data: response.data || false,
+        success: response.success
+      };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to resend verification code';
+      console.error('❌ Resend verification code error:', errorMessage);
+      
+      return {
+        message: errorMessage,
+        data: false,
+        success: false
+      };
+    }
   }
 }
 

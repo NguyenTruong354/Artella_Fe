@@ -1,11 +1,16 @@
 import { motion, useAnimation } from "framer-motion";
 import { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import LoginBackground from "./LoginBackground";
+import { authService } from "../../api";
 
 const VerificationCode = () => {
   const controls = useAnimation();
   const navigate = useNavigate();
+  const location = useLocation();
+  const email = location.state?.email || "";
+  const message = location.state?.message || "";
+  
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -108,9 +113,7 @@ const VerificationCode = () => {
       setCode(newCode);
       inputRefs.current[5]?.focus();
     }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  };  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const verificationCode = code.join("");
     
@@ -119,21 +122,31 @@ const VerificationCode = () => {
       return;
     }
 
+    if (!email) {
+      setError("Email address is missing. Please go back to the registration page.");
+      return;
+    }
+
     setIsLoading(true);
     setError("");
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Call the verifyEmail API
+      const response = await authService.verifyEmail(email, verificationCode);
       
-      // Mock verification
-      if (verificationCode === "123456") {
-        console.log("Verification successful");
-        navigate("/login");
+      if (response.success) {
+        console.log("Verification successful:", response.message);
+        navigate("/login", { 
+          state: { 
+            message: "Email verified successfully! Please log in with your credentials.",
+            email: email 
+          }
+        });
       } else {
-        setError("Invalid verification code. Please try again.");
+        setError(response.message || "Invalid verification code. Please try again.");
       }
-    } catch (error) {
+    } catch (err) {
+      console.error("Verification error:", err);
       setError("Verification failed. Please try again.");
     } finally {
       setIsLoading(false);
@@ -157,14 +170,33 @@ const VerificationCode = () => {
         }
         return prev - 1;
       });
-    }, 1000);
+    }, 1000);    // Check if we have email
+    if (!email) {
+      setError("Email address is missing. Please go back to the registration page.");
+      return;
+    }
 
-    // Simulate resend API call
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("Verification code resent");
-    } catch (error) {
-      console.error("Failed to resend code");
+      // Call the API to resend verification code
+      const response = await authService.resendVerificationCode(email);
+      
+      if (response.success) {
+        // Show success message
+        setError(""); // Clear any previous errors
+        // Show a temporary success message
+        const successElement = document.getElementById('resend-success');
+        if (successElement) {
+          successElement.classList.remove('hidden');
+          setTimeout(() => {
+            successElement.classList.add('hidden');
+          }, 5000); // Hide after 5 seconds
+        }
+      } else {
+        setError(response.message || "Failed to resend verification code");
+      }
+    } catch (err) {
+      console.error("Failed to resend code:", err);
+      setError("Failed to resend verification code. Please try again later.");
     }
   };
 
@@ -225,9 +257,7 @@ const VerificationCode = () => {
               }}
             >
               Verify Your Email
-            </motion.h1>
-
-            <motion.p
+            </motion.h1>            <motion.p
               className="text-[#6d7f75] font-light mb-2"
               variants={itemVariants}
               custom={2}
@@ -236,12 +266,22 @@ const VerificationCode = () => {
             </motion.p>
 
             <motion.p
-              className="text-[#8a9690] text-sm"
+              className="text-[#8a9690] text-sm font-medium"
               variants={itemVariants}
               custom={2}
             >
-              example@email.com
+              {email || "example@email.com"}
             </motion.p>
+            
+            {message && (
+              <motion.p
+                className="text-green-600 text-sm mt-3 font-medium"
+                variants={itemVariants}
+                custom={3}
+              >
+                {message}
+              </motion.p>
+            )}
 
             {/* Artistic underline */}
             <motion.div
@@ -266,28 +306,28 @@ const VerificationCode = () => {
             <motion.div variants={itemVariants} custom={4}>
               <label className="block text-[#46594f] font-medium mb-4 text-sm text-center">
                 Enter Verification Code
-              </label>
-              <div className="flex justify-center space-x-3 mb-4">
+              </label>              <div className="flex justify-center space-x-3 mb-4">
                 {code.map((digit, index) => (
-                  <motion.input
+                  <motion.div
                     key={index}
-                    ref={(el) => (inputRefs.current[index] = el)}
-                    type="text"
-                    value={digit}
-                    onChange={(e) => handleInputChange(index, e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(index, e)}
-                    onPaste={index === 0 ? handlePaste : undefined}
-                    className="w-12 h-12 text-center text-xl font-bold bg-white/60 backdrop-blur-sm 
-                              border-2 border-[#e2d6c3] rounded-xl focus:outline-none focus:border-[#c2a792] 
-                              focus:bg-white/80 transition-all duration-300 text-[#46594f]"
-                    maxLength={1}
                     whileFocus={{
-                      borderColor: "#c2a792",
-                      backgroundColor: "rgba(255,255,255,0.8)",
                       scale: 1.05,
                       transition: { duration: 0.3 },
                     }}
-                  />
+                    className="input-container"
+                  >                    <input
+                      ref={el => { inputRefs.current[index] = el; }}
+                      type="text"
+                      value={digit}
+                      onChange={(e) => handleInputChange(index, e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(index, e)}
+                      onPaste={index === 0 ? handlePaste : undefined}
+                      className="w-12 h-12 text-center text-xl font-bold bg-white/60 backdrop-blur-sm 
+                                border-2 border-[#e2d6c3] rounded-xl focus:outline-none focus:border-[#c2a792] 
+                                focus:bg-white/80 transition-all duration-300 text-[#46594f]"
+                      maxLength={1}
+                    />
+                  </motion.div>
                 ))}
               </div>
               
@@ -341,14 +381,18 @@ const VerificationCode = () => {
               </span>
             </motion.button>
 
-            {/* Resend section */}
-            <motion.div
+            {/* Resend section */}            <motion.div
               className="text-center pt-4"
               variants={itemVariants}
               custom={6}
             >
               <p className="text-[#8a9690] text-sm mb-2">
                 Didn't receive the code?
+              </p>
+              
+              {/* Success message when resend code */}
+              <p id="resend-success" className="text-green-600 text-sm mb-2 hidden">
+                Verification code has been resent to your email!
               </p>
               
               {canResend ? (

@@ -51,7 +51,7 @@ export interface EmailLoginData {
 export interface UserRegistrationRequest {
   email: string;
   password: string;
-  role: 'USER' | 'ADMIN' | 'ARTIST';
+  role: 'Buyer' | 'Seller' | 'Admin';
   walletAddress?: string;
   fullName: string;
   phoneNumber?: string;
@@ -62,7 +62,7 @@ export interface User {
   email: string;
   fullName: string;
   phoneNumber?: string;
-  role: 'USER' | 'ADMIN' | 'ARTIST';
+  role: 'Buyer' | 'Seller' | 'Admin';
   walletAddress?: string;
   createdAt: string;
   updatedAt: string;
@@ -86,4 +86,14 @@ export interface ApiError {
 export interface ValidationError {
   field: string;
   message: string;
+}
+
+// Verification related types
+export interface VerificationRequest {
+  email: string;
+  code: string;
+}
+
+export interface VerificationResponse extends ApiResponse<boolean> {
+  // Extends ApiResponse with boolean data
 }
