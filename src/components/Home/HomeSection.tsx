@@ -7,6 +7,8 @@ import {
 import useDarkMode from "../../hooks/useDarkMode";
 import { WaveTransition } from "../WaveTransition";
 import { DarkModeToggle } from "../DarkModeToggle";
+import { authService } from "../../api/services";
+import { UserProfileResponse } from "../../api/types";
 
 // Direct imports instead of lazy loading
 import BannerSection from './BannerSection';
@@ -48,15 +50,64 @@ const HomeSection: React.FC = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const inView = useInView(sectionRef, { once: false, amount: 0.1 });
   const [watchedItems, setWatchedItems] = useState<Set<number>>(new Set());
+  const [userProfile, setUserProfile] = useState<UserProfileResponse | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
 
   // Dark mode hook
   const darkMode = useDarkMode();
 
+  // Function to generate avatar background color
+  const generateAvatarColor = (name: string) => {
+    const colors = [
+      'bg-gradient-to-r from-blue-400 to-blue-600',
+      'bg-gradient-to-r from-green-400 to-green-600',
+      'bg-gradient-to-r from-purple-400 to-purple-600',
+      'bg-gradient-to-r from-pink-400 to-pink-600',
+      'bg-gradient-to-r from-yellow-400 to-yellow-600',
+      'bg-gradient-to-r from-red-400 to-red-600',
+      'bg-gradient-to-r from-indigo-400 to-indigo-600',
+      'bg-gradient-to-r from-orange-400 to-orange-600',
+    ];
+    
+    // Use name length to pick a color consistently
+    const index = name.length % colors.length;
+    return colors[index];
+  };
+
+  // Function to get initials from full name
+  const getInitials = (fullName: string) => {
+    return fullName
+      .split(' ')
+      .map(name => name.charAt(0).toUpperCase())
+      .join('')
+      .slice(0, 2); // Max 2 characters
+  };
+
+  // Fetch user profile
+  const fetchUserProfile = async () => {
+    setIsLoadingProfile(true);
+    try {
+      const response = await authService.getUserProfile();
+      if (response.success) {
+        setUserProfile(response.data);
+      } else {
+        console.error('Failed to fetch profile:', response.message);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  };
   useEffect(() => {
     if (inView) {
       controls.start("visible");
     }
   }, [controls, inView]);
+
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
 
   // Featured Artworks Data
   const featuredArtworks: ArtworkData[] = [
@@ -251,9 +302,7 @@ const HomeSection: React.FC = () => {
             </motion.button>
 
             {/* Dark Mode Toggle */}
-            <DarkModeToggle />
-
-            <div 
+            <DarkModeToggle />            <div 
               className="flex items-center space-x-3 backdrop-blur-sm rounded-2xl px-4 py-2 shadow-xl transition-all duration-500 bg-gradient-to-r from-white/80 to-gray-50/80 border border-gray-200/50 dark:bg-gradient-to-r dark:from-[#1A1A1A] dark:to-[#1F1F1F] dark:border dark:border-gray-800/50"
               role="button"
               tabIndex={0}
@@ -261,15 +310,26 @@ const HomeSection: React.FC = () => {
               aria-haspopup="true"
               aria-expanded="false"
             >
-              <img
-                src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
-                alt="Zack Foster's profile picture"
-                className="w-10 h-10 rounded-full border-2 border-gradient-to-r from-amber-400 to-orange-500 shadow-lg"
-                loading="lazy"
-              />
+              {/* Avatar with initials */}
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg ${
+                userProfile?.fullName 
+                  ? generateAvatarColor(userProfile.fullName)
+                  : 'bg-gradient-to-r from-gray-400 to-gray-600'
+              }`}>
+                {isLoadingProfile 
+                  ? '...' 
+                  : userProfile?.fullName 
+                    ? getInitials(userProfile.fullName)
+                    : 'U'
+                }
+              </div>
+              
               <div>
                 <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                  Zack Foster
+                  {isLoadingProfile 
+                    ? 'Loading...' 
+                    : userProfile?.fullName || 'User'
+                  }
                 </span>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   Premium Member

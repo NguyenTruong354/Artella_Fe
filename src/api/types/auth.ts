@@ -108,3 +108,11 @@ export interface PasswordResetConfirmRequest {
   code: string;
   newPassword: string;
 }
+
+// User Profile related types
+export interface UserProfileResponse {
+  email: string;
+  walletAddress?: string;
+  fullName?: string;
+  phoneNumber?: string;
+}

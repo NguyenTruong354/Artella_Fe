@@ -11,7 +11,8 @@ import {
   VerificationRequest,
   AuthUser,
   PasswordResetRequest,
-  PasswordResetConfirmRequest
+  PasswordResetConfirmRequest,
+  UserProfileResponse
 } from '../types';
 
 export class AuthService {  private readonly endpoints = {
@@ -24,6 +25,7 @@ export class AuthService {  private readonly endpoints = {
     resendVerification: '/api/users/resend-verification',
     forgotPassword: '/api/users/forgot-password',
     resetPassword: '/api/users/reset-password',
+    profile: '/api/users/profile',
   };
 
   /**
@@ -373,6 +375,41 @@ export class AuthService {  private readonly endpoints = {
       return {
         message: errorMessage,
         data: false,
+        success: false
+      };
+    }
+  }
+
+  /**
+   * Get current user profile
+   * 
+   * @returns ApiResponse with user profile data
+   */
+  async getUserProfile(): Promise<ApiResponse<UserProfileResponse>> {
+    try {
+      // Debug log
+      console.log('🔍 Getting user profile...');
+      console.log('🔍 Profile URL:', this.endpoints.profile);
+      
+      // Use regular get method with authentication token
+      const response = await apiClient.get<UserProfileResponse>(this.endpoints.profile);
+      
+      return {
+        message: response.message,
+        data: response.data,
+        success: response.success
+      };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to get user profile';
+      console.error('❌ Get user profile error:', errorMessage);
+        return {
+        message: errorMessage,
+        data: { 
+          email: '', 
+          walletAddress: '', 
+          fullName: '', 
+          phoneNumber: '' 
+        },
         success: false
       };
     }

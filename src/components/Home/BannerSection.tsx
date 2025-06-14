@@ -54,18 +54,6 @@ const BannerSection: React.FC = () => {
           transition={{ delay: 0.7, duration: 0.8 }}
         >
           <motion.button
-            className="relative overflow-hidden bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black font-bold px-6 sm:px-8 md:px-10 py-3 md:py-4 rounded-xl sm:rounded-2xl transition-all duration-300 text-xs sm:text-sm md:text-base shadow-2xl hover:shadow-amber-500/25 group border border-amber-400/20"
-            whileHover={{ scale: 1.05, y: -3 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <span className="relative z-10 flex items-center justify-center">
-              Explore Now
-              <ArrowUpRight className="w-4 h-4 ml-2 transition-transform group-hover:rotate-45" />
-            </span>
-            <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300 rounded-2xl"></div>
-          </motion.button>
-          
-          <motion.button
             onClick={() => navigate('/Home/explore-more')}
             className="relative overflow-hidden bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-800 hover:from-purple-700 hover:via-purple-800 hover:to-indigo-900 text-white font-bold px-6 sm:px-8 md:px-10 py-3 md:py-4 rounded-xl sm:rounded-2xl transition-all duration-300 text-xs sm:text-sm md:text-base shadow-2xl hover:shadow-purple-500/25 group border border-purple-500/20"
             whileHover={{ scale: 1.05, y: -3 }}
