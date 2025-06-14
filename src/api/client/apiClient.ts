@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { ApiResponse, ApiError } from '../types';
 import config from '../../config/env';
 
@@ -112,6 +112,37 @@ class ApiClient {
   public clearAuthToken(): void {
     delete this.instance.defaults.headers.Authorization;
     localStorage.removeItem('auth_token');
+  }
+  // Public endpoints without authentication
+  public async postPublic<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    // Create a new axios instance for public requests without default auth headers
+    const publicInstance = axios.create({
+      baseURL: this.baseURL,
+      timeout: config?.timeout || 10000,
+      headers: {
+        'Content-Type': 'application/json',
+        ...config?.headers,
+      },
+    });
+
+    try {
+      const response = await publicInstance.post<ApiResponse<T>>(url, data, config);
+      return response.data;    } catch (error: unknown) {
+      // Handle errors similar to main interceptor
+      const axiosError = error as AxiosError;
+      const apiError: ApiError = {
+        message: 'An unexpected error occurred',
+        status: axiosError?.response?.status,
+      };      if (axiosError?.response?.data) {
+        const responseData = axiosError.response.data as Record<string, unknown>;
+        apiError.message = (responseData.message as string) || apiError.message;
+        apiError.errors = responseData.errors as Record<string, string[]>;
+      } else if (axiosError?.message) {
+        apiError.message = axiosError.message;
+      }
+
+      return Promise.reject(apiError);
+    }
   }
 }
 

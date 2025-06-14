@@ -311,13 +311,13 @@ export class AuthService {  private readonly endpoints = {
   async forgotPassword(email: string): Promise<ApiResponse<boolean>> {
     const request: PasswordResetRequest = {
       email
-    };
-
-    try {
+    };    try {
       // Debug log
       console.log('🔍 Forgot Password Request:', JSON.stringify(request, null, 2));
+      console.log('🔍 Forgot Password URL:', this.endpoints.forgotPassword);
       
-      const response = await apiClient.post<boolean>(this.endpoints.forgotPassword, request);
+      // Use postPublic to avoid sending authentication token
+      const response = await apiClient.postPublic<boolean>(this.endpoints.forgotPassword, request);
       
       return {
         message: response.message,
@@ -351,15 +351,15 @@ export class AuthService {  private readonly endpoints = {
       newPassword
     };
 
-    try {
-      // Debug log (excluding password for security)
+    try {      // Debug log (excluding password for security)
       console.log('🔍 Reset Password Request:', JSON.stringify({
         email: request.email,
         code: request.code,
         newPassword: '[HIDDEN]'
       }, null, 2));
       
-      const response = await apiClient.post<boolean>(this.endpoints.resetPassword, request);
+      // Use postPublic to avoid sending authentication token
+      const response = await apiClient.postPublic<boolean>(this.endpoints.resetPassword, request);
       
       return {
         message: response.message,

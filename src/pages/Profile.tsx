@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState, Suspense } from 'react';
 import { motion, useAnimation, useInView } from 'framer-motion';
-import { Bell, Search, Copy, Heart, Wallet, PenLine, Share2 } from 'lucide-react';
+import { Bell, Search, Copy, Heart, Wallet, PenLine, Share2, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../api/auth';
 import useDarkMode from '../hooks/useDarkMode';
 import { WaveTransition } from '../components/WaveTransition';
 import { DarkModeToggle } from '../components/DarkModeToggle';
@@ -14,7 +16,10 @@ const Profile: React.FC = () => {
   const inView = useInView(sectionRef, { once: false, amount: 0.1 });
   const [activeTab, setActiveTab] = useState<string>('owned');
   const [watchedItems, setWatchedItems] = useState<Set<number>>(new Set());
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const darkMode = useDarkMode();
 
   useEffect(() => {
@@ -35,7 +40,6 @@ const Profile: React.FC = () => {
     { id: 2, title: "Abstract Reality #045", collection: "Abstract Realities", price: "1.8 ETH", image: "/src/assets/background_2.jpg" },
     { id: 3, title: "Crypto Landscape #012", collection: "Crypto Landscapes", price: "3.2 ETH", image: "/src/assets/background_3.jpg" }
   ];
-
   const toggleWatch = (nftId: number) => {
     setWatchedItems((prev) => {
       const newSet = new Set(prev);
@@ -43,6 +47,20 @@ const Profile: React.FC = () => {
       else newSet.add(nftId);
       return newSet;
     });
+  };
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Even if logout fails, redirect to login for security
+      navigate('/login');
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   const containerVariants = {
@@ -148,8 +166,7 @@ const Profile: React.FC = () => {
                     <div className="text-gray-600 dark:text-gray-400 text-sm">Created</div>
                   </div>
                 </div>
-              </div>
-              <div className="flex flex-col space-y-3">
+              </div>              <div className="flex flex-col space-y-3">
                 <motion.button 
                   className="px-6 py-2 bg-gradient-to-r from-amber-500 to-orange-500 dark:from-blue-500 dark:to-purple-600 text-white rounded-xl hover:from-amber-600 hover:to-orange-600 dark:hover:from-blue-600 dark:hover:to-purple-700 transition-all duration-300 shadow-md flex items-center justify-center"
                   whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
@@ -161,6 +178,32 @@ const Profile: React.FC = () => {
                   whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
                 >
                   <Share2 className="w-4 h-4 mr-2" /> Share Profile
+                </motion.button>
+                <motion.button 
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="px-6 py-2 border border-red-200 dark:border-red-800 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-300 text-red-600 dark:text-red-400 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  whileHover={!isLoggingOut ? { scale: 1.03 } : {}} 
+                  whileTap={!isLoggingOut ? { scale: 0.97 } : {}}
+                >
+                  {isLoggingOut ? (
+                    <>
+                      <motion.div
+                        className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full mr-2"
+                        animate={{ rotate: 360 }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
+                      />
+                      Logging Out...
+                    </>
+                  ) : (
+                    <>
+                      <LogOut className="w-4 h-4 mr-2" /> Logout
+                    </>
+                  )}
                 </motion.button>
               </div>
             </div>

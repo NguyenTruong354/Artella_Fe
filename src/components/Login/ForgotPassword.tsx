@@ -216,27 +216,39 @@ const ForgotPassword = () => {
                 transition={{ delay: 0.3 }}
               >
                 Check Your Email
-              </motion.h1>
-
-              <motion.p
+              </motion.h1>              <motion.p
                 className="text-[#6d7f75] mb-6 leading-relaxed"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.4 }}
               >
-                We've sent a password reset link to <br />
+                We've sent a verification code to <br />
                 <strong className="text-[#46594f]">{formData.email}</strong>
               </motion.p>
 
               <motion.p
-                className="text-sm text-[#8a9690] mb-8"
+                className="text-sm text-[#8a9690] mb-6"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
               >
-                Please check your inbox and click the link to reset your password. 
+                Please check your inbox for the verification code. 
                 Don't forget to check your spam folder!
               </motion.p>
+
+              <motion.button
+                onClick={() => navigate('/reset-password')}
+                className="w-full bg-gradient-to-r from-[#46594f] via-[#5a6b62] to-[#6d7f75] text-white 
+                          py-4 rounded-2xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 
+                          uppercase tracking-wider text-sm border border-white/20 mb-4"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                Go to Reset Password
+              </motion.button>
 
               <motion.button
                 onClick={handleBackToLogin}
