@@ -21,11 +21,14 @@ const SmartImage: React.FC<SmartImageProps> = ({
   const [imageSrc, setImageSrc] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
     setIsLoading(true);
-    setHasError(false);    const loadImage = async () => {
+    setHasError(false);
+    
+    const loadImage = async () => {
       try {
         // Get JWT token from localStorage
         const token = localStorage.getItem('auth_token');
@@ -59,15 +62,28 @@ const SmartImage: React.FC<SmartImageProps> = ({
               console.log(`✅ Found image at: ${endpoint}`);
               
               if (isMounted) {
-                // Add token as query parameter for img src
-                const finalUrl = token 
-                  ? `${endpoint}${endpoint.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}`
-                  : endpoint;
-                
-                setImageSrc(finalUrl);
-                setIsLoading(false);
-                onLoad?.();
-                return; // Successfully found an image, exit the loop
+                // For authenticated images, use the fetch API with proper Authorization header
+                if (token) {
+                  try {
+                    const response = await fetch(endpoint, { headers });
+                    const blob = await response.blob();
+                    const objectUrl = URL.createObjectURL(blob);
+                    setBlobUrl(objectUrl);
+                    setImageSrc(objectUrl);
+                    setIsLoading(false);
+                    onLoad?.();
+                    return;
+                  } catch (error) {
+                    console.error('Error fetching image with authentication:', error);
+                    // If fetching with auth fails, continue to next approach
+                  }
+                } else {
+                  // No auth token, set direct URL
+                  setImageSrc(endpoint);
+                  setIsLoading(false);
+                  onLoad?.();
+                  return;
+                }
               }
             } else {
               console.log(`❌ Endpoint returned status ${testResponse.status}: ${endpoint}`);
@@ -98,20 +114,12 @@ const SmartImage: React.FC<SmartImageProps> = ({
     // Cleanup function
     return () => {
       isMounted = false;
+      // Revoke blob URL to prevent memory leaks
+      if (blobUrl) {
+        URL.revokeObjectURL(blobUrl);
+      }
     };
-  }, [imageId, fallbackCategory, onLoad, onError]);
-  // Add token to URL if we have one and it's not already in the URL
-  useEffect(() => {
-    if (!imageSrc || imageSrc.includes('token=') || imageSrc.startsWith('data:') || hasError) {
-      return;
-    }
-
-    const token = localStorage.getItem('auth_token');
-    if (token && !imageSrc.includes('?token=') && !imageSrc.includes('&token=')) {
-      const separator = imageSrc.includes('?') ? '&' : '?';
-      setImageSrc(`${imageSrc}${separator}token=${encodeURIComponent(token)}`);
-    }
-  }, [imageSrc, hasError]);
+  }, [imageId, fallbackCategory, onLoad, onError]); // Removed blobUrl from dependencies
 
   if (isLoading) {
     return (

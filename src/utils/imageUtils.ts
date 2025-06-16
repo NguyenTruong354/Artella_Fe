@@ -6,7 +6,7 @@
  * @param baseUrl - Base URL for the API
  * @param includeAuth - Whether to include auth token as query param for authenticated endpoints
  */
-export const getImageUrl = (imageUrl: string, baseUrl: string = 'http://localhost:8080', includeAuth: boolean = true): string => {
+export const getImageUrl = (imageUrl: string, baseUrl: string = 'http://localhost:8080'): string => {
   // If it's already a full URL, return as is
   if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
     return imageUrl;
@@ -27,15 +27,8 @@ export const getImageUrl = (imageUrl: string, baseUrl: string = 'http://localhos
     url = `${baseUrl}/api/files/${imageUrl}`;
   }
   
-  // Add auth token if needed and available
-  if (includeAuth) {
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      const separator = url.includes('?') ? '&' : '?';
-      url += `${separator}token=${encodeURIComponent(token)}`;
-    }
-  }
-  
+  // We're no longer appending token to URL as this causes authentication issues
+  // Instead, we'll use fetch with Authorization header when needed
   return url;
 };
 
@@ -44,19 +37,30 @@ export const getImageUrl = (imageUrl: string, baseUrl: string = 'http://localhos
  */
 export const tryImageEndpoints = async (imageId: string, baseUrl: string = 'http://localhost:8080'): Promise<string> => {
   const endpoints = [
+    `${baseUrl}/api/public/nft-images/${imageId}`, // Public endpoint (preferred)
     `${baseUrl}/api/files/${imageId}`,
     `${baseUrl}/api/images/${imageId}`,
     `${baseUrl}/api/gridfs/${imageId}`,
-    `${baseUrl}/files/${imageId}`,
   ];
+
+  const token = localStorage.getItem('auth_token');
+  const headers: HeadersInit = {};
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
 
   for (const endpoint of endpoints) {
     try {
-      const response = await fetch(endpoint, { method: 'HEAD' });
+      const response = await fetch(endpoint, { 
+        method: 'HEAD',
+        headers: headers
+      });
       if (response.ok) {
         console.log(`✅ Found image at: ${endpoint}`);
         return endpoint;
-      }    } catch {
+      }
+    } catch {
       console.log(`❌ Failed to load image from: ${endpoint}`);
     }
   }
@@ -70,7 +74,17 @@ export const tryImageEndpoints = async (imageId: string, baseUrl: string = 'http
  */
 export const isImageAccessible = async (imageUrl: string): Promise<boolean> => {
   try {
-    const response = await fetch(imageUrl, { method: 'HEAD' });
+    const token = localStorage.getItem('auth_token');
+    const headers: HeadersInit = {};
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    const response = await fetch(imageUrl, { 
+      method: 'HEAD',
+      headers: headers
+    });
     return response.ok;
   } catch {
     return false;
@@ -94,17 +108,40 @@ export const getFallbackImage = (category?: string): string => {
 };
 
 /**
- * Get authenticated image URL with proper headers
+ * Fetch an authenticated image and return a blob URL
+ * This is the recommended way to display authenticated images
  */
-export const getAuthenticatedImageUrl = (imageId: string, baseUrl: string = 'http://localhost:8080'): string => {
-  return getImageUrl(imageId, baseUrl, true);
+export const fetchAuthenticatedImage = async (imageId: string, baseUrl: string = 'http://localhost:8080'): Promise<string> => {
+  const token = localStorage.getItem('auth_token');
+  const headers: HeadersInit = {};
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  try {
+    const imageUrl = await tryImageEndpoints(imageId, baseUrl);
+    const response = await fetch(imageUrl, { headers });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.status}`);
+    }
+    
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
+  } catch (error) {
+    console.error('Error fetching authenticated image:', error);
+    return getFallbackImage();
+  }
 };
 
 /**
- * Get public image URL without authentication
+ * Clean up blob URLs to prevent memory leaks
  */
-export const getPublicImageUrl = (imageId: string, baseUrl: string = 'http://localhost:8080'): string => {
-  return getImageUrl(imageId, baseUrl, false);
+export const revokeBlobUrl = (url: string): void => {
+  if (url.startsWith('blob:')) {
+    URL.revokeObjectURL(url);
+  }
 };
 
 /**
@@ -114,31 +151,29 @@ export const createAuthenticatedImage = (imageId: string, onLoad?: () => void, o
   const img = new Image();
   const token = localStorage.getItem('auth_token');
   
-  // If we have a token, use fetch with Authorization header instead of direct img src
+  // If we have a token, use fetch with Authorization header
   if (token) {
-    fetch(getPublicImageUrl(imageId), {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-    .then(response => {
-      if (response.ok) {
-        return response.blob();
-      }
-      throw new Error(`HTTP ${response.status}`);
-    })
-    .then(blob => {
-      const objectURL = URL.createObjectURL(blob);
-      img.src = objectURL;
-      if (onLoad) onLoad();
-    })
-    .catch(error => {
-      console.error('Failed to load authenticated image:', error);
-      if (onError) onError();
-    });
+    fetchAuthenticatedImage(imageId)
+      .then(blobUrl => {
+        img.src = blobUrl;
+        if (onLoad) img.onload = onLoad;
+      })
+      .catch(error => {
+        console.error('Failed to load authenticated image:', error);
+        img.src = getFallbackImage();
+        if (onError) onError();
+      });
   } else {
     // No token, try public access
-    img.src = getPublicImageUrl(imageId);
+    tryImageEndpoints(imageId)
+      .then(url => {
+        img.src = url;
+      })
+      .catch(() => {
+        img.src = getFallbackImage();
+        if (onError) onError();
+      });
+    
     if (onLoad) img.onload = onLoad;
     if (onError) img.onerror = onError;
   }

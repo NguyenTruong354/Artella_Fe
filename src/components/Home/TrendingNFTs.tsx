@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useTrendingNFTs } from '../../hooks/useNFT';
 import { DigitalArtNFT } from '../../api/types';
 import SmartImage from '../SmartImage';
-import { getAuthenticatedImageUrl } from '../../utils/imageUtils';
+// Using SmartImage component for image loading
 
 interface TrendingNFTsProps {
   limit?: number;
@@ -15,20 +15,15 @@ const TrendingNFTs: React.FC<TrendingNFTsProps> = ({
   limit = 10, 
   className = '',
   showApiStatus = true
-}) => {  const { nfts, loading, error, refetch } = useTrendingNFTs(limit);
-  // Debug logging
+}) => {
+  const { nfts, loading, error, refetch } = useTrendingNFTs(limit);
+  
+  // Debug logging without references to removed functions
   console.log('🎨 TrendingNFTs Component - Current state:', {
-    nfts,
-    nftsLength: nfts?.length,
-    nftsType: typeof nfts,
+    nftsCount: nfts?.length,
     isArray: Array.isArray(nfts),
     loading,
-    error,    // Log first NFT's image info for debugging
-    firstNFTImage: nfts?.length > 0 ? {
-      originalImageUrl: nfts[0].imageUrl,
-      resolvedImageUrl: getAuthenticatedImageUrl(nfts[0].imageUrl),
-      isObjectId: nfts[0].imageUrl?.match(/^[0-9a-fA-F]{24}$/),
-    } : null
+    error
   });
 
   // Check if we're using mock data (when API is not available)

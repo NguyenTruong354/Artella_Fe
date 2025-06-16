@@ -21,6 +21,7 @@ const SmartImage: React.FC<SmartImageProps> = ({
   const [imageSrc, setImageSrc] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -28,7 +29,17 @@ const SmartImage: React.FC<SmartImageProps> = ({
     setHasError(false);
 
     const loadImage = async () => {
-      try {        // Multiple endpoints to try (based on your new backend controller)
+      try {
+        // Get JWT token from localStorage
+        const token = localStorage.getItem('auth_token');
+        const headers: HeadersInit = {};
+        
+        // Add Authorization header if token exists
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        // Multiple endpoints to try (based on your new backend controller)
         const endpoints = [
           `http://localhost:8080/api/public/nft-images/${imageId}`, // New public NFT endpoint (preferred)
           `http://localhost:8080/api/files/${imageId}`,            // Primary GridFS endpoint
@@ -40,17 +51,40 @@ const SmartImage: React.FC<SmartImageProps> = ({
         for (const endpoint of endpoints) {
           try {
             console.log(`🔄 Trying endpoint: ${endpoint}`);
-            const testResponse = await fetch(endpoint, { method: 'HEAD' });
+            
+            // Make authenticated HEAD request with proper Authorization header
+            const testResponse = await fetch(endpoint, { 
+              method: 'HEAD',
+              headers: headers
+            });
             
             if (testResponse.ok) {
               console.log(`✅ Found image at: ${endpoint}`);
               
               if (isMounted) {
-                setImageSrc(endpoint);
-                setIsLoading(false);
-                onLoad?.();
+                // For authenticated images, use the fetch API with proper Authorization header
+                if (token) {
+                  try {
+                    const response = await fetch(endpoint, { headers });
+                    const blob = await response.blob();
+                    const objectUrl = URL.createObjectURL(blob);
+                    setBlobUrl(objectUrl);
+                    setImageSrc(objectUrl);
+                    setIsLoading(false);
+                    onLoad?.();
+                    return;
+                  } catch (error) {
+                    console.error('Error fetching image with authentication:', error);
+                    // If fetching with auth fails, continue to next approach
+                  }
+                } else {
+                  // No auth token, set direct URL
+                  setImageSrc(endpoint);
+                  setIsLoading(false);
+                  onLoad?.();
+                  return;
+                }
               }
-              return;
             }
           } catch (endpointError) {
             console.log(`❌ Failed endpoint: ${endpoint}`, endpointError);
@@ -71,13 +105,18 @@ const SmartImage: React.FC<SmartImageProps> = ({
           onError?.();
         }
       }
-    };    loadImage();
+    };
+      loadImage();
 
     // Cleanup function
     return () => {
       isMounted = false;
+      // Revoke blob URL to prevent memory leaks
+      if (blobUrl) {
+        URL.revokeObjectURL(blobUrl);
+      }
     };
-  }, [imageId, fallbackCategory, onLoad, onError]);
+  }, [imageId, fallbackCategory, onLoad, onError, blobUrl]);
 
   if (isLoading) {
     return (
@@ -92,6 +131,7 @@ const SmartImage: React.FC<SmartImageProps> = ({
       src={imageSrc}
       alt={alt}
       className={className}
+      crossOrigin="anonymous"
       onError={() => {
         if (!hasError) {
           setImageSrc(getFallbackImage(fallbackCategory));
