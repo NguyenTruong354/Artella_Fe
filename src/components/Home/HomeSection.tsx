@@ -7,8 +7,9 @@ import {
 import useDarkMode from "../../hooks/useDarkMode";
 import { WaveTransition } from "../WaveTransition";
 import { DarkModeToggle } from "../DarkModeToggle";
-import { authService } from "../../api/services";
+import { authService, auctionService, auctionScheduleService } from "../../api/services";
 import { UserProfileResponse, TopSellerRevenueResponse } from "../../api/types";
+import { AuctionDTO, ScheduledAuctionDetailDTO } from "../../types/auction";
 
 // Direct imports instead of lazy loading
 import BannerSection from './BannerSection';
@@ -49,12 +50,15 @@ const HomeSection: React.FC = () => {
   const controls = useAnimation();
   const sectionRef = useRef<HTMLDivElement>(null);
   const inView = useInView(sectionRef, { once: false, amount: 0.1 });
-
   const [watchedItems, setWatchedItems] = useState<Set<number>>(new Set());
   const [userProfile, setUserProfile] = useState<UserProfileResponse | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [topSellersData, setTopSellersData] = useState<TopSellerRevenueResponse[]>([]);
   const [isLoadingTopSellers, setIsLoadingTopSellers] = useState(false);
+  // State cho auction data
+  const [liveAuctionsData, setLiveAuctionsData] = useState<AuctionDTO[]>([]);
+  const [upcomingAuctionsData, setUpcomingAuctionsData] = useState<ScheduledAuctionDetailDTO[]>([]);
+  const [isLoadingAuctions, setIsLoadingAuctions] = useState(false);
 
   // Dark mode hook
   const darkMode = useDarkMode();
@@ -90,7 +94,6 @@ const HomeSection: React.FC = () => {
     const index = name.length % colors.length;
     return colors[index];
   };
-
   // Function to get initials from full name
   const getInitials = (fullName: string) => {
     return fullName
@@ -98,6 +101,76 @@ const HomeSection: React.FC = () => {
       .map(name => name.charAt(0).toUpperCase())
       .join('')
       .slice(0, 2); // Max 2 characters
+  };
+
+  // Helper function để format thời gian
+  const formatTimeLeft = (endTime: number): string => {
+    const now = Date.now();
+    const timeLeft = endTime - now;
+    
+    if (timeLeft <= 0) return "00:00:00";
+    
+    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const formatTimeUntilStart = (scheduledTime: string): string => {
+    const startTime = new Date(scheduledTime).getTime();
+    const now = Date.now();
+    const timeUntil = startTime - now;
+    
+    if (timeUntil <= 0) return "Starting soon";
+    
+    const hours = Math.floor(timeUntil / (1000 * 60 * 60));
+    const minutes = Math.floor((timeUntil % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeUntil % (1000 * 60)) / 1000);
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+  // Transform AuctionDTO to ArtworkData
+  const transformAuctionToArtwork = (auction: AuctionDTO): ArtworkData => {
+    return {
+      id: parseInt(auction.auctionId),
+      title: `Live Auction #${auction.productId}`, // Có thể cải thiện bằng cách fetch thông tin NFT
+      artist: auction.owner.slice(0, 8) + "...", // Rút gọn địa chỉ wallet
+      year: "2024",
+      medium: "Digital Art",
+      dimensions: "1080x1080px",
+      image: auction.productId, // Sử dụng productId làm imageId cho SmartImage
+      currentBid: `${auction.currentBid} ETH`,
+      estimatedValue: `${auction.startPrice} - ${auction.currentBid * 1.5} ETH`,
+      timeLeft: formatTimeLeft(auction.endTime),
+      bidCount: Math.floor(Math.random() * 20) + 1, // Random số bid
+      category: "Digital",
+      status: "live",
+      auctionHouse: "Artella Digital",
+    };
+  };// Transform ScheduledAuctionDetailDTO to ArtworkData
+  const transformScheduledAuctionDetailToArtwork = (scheduledAuction: ScheduledAuctionDetailDTO): ArtworkData => {
+    // Ưu tiên productImages[0], nếu không có thì dùng imageUrl, cuối cùng là productId
+    const primaryImageId = scheduledAuction.productImages?.[0] || 
+                           scheduledAuction.imageUrl || 
+                           scheduledAuction.productId;
+    
+    return {
+      id: parseInt(scheduledAuction.id),
+      title: scheduledAuction.productName || `Scheduled Auction #${scheduledAuction.id}`,
+      artist: scheduledAuction.owner.slice(0, 8) + "...",
+      year: "2024",
+      medium: "Digital Art", 
+      dimensions: "1080x1080px",
+      image: primaryImageId, // Chuyển thành imageId để SmartImage xử lý
+      currentBid: `${scheduledAuction.startPrice} ETH (Starting)`,
+      estimatedValue: `Starting from ${scheduledAuction.startPrice} ETH`,
+      timeLeft: formatTimeUntilStart(scheduledAuction.scheduledTime),
+      bidCount: 0,
+      category: "Digital",
+      status: "upcoming",
+      auctionHouse: "Artella Digital",
+    };
   };
   // Fetch user profile
   const fetchUserProfile = async () => {
@@ -115,7 +188,6 @@ const HomeSection: React.FC = () => {
       setIsLoadingProfile(false);
     }
   };
-
   // Fetch top sellers
   const fetchTopSellers = async () => {
     setIsLoadingTopSellers(true);
@@ -131,15 +203,71 @@ const HomeSection: React.FC = () => {
     } finally {
       setIsLoadingTopSellers(false);
     }
+  };  // Fetch live auctions và upcoming scheduled auctions
+  const fetchAuctionsData = async () => {
+    setIsLoadingAuctions(true);
+    console.log('🔍 Starting to fetch auctions data...');
+    
+    try {
+      // Call API để lấy live auctions - thử nhiều status khác nhau
+      let liveAuctionsResponse: AuctionDTO[] = [];      try {
+        console.log('🔍 Trying to fetch ACTIVE auctions...');
+        liveAuctionsResponse = await auctionService.getAllAuctions({ status: 'ACTIVE' });
+        console.log('✅ Successfully fetched ACTIVE auctions:', Array.isArray(liveAuctionsResponse) ? liveAuctionsResponse.length : 'Not an array');
+      } catch (liveError) {
+        console.warn('⚠️ Failed to fetch ACTIVE auctions, trying without status filter:', liveError);
+        try {
+          console.log('🔍 Trying to fetch all auctions...');
+          // Thử lấy tất cả auctions nếu filter theo status không hoạt động
+          liveAuctionsResponse = await auctionService.getAllAuctions();
+          console.log('✅ Successfully fetched all auctions:', Array.isArray(liveAuctionsResponse) ? liveAuctionsResponse.length : 'Not an array');
+        } catch (allError) {
+          console.warn('❌ Failed to fetch all auctions:', allError);
+          liveAuctionsResponse = [];
+        }
+      }
+      
+      // Ensure we have a valid array
+      if (!Array.isArray(liveAuctionsResponse)) {
+        console.warn('⚠️ liveAuctionsResponse is not an array, setting to empty array');
+        liveAuctionsResponse = [];
+      }
+      setLiveAuctionsData(liveAuctionsResponse);      // Call API để lấy upcoming scheduled auctions
+      let upcomingResponse: ScheduledAuctionDetailDTO[] = [];
+      try {
+        console.log('🔍 Trying to fetch upcoming scheduled auctions...');
+        upcomingResponse = await auctionScheduleService.getUpcomingScheduledAuctions();
+        console.log('✅ Successfully fetched upcoming auctions:', Array.isArray(upcomingResponse) ? upcomingResponse.length : 'Not an array');
+      } catch (upcomingError) {
+        console.warn('❌ Failed to fetch upcoming scheduled auctions:', upcomingError);
+        upcomingResponse = [];
+      }
+      
+      // Ensure we have a valid array
+      if (!Array.isArray(upcomingResponse)) {
+        console.warn('⚠️ upcomingResponse is not an array, setting to empty array');
+        upcomingResponse = [];
+      }
+      setUpcomingAuctionsData(upcomingResponse);
+
+      console.log('📊 Final results - Live:', Array.isArray(liveAuctionsResponse) ? liveAuctionsResponse.length : 0, 'Upcoming:', Array.isArray(upcomingResponse) ? upcomingResponse.length : 0);
+    } catch (error) {
+      console.error('❌ Error fetching auctions data:', error);
+      // Set empty arrays để không crash app
+      setLiveAuctionsData([]);
+      setUpcomingAuctionsData([]);
+    } finally {
+      setIsLoadingAuctions(false);
+    }
   };
   useEffect(() => {
     if (inView) {
       controls.start("visible");
     }
-  }, [controls, inView]);
-  useEffect(() => {
+  }, [controls, inView]);  useEffect(() => {
     fetchUserProfile();
     fetchTopSellers();
+    fetchAuctionsData(); // Thêm call để fetch auction data
   }, []);
 
   // Featured Artworks Data
@@ -209,6 +337,48 @@ const HomeSection: React.FC = () => {
       auctionHouse: "NFT Marketplace",
     },  ];  // Get transformed top sellers data
   const transformedTopSellers = transformTopSellersData(topSellersData);
+  // Kết hợp dữ liệu từ API với dữ liệu tĩnh
+  const getCombinedAuctionsData = (): ArtworkData[] => {
+    console.log('🔍 getCombinedAuctionsData called');
+    console.log('🔍 liveAuctionsData:', liveAuctionsData);
+    console.log('🔍 upcomingAuctionsData:', upcomingAuctionsData);
+    
+    const transformedLiveAuctions = liveAuctionsData.map(transformAuctionToArtwork);
+    const transformedUpcomingAuctions = upcomingAuctionsData.map(transformScheduledAuctionDetailToArtwork);
+    
+    console.log('🔍 transformedLiveAuctions:', transformedLiveAuctions);
+    console.log('🔍 transformedUpcomingAuctions:', transformedUpcomingAuctions);
+      // Log chi tiết từng object
+    transformedUpcomingAuctions.forEach((auction: ArtworkData, index: number) => {
+      console.log(`🔍 Upcoming auction ${index}:`, {
+        id: auction.id,
+        title: auction.title,
+        artist: auction.artist,
+        status: auction.status,
+        currentBid: auction.currentBid,
+        timeLeft: auction.timeLeft
+      });
+    });
+    
+    const apiAuctions: ArtworkData[] = [
+      ...transformedLiveAuctions,
+      ...transformedUpcomingAuctions,
+    ];
+
+    console.log('🔍 Total apiAuctions:', apiAuctions.length);
+    console.log('🔍 apiAuctions:', apiAuctions);
+
+    // Nếu có dữ liệu từ API, ưu tiên sử dụng, nếu không thì dùng dữ liệu tĩnh
+    if (apiAuctions.length > 0) {
+      console.log('✅ Using API auctions data');
+      return apiAuctions;
+    }
+    
+    console.log('📋 Falling back to static data');
+    return featuredArtworks; // Fallback về dữ liệu tĩnh
+  };
+
+  const combinedAuctionsData = getCombinedAuctionsData();
 
   const toggleWatch = (artworkId: number) => {
     setWatchedItems((prev) => {
@@ -367,14 +537,28 @@ const HomeSection: React.FC = () => {
                 topSellers={transformedTopSellers} 
                 isLoading={isLoadingTopSellers}
               />
-            </div>
-
-            <div className="rounded-xl p-4">
-              <LiveAuctions 
-                auctions={featuredArtworks.slice(2, 4)}
-                watchedItems={watchedItems}
-                toggleWatch={toggleWatch}
-              />
+            </div>            <div className="rounded-xl p-4">
+              {isLoadingAuctions ? (
+                <div className="flex items-center justify-center p-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
+                  <span className="ml-2 text-gray-600 dark:text-gray-400">Loading auctions...</span>
+                </div>
+              ) : (
+                (() => {
+                  const auctionsToDisplay = combinedAuctionsData.slice(0, 4);
+                  console.log('🎯 About to render LiveAuctions with:', auctionsToDisplay);
+                  console.log('🎯 Total combined data:', combinedAuctionsData.length);
+                  console.log('🎯 Is loading:', isLoadingAuctions);
+                  
+                  return (
+                    <LiveAuctions 
+                      auctions={auctionsToDisplay}
+                      watchedItems={watchedItems}
+                      toggleWatch={toggleWatch}
+                    />
+                  );
+                })()
+              )}
             </div>
           </motion.div>
         </motion.main>

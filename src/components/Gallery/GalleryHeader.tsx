@@ -14,11 +14,13 @@ interface GalleryHeaderProps {
   searchQuery: string;
   isFilteringTransition: boolean;
   showAdvancedSearch: boolean;
+  dataType: 'products' | 'nfts' | 'both';
   onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onMasonryView: () => void;
   onGridView: () => void;
   onListView: () => void;
   onToggleAdvancedSearch: () => void;
+  onDataTypeChange: (type: 'products' | 'nfts' | 'both') => void;
 }
 
 // Lazy load components
@@ -34,15 +36,16 @@ export const GalleryHeader = memo(
     searchQuery,
     isFilteringTransition,
     showAdvancedSearch,
+    dataType,
     onSearchChange,
     onMasonryView,
     onGridView,
     onListView,
     onToggleAdvancedSearch,
+    onDataTypeChange,
   }: GalleryHeaderProps) => {
     return (
-      <header className="mb-8">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6">
+      <header className="mb-8">        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6">
           <div className="flex items-center gap-4 mb-4 sm:mb-0">
             <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 dark:from-amber-500 dark:to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
               <Grid3X3 className="w-6 h-6 text-white" />
@@ -55,8 +58,57 @@ export const GalleryHeader = memo(
                 Discover, collect & share amazing digital artworks
               </p>
             </div>
+              {/* Data Type Filter - positioned next to Art Gallery */}
+            <div className="ml-6 hidden lg:flex">
+              <div className="flex items-center gap-1 bg-white dark:bg-gray-800 rounded-lg p-1 shadow-sm border border-gray-200 dark:border-gray-700">
+                {[
+                  { value: 'both', label: 'All Items' },
+                  { value: 'products', label: 'Products' },
+                  { value: 'nfts', label: 'NFTs' }
+                ].map((option) => (
+                  <motion.button
+                    key={option.value}
+                    onClick={() => onDataTypeChange(option.value as 'products' | 'nfts' | 'both')}
+                    className={`px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                      dataType === option.value
+                        ? 'bg-blue-500 dark:bg-amber-500 text-white shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }`}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {option.label}
+                  </motion.button>
+                ))}
+              </div>
+            </div>
           </div>
-          <div className="flex gap-4">
+            <div className="flex items-center gap-4">
+            {/* Data Type Filter for tablet/mobile */}
+            <div className="lg:hidden">
+              <div className="flex items-center gap-1 bg-white dark:bg-gray-800 rounded-lg p-1 shadow-sm border border-gray-200 dark:border-gray-700">
+                {[
+                  { value: 'both', label: 'All' },
+                  { value: 'products', label: 'Products' },
+                  { value: 'nfts', label: 'NFTs' }
+                ].map((option) => (
+                  <motion.button
+                    key={option.value}
+                    onClick={() => onDataTypeChange(option.value as 'products' | 'nfts' | 'both')}
+                    className={`px-2 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${
+                      dataType === option.value
+                        ? 'bg-blue-500 dark:bg-amber-500 text-white shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }`}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {option.label}
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+            
             {/* Dark Mode Toggle */}
             <Suspense
               fallback={

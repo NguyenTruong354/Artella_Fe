@@ -8,6 +8,7 @@ import React, {
 import { motion, useAnimation, useInView } from "framer-motion";
 import { Search, X } from "lucide-react";
 import useDarkMode from "../hooks/useDarkMode";
+import useGalleryData, { GalleryItem } from "../hooks/useGalleryData";
 import {
   ArtworkCard,
   AdvancedSearchPanel,
@@ -19,13 +20,7 @@ import {
   LoadingMore,
   galleryPageReducer,
   initialGalleryPageState,
-  useInfiniteScroll,
-  useAllArtists,
-  useAllTags,
-  useFilteredArtworks,
-  mockArtworks,
   categories,
-  generateMoreArtworks,
 } from "../components/Gallery";
 
 // Lazy load WaveTransition component
@@ -35,93 +30,144 @@ const WaveTransition = React.lazy(() =>
   }))
 );
 
+// Helper function to convert GalleryItem to ArtworkItem
+const galleryItemToArtworkItem = (item: GalleryItem) => ({
+  id: parseInt(item.id) || Math.random() * 1000000, // Convert to number
+  title: item.title,
+  artist: item.artist,
+  category: item.category,
+  price: item.price.toString(), // Convert to string
+  image: item.imageUrl,
+  tags: item.tags,
+  description: item.description,
+  likes: 0, // Default value
+  views: 0, // Default value
+  isNew: false, // Default value
+  isFeatured: false, // Default value
+});
+
 const Gallery: React.FC = () => {
   const controls = useAnimation();
   const sectionRef = useRef<HTMLDivElement>(null);
   const inView = useInView(sectionRef, { once: false, amount: 0.1 });
-  
   // Use reducer for state management
   const [state, dispatch] = useReducer(
     galleryPageReducer,
     initialGalleryPageState
-  );
-  const {
+  );  const {
     selectedCategory,
     viewMode,
     searchQuery,
     likedItems,
-    isLoading,
-    displayedArtworks,
-    hasMoreArtworks,
     isLoadingMore,
     isFilteringTransition,
     advancedFilters,
     showAdvancedSearch,
   } = state;
 
+  // Add state for data type selection
+  const [dataType, setDataType] = React.useState<'products' | 'nfts' | 'both'>('both');
+
   // Dark mode hook
   const darkMode = useDarkMode();
-
+  // Gallery data hook with real API calls
+  const {
+    items: galleryItems,
+    loading: apiLoading,
+    error: apiError,
+    hasMore,
+    loadMore,
+    refresh,
+    totalItems
+  } = useGalleryData({
+    category: selectedCategory,
+    searchQuery: searchQuery,
+    dataType: dataType, // Use the dataType state
+    pageSize: 12
+  });
   useEffect(() => {
     if (inView) {
       controls.start("visible");
     }
   }, [controls, inView]);
 
-  // Simulate data loading
+  // Update loading state based on API loading
   useEffect(() => {
-    const timer = setTimeout(() => {
+    if (!apiLoading) {
       dispatch({ type: "FINISH_INITIAL_LOADING" });
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, []);
+    }
+  }, [apiLoading]);
 
-  // Using imported mockArtworks data
-  const artworks = mockArtworks;
+  // Get all artists and tags from gallery items
+  const allArtists = Array.from(new Set(galleryItems.map(item => item.artist))).filter(Boolean);
+  const allTags = Array.from(new Set(galleryItems.flatMap(item => item.tags))).filter(Boolean);
 
-  // Using imported utility functions
-  const allArtists = useAllArtists(artworks);
-  const allTags = useAllTags(artworks);  const filteredArtworks = useFilteredArtworks(
-    artworks,
-    displayedArtworks,
-    selectedCategory,
-    searchQuery,
-    advancedFilters
-  );
-
-  // Load more artworks function
-  const loadMoreArtworks = useCallback(() => {
-    if (isLoadingMore || !hasMoreArtworks) return;
+  // Filter items based on advanced filters
+  const filteredArtworks = galleryItems.filter(item => {    // Advanced filters logic
+    const { selectedTags, selectedArtist, priceRange } = advancedFilters;
+    
+    // Tag filter
+    if (selectedTags.length > 0) {
+      const hasMatchingTag = selectedTags.some(tag => item.tags.includes(tag));
+      if (!hasMatchingTag) return false;
+    }
+    
+    // Artist filter
+    if (selectedArtist && selectedArtist !== 'All' && item.artist !== selectedArtist) {
+      return false;
+    }
+    
+    // Price range filter
+    if (item.price < priceRange.min * 1000 || item.price > priceRange.max * 1000) {
+      return false;
+    }
+    
+    return true;
+  }).sort((a, b) => {
+    // Apply sorting
+    const { sortBy } = advancedFilters;
+      switch (sortBy) {
+      case 'price-low':
+        return a.price - b.price;
+      case 'price-high':
+        return b.price - a.price;
+      case 'oldest':
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      case 'newest':
+      default:
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
+  });
+  // Load more artworks function using real API
+  const loadMoreArtworks = useCallback(async () => {
+    if (isLoadingMore || !hasMore) return;
 
     dispatch({ type: "SET_LOADING_MORE", payload: true });
 
-    // Simulate API call delay
-    setTimeout(() => {
-      const newArtworks = generateMoreArtworks(
-        displayedArtworks.length + 100,
-        8
-      );
-      const filteredNewArtworks = newArtworks.filter((artwork) => {
-        const matchesCategory =
-          selectedCategory === "All" || artwork.category === selectedCategory;
-        const matchesSearch =
-          artwork.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          artwork.artist.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesCategory && matchesSearch;
-      });
+    try {
+      await loadMore();
+    } catch (error) {
+      console.error('Error loading more artworks:', error);
+    } finally {
+      dispatch({ type: "SET_LOADING_MORE", payload: false });
+    }
+  }, [isLoadingMore, hasMore, loadMore]);
+  // Use infinite scroll hook for loading more items
+  useEffect(() => {
+    const handleScroll = () => {
+      if (
+        window.innerHeight + document.documentElement.scrollTop
+        >= document.documentElement.offsetHeight - 1000
+      ) {
+        loadMoreArtworks();
+      }
+    };
 
-      dispatch({ type: "LOAD_MORE_ARTWORKS", payload: filteredNewArtworks });
-    }, 800);
-  }, [
-    isLoadingMore,
-    hasMoreArtworks,
-    displayedArtworks.length,
-    selectedCategory,
-    searchQuery,
-  ]);
-
-  // Use infinite scroll hook
-  useInfiniteScroll(loadMoreArtworks, hasMoreArtworks, isLoadingMore);
+    if (hasMore && !isLoadingMore) {
+      window.addEventListener('scroll', handleScroll);
+      return () => window.removeEventListener('scroll', handleScroll);
+    }
+  }, [hasMore, isLoadingMore, loadMoreArtworks]);
 
   // Update search handler with smooth transition and debouncing
   const handleSearchChange = useCallback(
@@ -141,10 +187,10 @@ const Gallery: React.FC = () => {
     },
     []
   );
-
   // Reset artworks when category, search, or advanced filters change
   useEffect(() => {
-    dispatch({ type: "RESET_ARTWORKS", payload: [] });
+    // The useGalleryData hook will automatically handle data refresh
+    // when category or searchQuery changes
   }, [selectedCategory, searchQuery, advancedFilters]);
 
   // Update toggleLike to dispatch action
@@ -235,7 +281,6 @@ const Gallery: React.FC = () => {
       },
     },
   };
-
   return (
     <>
       <Suspense fallback={<ComponentFallback />}>
@@ -253,19 +298,19 @@ const Gallery: React.FC = () => {
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500 dark:bg-amber-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob"></div>
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-cyan-500 dark:bg-orange-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-2000"></div>
           <div className="absolute top-40 left-40 w-80 h-80 bg-purple-500 dark:bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-4000"></div>
-        </div>
-
-        {/* Header */}
+        </div>        {/* Header */}
         <GalleryHeader 
           viewMode={viewMode}
           searchQuery={searchQuery}
           isFilteringTransition={isFilteringTransition}
           showAdvancedSearch={showAdvancedSearch}
+          dataType={dataType}
           onSearchChange={handleSearchChange}
           onMasonryView={setMasonryView}
           onGridView={setGridView}
           onListView={setListView}
           onToggleAdvancedSearch={() => dispatch({ type: "TOGGLE_ADVANCED_SEARCH" })}
+          onDataTypeChange={setDataType}
         />
 
         {/* Advanced Search Panel */}
@@ -296,11 +341,10 @@ const Gallery: React.FC = () => {
         <CategoryFilter 
           categories={categories}
           selectedCategory={selectedCategory}
-          onCategoryChange={handleCategoryChange}
-        />
+          onCategoryChange={handleCategoryChange}        />
 
         {/* Results count with animation and active filters display */}
-        {!isLoading && filteredArtworks.length > 0 && (
+        {!apiLoading && filteredArtworks.length > 0 && (
           <motion.div
             className="mb-6 space-y-3"
             initial={{ opacity: 0, y: -10 }}
@@ -322,6 +366,9 @@ const Gallery: React.FC = () => {
                   {filteredArtworks.length}
                 </span>{" "}
                 artworks
+                {totalItems > 0 && (
+                  <span className="text-gray-500"> of {totalItems} total</span>
+                )}
                 {selectedCategory !== "All" && (
                   <span>
                     {" "}
@@ -349,6 +396,7 @@ const Gallery: React.FC = () => {
                     handleCategoryChange("All");
                     dispatch({ type: "SET_SEARCH_QUERY", payload: "" });
                     dispatch({ type: "RESET_ADVANCED_FILTERS" });
+                    refresh(); // Refresh data from API
                   }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -361,6 +409,25 @@ const Gallery: React.FC = () => {
                 </motion.button>
               )}
             </div>
+
+            {/* Show API error if exists */}
+            {apiError && (
+              <motion.div
+                className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <p className="text-red-600 dark:text-red-400 text-sm">
+                  Error loading data: {apiError}
+                </p>
+                <button
+                  onClick={refresh}
+                  className="mt-2 text-xs bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-300 px-2 py-1 rounded hover:bg-red-200 dark:hover:bg-red-700 transition-colors"
+                >
+                  Try Again
+                </button>
+              </motion.div>
+            )}
           </motion.div>
         )}
 
@@ -394,7 +461,7 @@ const Gallery: React.FC = () => {
           {viewMode === "masonry" ? (
             <>
               <MasonryGrid className="w-full">
-                {isLoading ? (
+                {apiLoading ? (
                   Array.from({ length: 6 }).map((_, index) => (
                     <div
                       key={`skeleton-${index}`}
@@ -417,21 +484,31 @@ const Gallery: React.FC = () => {
                       No artworks found
                     </h3>
                     <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                      Try adjusting your search or filter criteria to find what
-                      you're looking for.
+                      {apiError 
+                        ? 'Error loading data. Please try refreshing.'
+                        : 'Try adjusting your search or filter criteria to find what you\'re looking for.'
+                      }
                     </p>
+                    {apiError && (
+                      <button
+                        onClick={refresh}
+                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                      >
+                        Refresh
+                      </button>
+                    )}
                   </motion.div>
                 ) : (
                   filteredArtworks.map((artwork, index) => (
                     <motion.div
-                      key={artwork.id}
+                      key={`${artwork.type}-${artwork.id}`}
                       variants={itemVariants}
                       initial="hidden"
                       animate="visible"
                       transition={{ delay: index * 0.05 }}
                     >
                       <ArtworkCard
-                        artwork={artwork}
+                        artwork={galleryItemToArtworkItem(artwork)}
                         viewMode={viewMode}
                         likedItems={likedItems}
                         toggleLike={toggleLike}
@@ -443,7 +520,7 @@ const Gallery: React.FC = () => {
               {/* Loading More Indicator */}
               {isLoadingMore && <LoadingMore />}
               {/* End of content indicator */}
-              {!hasMoreArtworks && filteredArtworks.length > 8 && (
+              {!hasMore && filteredArtworks.length > 8 && (
                 <motion.div
                   className="text-center py-12"
                   variants={itemVariants}
@@ -475,7 +552,7 @@ const Gallery: React.FC = () => {
                 initial="hidden"
                 animate="visible"
               >
-                {isLoading ? (
+                {apiLoading ? (
                   Array.from({ length: viewMode === "grid" ? 3 : 2 }).map(
                     (_, index) => <SkeletonCard key={`skeleton-${index}`} />
                   )
@@ -493,21 +570,31 @@ const Gallery: React.FC = () => {
                       No artworks found
                     </h3>
                     <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                      Try adjusting your search or filter criteria to find what
-                      you're looking for.
+                      {apiError 
+                        ? 'Error loading data. Please try refreshing.'
+                        : 'Try adjusting your search or filter criteria to find what you\'re looking for.'
+                      }
                     </p>
+                    {apiError && (
+                      <button
+                        onClick={refresh}
+                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                      >
+                        Refresh
+                      </button>
+                    )}
                   </motion.div>
                 ) : (
                   filteredArtworks.map((artwork, index) => (
                     <motion.div
-                      key={artwork.id}
+                      key={`${artwork.type}-${artwork.id}`}
                       variants={itemVariants}
                       initial="hidden"
                       animate="visible"
                       transition={{ delay: index * 0.05 }}
                     >
                       <ArtworkCard
-                        artwork={artwork}
+                        artwork={galleryItemToArtworkItem(artwork)}
                         viewMode={viewMode}
                         likedItems={likedItems}
                         toggleLike={toggleLike}
@@ -519,7 +606,7 @@ const Gallery: React.FC = () => {
               {/* Loading More Indicator for Grid/List view */}
               {isLoadingMore && <LoadingMore />}
               {/* End of content indicator for Grid/List view */}
-              {!hasMoreArtworks && filteredArtworks.length > 8 && (
+              {!hasMore && filteredArtworks.length > 8 && (
                 <motion.div
                   className="text-center py-12"
                   variants={itemVariants}

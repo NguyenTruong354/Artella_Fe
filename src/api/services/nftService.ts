@@ -1,5 +1,5 @@
 import { apiClient } from '../client/apiClient';
-import { DigitalArtNFT, GetTrendingNFTsRequest, ApiResponse } from '../types';
+import { DigitalArtNFT, GetTrendingNFTsRequest, ApiResponse, NFT } from '../types';
 
 class NFTService {
   private readonly basePath = '/api/v1/digital-arts';
@@ -134,6 +134,215 @@ class NFTService {
       return response.data;
     } catch (error) {
       console.error('Error fetching NFTs by user:', error);
+      throw error;
+    }
+  }
+  /**
+   * Lấy chi tiết NFT theo tokenId
+   * @param tokenId - Token ID của NFT
+   * @returns Promise<NFT>
+   */
+  async getNFTByTokenId(tokenId: string): Promise<NFT> {
+    try {
+      console.log('🔍 Fetching NFT by tokenId:', tokenId);
+      
+      const response = await apiClient.get(`/api/nft/${tokenId}`);
+      
+      console.log('🔍 Raw NFT response:', response);
+      
+      // Handle different response structures
+      if (response && response.data && typeof response.data === 'object') {
+        // Response structure: { success: true, data: {...}, message: "..." }
+        console.log('✅ Successfully fetched NFT:', response.data);
+        return response.data as NFT;
+      } else if (response && typeof response === 'object' && 'id' in response) {
+        // Direct NFT object response
+        console.log('✅ Direct NFT object response');
+        return response as NFT;
+      } else {
+        console.warn('⚠️ Unexpected NFT response structure:', response);
+        throw new Error('Invalid NFT response structure');
+      }
+    } catch (error) {
+      console.error('❌ Error fetching NFT by tokenId:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Lấy tất cả DigitalArtNFT
+   * @returns Promise<DigitalArtNFT[]>
+   */
+  async getAllDigitalArtNFTs(): Promise<DigitalArtNFT[]> {
+    try {
+      console.log('🔍 Fetching all digital art NFTs...');
+      
+      const response = await apiClient.get(this.basePath);
+      
+      console.log('🔍 Raw all NFTs response:', response);
+      
+      // Handle different response structures
+      if (Array.isArray(response)) {
+        // Direct array response
+        console.log('✅ Direct array response, count:', response.length);
+        return response;
+      } else if (response && response.data && Array.isArray(response.data)) {
+        // Wrapped in ApiResponse
+        console.log('✅ Wrapped response, count:', response.data.length);
+        return response.data;
+      } else {
+        console.warn('⚠️ Unexpected all NFTs response structure:', response);
+        return [];
+      }
+    } catch (error) {
+      console.error('❌ Error fetching all digital art NFTs:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Lấy chi tiết DigitalArtNFT theo ID (sẽ tự động tăng view count)
+   * @param id - ID của DigitalArtNFT
+   * @returns Promise<DigitalArtNFT>
+   */
+  async getDigitalArtNFTById(id: string): Promise<DigitalArtNFT> {
+    try {
+      console.log('🔍 Fetching digital art NFT by ID:', id);
+      
+      const response = await apiClient.get(`${this.basePath}/${id}`);
+      
+      console.log('🔍 Raw digital art NFT response:', response);
+        // Handle different response structures
+      if (response && typeof response === 'object' && 'id' in response) {
+        // Direct DigitalArtNFT object response
+        console.log('✅ Successfully fetched digital art NFT:', response.id);
+        return response as unknown as DigitalArtNFT;
+      } else if (response && response.data && typeof response.data === 'object') {
+        // Wrapped in ApiResponse
+        console.log('✅ Wrapped digital art NFT response');
+        return response.data as DigitalArtNFT;
+      } else {
+        console.warn('⚠️ Unexpected digital art NFT response structure:', response);
+        throw new Error('Invalid digital art NFT response structure');
+      }
+    } catch (error) {
+      console.error('❌ Error fetching digital art NFT by ID:', error);
+      throw error;
+    }
+  }
+  /**
+   * Lấy chi tiết DigitalArtNFT theo tokenId
+   * @param tokenId - Token ID của DigitalArtNFT
+   * @returns Promise<DigitalArtNFT>
+   */
+  async getDigitalArtNFTByTokenId(tokenId: string): Promise<DigitalArtNFT> {
+    try {
+      console.log('🔍 Fetching digital art NFT by tokenId:', tokenId);
+      
+      const response = await apiClient.get(`${this.basePath}/token/${tokenId}`);
+      
+      console.log('🔍 Raw digital art NFT by tokenId response:', response);
+        // Handle different response structures
+      if (response && typeof response === 'object' && 'id' in response) {
+        // Direct DigitalArtNFT object response
+        console.log('✅ Successfully fetched digital art NFT by tokenId:', response.id);
+        return response as unknown as DigitalArtNFT;
+      } else if (response && response.data && typeof response.data === 'object') {
+        // Wrapped in ApiResponse
+        console.log('✅ Wrapped digital art NFT by tokenId response');
+        return response.data as DigitalArtNFT;
+      } else {
+        console.warn('⚠️ Unexpected digital art NFT by tokenId response structure:', response);
+        throw new Error('Invalid digital art NFT by tokenId response structure');
+      }
+    } catch (error) {
+      console.error('❌ Error fetching digital art NFT by tokenId:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Lấy danh sách DigitalArtNFT theo category
+   * @param category - Category của DigitalArtNFT
+   * @returns Promise<DigitalArtNFT[]>
+   */
+  async getDigitalArtNFTsByCategory(category: string): Promise<DigitalArtNFT[]> {
+    try {
+      console.log('🔍 Fetching digital art NFTs by category:', category);
+      
+      const response = await apiClient.get(`${this.basePath}/category/${category}`);
+      
+      console.log('🔍 Raw digital art NFTs by category response:', response);
+      
+      // Handle different response structures
+      let nftsData: DigitalArtNFT[];
+      
+      if (Array.isArray(response)) {
+        // Direct array response
+        console.log('📦 Direct array response detected');
+        nftsData = response;
+      } else if (response && response.data && Array.isArray(response.data)) {
+        // Wrapped in ApiResponse
+        console.log('📦 Wrapped ApiResponse detected');
+        nftsData = response.data;
+      } else if (response && Array.isArray(response.data)) {
+        // Another possible structure
+        console.log('📦 Alternative structure detected');
+        nftsData = response.data;
+      } else {
+        console.warn('⚠️ Unexpected response structure:', response);
+        nftsData = [];
+      }
+
+      console.log('✅ Final NFTs by category data:', nftsData);
+      console.log('✅ NFTs by category count:', nftsData.length);
+
+      return nftsData;
+    } catch (error) {
+      console.error('❌ Error fetching digital art NFTs by category:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Lấy danh sách DigitalArtNFT theo tag
+   * @param tag - Tag của DigitalArtNFT
+   * @returns Promise<DigitalArtNFT[]>
+   */
+  async getDigitalArtNFTsByTag(tag: string): Promise<DigitalArtNFT[]> {
+    try {
+      console.log('🔍 Fetching digital art NFTs by tag:', tag);
+      
+      const response = await apiClient.get(`${this.basePath}/tag/${tag}`);
+      
+      console.log('🔍 Raw digital art NFTs by tag response:', response);
+      
+      // Handle different response structures
+      let nftsData: DigitalArtNFT[];
+      
+      if (Array.isArray(response)) {
+        // Direct array response
+        console.log('📦 Direct array response detected');
+        nftsData = response;
+      } else if (response && response.data && Array.isArray(response.data)) {
+        // Wrapped in ApiResponse
+        console.log('📦 Wrapped ApiResponse detected');
+        nftsData = response.data;
+      } else if (response && Array.isArray(response.data)) {
+        // Another possible structure
+        console.log('📦 Alternative structure detected');
+        nftsData = response.data;
+      } else {
+        console.warn('⚠️ Unexpected response structure:', response);
+        nftsData = [];
+      }
+
+      console.log('✅ Final NFTs by tag data:', nftsData);
+      console.log('✅ NFTs by tag count:', nftsData.length);
+
+      return nftsData;
+    } catch (error) {
+      console.error('❌ Error fetching digital art NFTs by tag:', error);
       throw error;
     }
   }

@@ -9,65 +9,22 @@ import {
   TrendingUp,
   Calendar,
   Award,
-  ChevronRight,
   Home,
   Volume2,
-  MessageSquare,
   Shield,
   Info,
   Sparkles,
   Camera,
+  Tag, // For price
+  BarChart2, // For stats
+  DollarSign, // For price
 } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import useDarkMode from "../hooks/useDarkMode";
 import { WaveTransition } from "../components/WaveTransition";
-
-interface NFTData {
-  id: number;
-  title: string;
-  artist: string;
-  artistAvatar: string;
-  collection: string;
-  description: string;
-  image: string;
-  price: string;
-  highestBid: string;
-  timeLeft: string;
-  views: number;
-  likes: number;
-  shares: number;
-  category: string;
-  createdDate: string;
-  blockchain: string;
-  tokenId: string;
-  royalties: string;
-  properties: Array<{ trait: string; value: string; rarity: string }>;
-  history: Array<{
-    type: string;
-    price: string;
-    from: string;
-    to: string;
-    date: string;
-  }>;
-}
-
-interface SimilarNFT {
-  id: number;
-  title: string;
-  artist: string;
-  image: string;
-  price: string;
-}
-
-interface VisitorComment {
-  id: number;
-  name: string;
-  location: string;
-  comment: string;
-  rating: number;
-  date: string;
-  avatar?: string;
-}
+import { nftService } from "../api/services";
+import { DigitalArtNFT } from "../api/types";
+import SmartImage from "../components/SmartImage";
 
 interface AudioGuideInfo {
   title: string;
@@ -75,230 +32,78 @@ interface AudioGuideInfo {
   duration: string;
 }
 
-interface Particle {
-  id: number;
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  size: number;
-  opacity: number;
-  color: string;
-  life: number;
-  maxLife: number;
-}
-
-// Particle System Component
-const ParticleSystem: React.FC<{ 
-  isHovered: boolean; 
-  mousePosition: { x: number; y: number };
-  isDark: boolean;
-}> = ({ isHovered, mousePosition, isDark }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationRef = useRef<number | null>(null);
-  const particlesRef = useRef<Particle[]>([]);
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-
-  const createParticle = useCallback((x?: number, y?: number): Particle => {
-    const canvas = canvasRef.current;
-    if (!canvas) return {} as Particle;
-
-    // Particle colors based on theme
-    const particleColors = isDark 
-      ? ['#F59E0B', '#FCD34D', '#FBBF24', '#F3E8FF', '#E5E7EB']
-      : ['#3B82F6', '#60A5FA', '#93C5FD', '#DBEAFE', '#F3F4F6'];
-
-    return {
-      id: Math.random(),
-      x: x ?? Math.random() * canvas.width,
-      y: y ?? Math.random() * canvas.height,
-      vx: (Math.random() - 0.5) * 0.5,
-      vy: (Math.random() - 0.5) * 0.5,
-      size: Math.random() * 3 + 1,
-      opacity: Math.random() * 0.6 + 0.2,
-      color: particleColors[Math.floor(Math.random() * particleColors.length)],
-      life: 0,
-      maxLife: 120 + Math.random() * 240,
-    };
-  }, [isDark]);
-
-  const updateParticles = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    particlesRef.current = particlesRef.current.filter(particle => {
-      // Update position
-      particle.x += particle.vx;
-      particle.y += particle.vy;
-      particle.life++;
-
-      // Mouse attraction when hovered
-      if (isHovered && mousePosition.x !== 0 && mousePosition.y !== 0) {
-        const dx = mousePosition.x - particle.x;
-        const dy = mousePosition.y - particle.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance < 100) {
-          const force = (100 - distance) / 100 * 0.02;
-          particle.vx += dx / distance * force;
-          particle.vy += dy / distance * force;
-        }
-      }
-
-      // Fade out towards end of life
-      const lifeRatio = particle.life / particle.maxLife;
-      particle.opacity = Math.max(0, (1 - lifeRatio) * 0.8);
-
-      // Boundary wrapping
-      if (particle.x < 0) particle.x = canvas.width;
-      if (particle.x > canvas.width) particle.x = 0;
-      if (particle.y < 0) particle.y = canvas.height;
-      if (particle.y > canvas.height) particle.y = 0;
-
-      return particle.life < particle.maxLife;
-    });
-
-    // Add new particles
-    const targetCount = isHovered ? 25 : 15;
-    while (particlesRef.current.length < targetCount) {
-      particlesRef.current.push(createParticle());
-    }
-
-    // Add extra particles near mouse when hovered with random burst patterns
-    if (isHovered && Math.random() < 0.3) {
-      const burstCount = Math.random() < 0.1 ? 3 : 1; // Occasional burst of multiple particles
-      for (let i = 0; i < burstCount; i++) {
-        const offsetX = (Math.random() - 0.5) * 80;
-        const offsetY = (Math.random() - 0.5) * 80;
-        particlesRef.current.push(createParticle(
-          mousePosition.x + offsetX,
-          mousePosition.y + offsetY
-        ));
-      }
-    }
-
-    // Add ambient particles around the edges for mystical effect
-    if (Math.random() < 0.05) {
-      const edge = Math.floor(Math.random() * 4);
-      let x, y;
-      switch (edge) {
-        case 0: x = 0; y = Math.random() * canvas.height; break;
-        case 1: x = canvas.width; y = Math.random() * canvas.height; break;
-        case 2: x = Math.random() * canvas.width; y = 0; break;
-        default: x = Math.random() * canvas.width; y = canvas.height; break;
-      }
-      particlesRef.current.push(createParticle(x, y));
-    }
-  }, [isHovered, mousePosition, createParticle]);
-
-  const drawParticles = useCallback(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d');
-    if (!canvas || !ctx) return;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    particlesRef.current.forEach(particle => {
-      ctx.save();
-      ctx.globalAlpha = particle.opacity;
-      
-      // Create a radial gradient for each particle
-      const gradient = ctx.createRadialGradient(
-        particle.x, particle.y, 0,
-        particle.x, particle.y, particle.size * 3
-      );
-      gradient.addColorStop(0, particle.color);
-      gradient.addColorStop(0.7, particle.color + '80'); // Add some transparency
-      gradient.addColorStop(1, particle.color + '00'); // Fully transparent
-      
-      ctx.fillStyle = gradient;
-      ctx.shadowBlur = particle.size * 4;
-      ctx.shadowColor = particle.color;
-      
-      // Draw main particle
-      ctx.beginPath();
-      ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-      ctx.fill();
-      
-      // Add a smaller bright core
-      ctx.globalAlpha = particle.opacity * 1.5;
-      ctx.fillStyle = particle.color;
-      ctx.shadowBlur = particle.size;
-      ctx.beginPath();
-      ctx.arc(particle.x, particle.y, particle.size * 0.3, 0, Math.PI * 2);
-      ctx.fill();
-      
-      ctx.restore();
-    });
-  }, []);
-
-  const animate = useCallback(() => {
-    updateParticles();
-    drawParticles();
-    animationRef.current = requestAnimationFrame(animate);
-  }, [updateParticles, drawParticles]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const updateDimensions = () => {
-      const rect = canvas.getBoundingClientRect();
-      setDimensions({ width: rect.width, height: rect.height });
-      canvas.width = rect.width;
-      canvas.height = rect.height;
-    };
-
-    updateDimensions();
-    window.addEventListener('resize', updateDimensions);
-
-    return () => {
-      window.removeEventListener('resize', updateDimensions);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (dimensions.width > 0 && dimensions.height > 0) {
-      animate();
-    }
-
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-  }, [animate, dimensions]);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className="absolute inset-0 pointer-events-none z-10"
-      style={{ width: '100%', height: '100%' }}
-    />
-  );
-};
-
 const DetailNFT: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const controls = useAnimation();
   const sectionRef = useRef<HTMLDivElement>(null);
   const inView = useInView(sectionRef, { once: true, amount: 0.2 });
-
   const [currentBid, setCurrentBid] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [nftData, setNftData] = useState<DigitalArtNFT | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [activeAudioGuide, setActiveAudioGuide] = useState<string | null>(null);
-  const [visitorComments, setVisitorComments] = useState<VisitorComment[]>([]);
-  const [newComment, setNewComment] = useState("");
-  const [newCommentName, setNewCommentName] = useState("");
-  const [newCommentLocation, setNewCommentLocation] = useState("");
-  
-  // Particle system state
-  const [isArtworkHovered, setIsArtworkHovered] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-
+  const [similarNFTs, setSimilarNFTs] = useState<DigitalArtNFT[]>([]);
+  const [similarNFTsLoading, setSimilarNFTsLoading] = useState(false);
   // Dark mode hook
   const darkMode = useDarkMode();
+  
+  // Fetch similar NFTs by category
+  const fetchSimilarNFTs = useCallback(async (category: string, currentNFTId: string) => {
+    try {
+      setSimilarNFTsLoading(true);
+      console.log('🔍 Fetching similar NFTs for category:', category);
+      
+      const similarNFTsResponse = await nftService.getDigitalArtNFTsByCategory(category);
+      
+      // Filter out current NFT and limit to 3 items
+      const filteredSimilarNFTs = similarNFTsResponse
+        .filter(nft => nft.id !== currentNFTId)
+        .slice(0, 3);
+      
+      console.log('✅ Similar NFTs received:', filteredSimilarNFTs);
+      setSimilarNFTs(filteredSimilarNFTs);
+    } catch (err) {
+      console.error('❌ Error fetching similar NFTs:', err);
+      // Don't show error for similar NFTs, just keep empty array
+      setSimilarNFTs([]);    } finally {
+      setSimilarNFTsLoading(false);
+    }
+  }, []);
+
+  // Fetch NFT data from API
+  const fetchNFTData = useCallback(async () => {
+    if (!id) {
+      setError("No NFT ID provided");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      // console.log('🔍 Fetching NFT data for ID:', id); // Debug log, consider removing for production
+      
+      const nftResponse = await nftService.getDigitalArtNFTById(id);
+      // console.log('✅ NFT data received:', nftResponse); // Debug log
+      
+      setNftData(nftResponse);
+      
+      // Fetch similar NFTs after getting main NFT data
+      if (nftResponse && nftResponse.category) {
+        fetchSimilarNFTs(nftResponse.category, nftResponse.id);
+      }
+    } catch (err) {
+      // console.error('❌ Error fetching NFT data:', err); // Debug log
+      if (err instanceof Error && err.message.includes("not found")) {
+        setError('Artwork not found.');
+      } else {
+        setError('Failed to load NFT data. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [id, fetchSimilarNFTs]);
 
   useEffect(() => {
     if (inView) {
@@ -312,184 +117,49 @@ const DetailNFT: React.FC = () => {
     if (!isLoading) {
       controls.start("visible");
     }
-  }, [controls, isLoading]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
+  }, [controls, isLoading]);  useEffect(() => {
+    fetchNFTData();
     
-    // Museum experience console showcase
-    console.log("🏛️ Welcome to the Digital Museum Experience!");
-    console.log("✨ Particle System: Active");
-    console.log("🎧 Audio Guide: Ready");
-    console.log("🖱️ Interactive Features: Enabled");
-    console.log("💫 Hover over the artwork to see magical particles!");
-    
-    return () => clearTimeout(timer);
-  }, []);
+    // console.log("🏛️ Welcome to the Digital Museum Experience!"); // Debug log
+    // console.log("✨ NFT Detail Page: Active"); // Debug log
+    // console.log("🎧 Audio Guide: Ready"); // Debug log
+    // console.log("🖱️ Interactive Features: Enabled"); // Debug log
+  }, [fetchNFTData]);
 
-  // Mouse tracking for particles
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setMousePosition({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
-  }, []);
+  // Generate mock properties based on NFT data
+  const generateMockProperties = (nft: DigitalArtNFT) => [
+    { trait: "Category", value: nft.category, rarity: "15%" },
+    { trait: "Creation Method", value: nft.creationMethod, rarity: nft.creationMethod === 'DRAWING' ? "8%" : "25%" },
+    { trait: "Royalty", value: `${nft.royaltyPercentage}%`, rarity: "12%" },
+    { trait: "Status", value: nft.onSale ? "For Sale" : "Collection", rarity: "20%" },
+  ];
 
-  // Particle burst effect on artwork click
-  const handleArtworkClick = useCallback(() => {
-    // This will trigger a burst of particles from the click position
-    // The ParticleSystem component will handle the burst effect
-    setIsArtworkHovered(true);
-    setTimeout(() => setIsArtworkHovered(false), 200);
-    
-    // Play a subtle sound effect (simulation)
-    console.log("🎵 Museum ambient sound: Gentle gallery echo");
-  }, []);
-
+  const mockProperties = nftData ? generateMockProperties(nftData) : [];
   // Audio guide sound simulation
   const playAudioGuideSound = useCallback((type: string) => {
     console.log(`🎧 Audio Guide: Playing ${type} information`);
   }, []);
-
-  // Mock NFT data
-  const nftData: NFTData = {
-    id: parseInt(id || "1"),
-    title: "Colorful Abstract Masterpiece",
-    artist: "Esther Howard",
-    artistAvatar:
-      "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face",
-    collection: "Digital Dreams Collection",
-    description:
-      "A vibrant and dynamic abstract piece that explores the intersection of color, form, and digital artistry. This NFT represents a unique blend of traditional artistic techniques with cutting-edge digital innovation.",
-    image:
-      "https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?w=800&h=800&fit=crop",
-    price: "3.40 ETH",
-    highestBid: "3.40 ETH",
-    timeLeft: "02:28:25",
-    views: 1247,
-    likes: 89,
-    shares: 23,
-    category: "Digital Art",
-    createdDate: "2024-01-15",
-    blockchain: "Ethereum",
-    tokenId: "#7234",
-    royalties: "10%",
-    properties: [
-      { trait: "Background", value: "Abstract", rarity: "15%" },
-      { trait: "Style", value: "Modern", rarity: "8%" },
-      { trait: "Color Palette", value: "Vibrant", rarity: "12%" },
-      { trait: "Medium", value: "Digital", rarity: "25%" },
-    ],
-    history: [
-      {
-        type: "Bid",
-        price: "3.40 ETH",
-        from: "0x1234",
-        to: "Current",
-        date: "2024-06-09",
-      },
-      {
-        type: "Bid",
-        price: "3.20 ETH",
-        from: "0x5678",
-        to: "0x1234",
-        date: "2024-06-08",
-      },
-      {
-        type: "Listed",
-        price: "2.50 ETH",
-        from: "Artist",
-        to: "Market",
-        date: "2024-06-01",
-      },
-    ],
-  };
-
-  const similarNFTs: SimilarNFT[] = [
-    {
-      id: 2,
-      title: "Digital Harmony",
-      artist: "John Doe",
-      image:
-        "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=300&h=300&fit=crop",
-      price: "2.1 ETH",
-    },
-    {
-      id: 3,
-      title: "Neon Dreams",
-      artist: "Jane Smith",
-      image:
-        "https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?w=300&h=300&fit=crop",
-      price: "1.8 ETH",
-    },
-    {
-      id: 4,
-      title: "Cyber Vision",
-      artist: "Mike Johnson",
-      image:
-        "https://images.unsplash.com/photo-1579965342575-15475c126358?w=300&h=300&fit=crop",
-      price: "4.2 ETH",
-    },
-  ];
-
-  // Mock visitor comments data
-  const mockVisitorComments: VisitorComment[] = [
-    {
-      id: 1,
-      name: "Dr. Sarah Chen",
-      location: "New York, USA",
-      comment:
-        "A masterful blend of traditional techniques with digital innovation. The color harmony is particularly striking.",
-      rating: 5,
-      date: "2024-06-08",
-      avatar:
-        "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=50&h=50&fit=crop&crop=face",
-    },
-    {
-      id: 2,
-      name: "Professor James Wilson",
-      location: "London, UK",
-      comment:
-        "This piece represents a significant evolution in digital art. The artist's vision is both bold and sophisticated.",
-      rating: 5,
-      date: "2024-06-07",
-      avatar:
-        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=50&h=50&fit=crop&crop=face",
-    },
-    {
-      id: 3,
-      name: "Maria Rodriguez",
-      location: "Barcelona, Spain",
-      comment:
-        "Breathtaking work that captures the essence of modern digital expression. A true gem in contemporary art.",
-      rating: 4,
-      date: "2024-06-06",
-      avatar:
-        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=50&h=50&fit=crop&crop=face",
-    },
-  ];
+  // Helper function to truncate long addresses (like wallet addresses or contract addresses)
+  const truncateAddress = useCallback((address: string, startLength: number = 6, endLength: number = 4) => {
+    if (!address || address.length <= startLength + endLength) return address;
+    return `${address.slice(0, startLength)}...${address.slice(-endLength)}`;
+  }, []);
 
   // Audio guide information
   const audioGuideInfo: { [key: string]: AudioGuideInfo } = {
     artwork: {
       title: "About the Artwork",
-      content:
-        "This digital masterpiece showcases the intersection of traditional artistry and modern technology...",
+      content: nftData?.description || "Detailed information about this artwork is being prepared.",
       duration: "2:34",
     },
     artist: {
       title: "Meet the Artist",
-      content:
-        "Esther Howard is renowned for her innovative approach to digital art creation...",
+      content: `This piece was created by ${nftData?.creator || 'an esteemed artist'}. More details about their background and other works are available in the gallery.`, 
       duration: "1:48",
     },
     technique: {
       title: "Artistic Technique",
-      content:
-        "The piece employs advanced digital layering techniques combined with classical color theory...",
+      content: `This artwork was created using the '${nftData?.creationMethod || 'unique digital'}' method. It showcases a blend of modern digital tools and artistic vision.`, 
       duration: "3:12",
     },
   };
@@ -506,24 +176,6 @@ const DetailNFT: React.FC = () => {
     setActiveAudioGuide(activeAudioGuide === section ? null : section);
     if (activeAudioGuide !== section) {
       playAudioGuideSound(section);
-    }
-  };
-
-  const handleAddComment = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newComment && newCommentName && newCommentLocation) {
-      const comment: VisitorComment = {
-        id: Date.now(),
-        name: newCommentName,
-        location: newCommentLocation,
-        comment: newComment,
-        rating: 5,
-        date: new Date().toISOString().split("T")[0],
-      };
-      setVisitorComments([comment, ...visitorComments]);
-      setNewComment("");
-      setNewCommentName("");
-      setNewCommentLocation("");
     }
   };
 
@@ -553,6 +205,7 @@ const DetailNFT: React.FC = () => {
     },
   };
 
+  // Show loading state
   if (isLoading) {
     return (
       <>
@@ -572,6 +225,105 @@ const DetailNFT: React.FC = () => {
     );
   }
 
+  if (error && error.includes("Artwork not found")) {
+    return (
+      <>
+        <WaveTransition
+          isTransitioning={darkMode.isTransitioning}
+          isDark={darkMode.isDark}
+        />
+        <div className="min-h-screen flex items-center justify-center transition-all duration-500 bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:bg-gradient-to-b dark:from-gray-900 dark:via-gray-800 dark:to-black">
+          <div className="text-center p-8">
+            <Camera className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-semibold text-gray-800 dark:text-amber-200 mb-2 font-serif">
+              Artwork Not Found
+            </h2>
+            <p className="text-gray-600 dark:text-amber-300/80 mb-6">
+              The requested NFT could not be found. It might have been moved or does not exist.
+            </p>
+            <button
+              onClick={() => navigate("/Home/gallery")}
+              className="px-6 py-3 bg-blue-500 dark:bg-amber-500 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-amber-600 transition-colors duration-300 font-medium flex items-center justify-center mx-auto shadow-lg hover:shadow-blue-500/50 dark:hover:shadow-amber-500/50"
+            >
+              <Home className="w-5 h-5 mr-2" />
+              Explore Main Gallery
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <WaveTransition
+          isTransitioning={darkMode.isTransitioning}
+          isDark={darkMode.isDark}
+        />
+        <div className="min-h-screen flex items-center justify-center transition-all duration-500 bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:bg-gradient-to-b dark:from-gray-900 dark:via-gray-800 dark:to-black">
+          <div className="text-center p-8">
+            <Sparkles className="w-16 h-16 text-red-500 dark:text-red-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-semibold text-gray-800 dark:text-amber-200 mb-2 font-serif">
+              Exhibition Temporarily Unavailable
+            </h2>
+            <p className="text-gray-600 dark:text-amber-300/80 mb-6">
+              We encountered an issue loading the artwork details: {error}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                onClick={fetchNFTData}
+                className="px-6 py-3 bg-blue-500 dark:bg-amber-500 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-amber-600 transition-colors duration-300 font-medium flex items-center justify-center shadow-lg hover:shadow-blue-500/50 dark:hover:shadow-amber-500/50"
+              >
+                <TrendingUp className="w-5 h-5 mr-2" />
+                Retry Loading
+              </button>
+              <button
+                onClick={() => navigate("/Home")}
+                className="px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-300 font-medium flex items-center justify-center"
+              >
+                <Home className="w-5 h-5 mr-2" />
+                Back to Museum Entrance
+              </button>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+  
+  if (!nftData) {
+    // This case should ideally be covered by the isLoading or error states above.
+    // If nftData is null after loading and no error, it implies an issue not caught.
+    // For robustness, we can show a generic "not found" or redirect.
+    return (
+      <>
+        <WaveTransition
+          isTransitioning={darkMode.isTransitioning}
+          isDark={darkMode.isDark}
+        />
+        <div className="min-h-screen flex items-center justify-center transition-all duration-500 bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:bg-gradient-to-b dark:from-gray-900 dark:via-gray-800 dark:to-black">
+          <div className="text-center p-8">
+            <Camera className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-semibold text-gray-800 dark:text-amber-200 mb-2 font-serif">
+              Artwork Details Unavailable
+            </h2>
+            <p className="text-gray-600 dark:text-amber-300/80 mb-6">
+              The details for this artwork could not be loaded at this time.
+            </p>
+            <button
+              onClick={() => navigate("/Home/gallery")}
+              className="px-6 py-3 bg-blue-500 dark:bg-amber-500 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-amber-600 transition-colors duration-300 font-medium flex items-center justify-center mx-auto shadow-lg hover:shadow-blue-500/50 dark:hover:shadow-amber-500/50"
+            >
+              <Home className="w-5 h-5 mr-2" />
+              Explore Main Gallery
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <WaveTransition
@@ -585,44 +337,10 @@ const DetailNFT: React.FC = () => {
       >
         {/* Gallery Lighting Effects */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          {/* Main spotlight on artwork */}
           <div className="absolute top-20 left-1/2 transform -translate-x-1/2 w-96 h-96 transition-all duration-500 bg-gradient-radial from-blue-200/20 via-blue-100/10 to-transparent dark:bg-gradient-radial dark:from-amber-200/20 dark:via-amber-100/10 dark:to-transparent rounded-full blur-3xl"></div>
-          {/* Secondary ambient lighting */}
           <div className="absolute top-40 right-1/4 w-64 h-64 transition-all duration-500 bg-gradient-radial from-purple-300/15 via-purple-200/8 to-transparent dark:bg-gradient-radial dark:from-amber-300/15 dark:via-amber-200/8 dark:to-transparent rounded-full blur-2xl"></div>
           <div className="absolute bottom-40 left-1/4 w-48 h-48 transition-all duration-500 bg-gradient-radial from-cyan-400/10 via-cyan-300/5 to-transparent dark:bg-gradient-radial dark:from-amber-400/10 dark:via-amber-300/5 dark:to-transparent rounded-full blur-xl"></div>
-        </div>
-
-        <div className="container mx-auto px-4 py-8 relative z-10">
-          {/* Museum Navigation */}
-          <motion.nav
-            className="flex items-center space-x-3 text-sm text-gray-600 dark:text-amber-300/80 mb-8 font-serif"
-            variants={itemVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <button
-              onClick={() => navigate("/")}
-              className="flex items-center hover:text-blue-600 dark:hover:text-amber-200 transition-colors duration-300"
-            >
-              <Home className="w-4 h-4 mr-1" />
-              <span className="hidden sm:inline">Museum Entrance</span>
-              <span className="sm:hidden">Home</span>
-            </button>
-            <ChevronRight className="w-4 h-4" />
-            <button
-              onClick={() => navigate("/gallery")}
-              className="hover:text-blue-600 dark:hover:text-amber-200 transition-colors duration-300"
-            >
-              <span className="hidden sm:inline">Main Gallery</span>
-              <span className="sm:hidden">Gallery</span>
-            </button>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-gray-900 dark:text-amber-100 font-medium">
-              <span className="hidden sm:inline">Exhibition Hall</span>
-              <span className="sm:hidden">Details</span>
-            </span>
-          </motion.nav>
-
+        </div>        <div className="container mx-auto px-4 py-8 relative z-10">
           {/* Back to Gallery */}
           <motion.button
             onClick={() => navigate(-1)}
@@ -650,27 +368,14 @@ const DetailNFT: React.FC = () => {
               <div className="relative">
                 {/* Artwork Frame */}
                 <div className="relative bg-gradient-to-br from-gray-100/80 to-gray-200/60 dark:bg-gradient-to-br dark:from-amber-900/20 dark:to-amber-800/10 p-8 rounded-lg border-4 border-gray-300/50 dark:border-amber-700/40 transition-all duration-500">
-                  {/* Spotlight effect on artwork */}
                   <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-gray-100/20 dark:bg-gradient-radial dark:from-transparent dark:via-transparent dark:to-black/30 pointer-events-none"></div>
                   
-                  <div 
-                    className="aspect-square rounded-lg overflow-hidden bg-white/50 dark:bg-black/50 shadow-2xl relative group transition-all duration-500 cursor-pointer"
-                    onMouseEnter={() => setIsArtworkHovered(true)}
-                    onMouseLeave={() => setIsArtworkHovered(false)}
-                    onMouseMove={handleMouseMove}
-                    onClick={handleArtworkClick}
-                  >
-                    {/* Particle System */}
-                    <ParticleSystem 
-                      isHovered={isArtworkHovered}
-                      mousePosition={mousePosition}
-                      isDark={darkMode.isDark}
-                    />
-                    
-                    <img
-                      src={nftData.image}
-                      alt={nftData.title}
+                  <div className="aspect-square rounded-lg overflow-hidden bg-white/50 dark:bg-black/50 shadow-2xl relative group transition-all duration-500">
+                    <SmartImage
+                      imageId={nftData.imageUrl}
+                      alt={nftData.name}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 relative z-5"
+                      fallbackCategory={nftData.category}
                     />
                     
                     {/* Museum Glass Effect */}
@@ -681,9 +386,11 @@ const DetailNFT: React.FC = () => {
                       <div className="p-2 bg-white/70 dark:bg-black/70 backdrop-blur-sm rounded-full text-green-500 dark:text-green-400 transition-all duration-500">
                         <Shield className="w-4 h-4" />
                       </div>
-                      <div className="p-2 bg-white/70 dark:bg-black/70 backdrop-blur-sm rounded-full text-blue-500 dark:text-blue-400 transition-all duration-500">
-                        <Camera className="w-4 h-4" />
-                      </div>
+                      {nftData.creationMethod === 'DRAWING' && (
+                        <div className="p-2 bg-white/70 dark:bg-black/70 backdrop-blur-sm rounded-full text-purple-500 dark:text-purple-400 transition-all duration-500">
+                          <Sparkles className="w-4 h-4" />
+                        </div>
+                      )}
                     </div>
 
                     {/* Audio Guide Buttons */}
@@ -704,382 +411,408 @@ const DetailNFT: React.FC = () => {
                       </motion.button>
                     </div>
                   </div>
-
-                  {/* Museum Placard */}
-                  <motion.div 
-                    className="mt-6 bg-gradient-to-r from-white/80 to-gray-50/60 dark:bg-gradient-to-r dark:from-amber-900/30 dark:to-amber-800/20 p-6 rounded-lg border border-gray-300/50 dark:border-amber-700/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/10 dark:hover:shadow-amber-500/20"
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  >
-                    <div className="text-center space-y-2">
-                      <h1 className="text-2xl font-serif text-gray-900 dark:text-amber-100 tracking-wide">
-                        {nftData.title}
-                      </h1>
-                      <p className="text-gray-700 dark:text-amber-300/80 font-serif italic">
-                        by {nftData.artist}
-                      </p>
-                      <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-blue-400 dark:via-amber-400 to-transparent mx-auto my-3"></div>
-                      <div className="text-xs text-gray-600 dark:text-amber-200/60 font-serif space-y-1">
-                        <p>Digital Art, 2024</p>
-                        <p>Collection: {nftData.collection}</p>
-                        <p>Token ID: {nftData.tokenId}</p>
-                      </div>
-                    </div>
-                  </motion.div>
                 </div>
               </div>
             </motion.div>
 
-            {/* Exhibition Information Panel */}
-            <motion.div className="space-y-8" variants={itemVariants}>
-              {/* Curatorial Notes */}
-              <div className="bg-gradient-to-b from-gray-100/80 to-gray-200/60 border border-gray-300/50 dark:bg-gradient-to-b dark:from-amber-900/20 dark:to-amber-800/10 dark:border-amber-700/30 p-6 rounded-lg transition-all duration-500">
-                <h3 className="text-lg font-serif text-gray-900 dark:text-amber-100 mb-4 flex items-center gap-2 transition-colors duration-500">
-                  <Sparkles className="w-5 h-5 text-blue-500 dark:text-amber-400 transition-colors duration-500" />
-                  Curatorial Notes
-                </h3>
-                <p className="text-gray-700 dark:text-amber-200/80 leading-relaxed font-serif text-sm transition-colors duration-500">
-                  {nftData.description}
-                </p>
-                
-                {/* Audio Guide for Artist */}
-                <button
-                  onClick={() => handleAudioGuide("artist")}
-                  className={`mt-4 flex items-center gap-2 text-sm px-4 py-2 rounded-lg transition-all duration-300 ${
-                    activeAudioGuide === "artist"
-                      ? "bg-blue-500 dark:bg-amber-500 text-white"
-                      : "bg-gray-200/80 dark:bg-amber-900/30 text-blue-600 dark:text-amber-300 hover:bg-gray-300/80 dark:hover:bg-amber-800/40"
-                  }`}
+            {/* Artwork Information Panel - Museum Style */}
+            <motion.div variants={itemVariants}>
+              <div className="bg-gradient-to-br from-white/70 to-gray-100/50 dark:bg-gradient-to-br dark:from-gray-800/60 dark:to-gray-900/50 backdrop-blur-md p-8 rounded-lg shadow-xl border border-gray-200/50 dark:border-amber-700/30 transition-all duration-500">
+                <motion.h1
+                  className="text-4xl font-bold mb-3 text-gray-900 dark:text-amber-100 font-serif tracking-tight leading-tight"
+                  variants={itemVariants}
                 >
-                  <Volume2 className="w-4 h-4" />
-                  Audio Guide: Meet the Artist
-                </button>
-              </div>
-
-              {/* Acquisition Information */}
-              <div className="bg-gradient-to-b from-gray-100/80 to-gray-200/60 border border-gray-300/50 dark:bg-gradient-to-b dark:from-amber-900/20 dark:to-amber-800/10 dark:border-amber-700/30 p-6 rounded-lg transition-all duration-500">
-                <h3 className="text-lg font-serif text-gray-900 dark:text-amber-100 mb-4 transition-colors duration-500">
-                  Acquisition Details
-                </h3>
-                <div className="space-y-3 text-sm font-serif">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-amber-300/70 transition-colors duration-500">Current Valuation:</span>
-                    <span className="text-gray-900 dark:text-amber-100 font-semibold transition-colors duration-500">{nftData.price}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-amber-300/70 transition-colors duration-500">Highest Bid:</span>
-                    <span className="text-gray-900 dark:text-amber-100 transition-colors duration-500">{nftData.highestBid}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-amber-300/70 transition-colors duration-500">Exhibition Ends:</span>
-                    <div className="flex items-center gap-1 text-gray-900 dark:text-amber-100 transition-colors duration-500">
-                      <Clock className="w-4 h-4" />
-                      <span className="font-mono">{nftData.timeLeft}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bidding Form - Museum Style */}
-                <form onSubmit={handleBidSubmit} className="mt-6 space-y-4">
-                  <input
-                    type="text"
-                    placeholder="Private Collection Offer (ETH)"
-                    value={currentBid}
-                    onChange={(e) => setCurrentBid(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/70 border border-gray-300/60 dark:bg-black/30 dark:border-amber-700/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-amber-500/50 text-gray-900 dark:text-amber-100 placeholder-gray-500 dark:placeholder-amber-300/50 font-serif transition-all duration-500"
-                  />
-                  <button
-                    type="submit"
-                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 dark:from-amber-600 dark:to-amber-700 text-white px-6 py-3 rounded-lg font-serif font-semibold hover:from-blue-700 hover:to-blue-800 dark:hover:from-amber-700 dark:hover:to-amber-800 transition-all duration-300 flex items-center justify-center gap-2"
+                  {nftData.name}
+                </motion.h1>                <motion.p
+                  className="text-lg text-gray-600 dark:text-amber-300/80 mb-6 font-sans"
+                  variants={itemVariants}
+                >
+                  By <span 
+                    className="font-semibold text-blue-600 dark:text-amber-400 cursor-pointer hover:text-blue-700 dark:hover:text-amber-300 transition-colors"
+                    title={nftData.creator} // Show full creator address on hover
+                    onClick={() => {
+                      navigator.clipboard.writeText(nftData.creator);
+                      console.log('Copied creator address to clipboard:', nftData.creator);
+                    }}
                   >
-                    <Award className="w-5 h-5" />
-                    Submit Private Offer
-                  </button>
-                </form>
-              </div>
+                    {nftData.creator.startsWith('0x') && nftData.creator.length > 20 
+                      ? truncateAddress(nftData.creator, 6, 4)
+                      : nftData.creator
+                    }
+                  </span>
+                </motion.p>
 
-              {/* Visitor Stats */}
-              <div className="bg-gradient-to-b from-gray-100/80 to-gray-200/60 border border-gray-300/50 dark:bg-gradient-to-b dark:from-amber-900/20 dark:to-amber-800/10 dark:border-amber-700/30 p-6 rounded-lg transition-all duration-500">
-                <h3 className="text-lg font-serif text-gray-900 dark:text-amber-100 mb-4 transition-colors duration-500">
-                  Exhibition Analytics
-                </h3>
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <div className="flex items-center justify-center mb-1">
-                      <Eye className="w-4 h-4 text-blue-500 dark:text-amber-400 transition-colors duration-500" />
-                    </div>
-                    <p className="text-gray-900 dark:text-amber-100 font-semibold transition-colors duration-500">{nftData.views.toLocaleString()}</p>
-                    <p className="text-xs text-gray-600 dark:text-amber-300/70 font-serif transition-colors duration-500">Visitors</p>
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-center mb-1">
-                      <Heart className="w-4 h-4 text-blue-500 dark:text-amber-400 transition-colors duration-500" />
-                    </div>
-                    <p className="text-gray-900 dark:text-amber-100 font-semibold transition-colors duration-500">{nftData.likes}</p>
-                    <p className="text-xs text-gray-600 dark:text-amber-300/70 font-serif transition-colors duration-500">Admirers</p>
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-center mb-1">
-                      <Share2 className="w-4 h-4 text-blue-500 dark:text-amber-400 transition-colors duration-500" />
-                    </div>
-                    <p className="text-gray-900 dark:text-amber-100 font-semibold transition-colors duration-500">{nftData.shares}</p>
-                    <p className="text-xs text-gray-600 dark:text-amber-300/70 font-serif transition-colors duration-500">Shared</p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-
-          {/* Technical Details & Provenance */}
-          <motion.div
-            className="mb-16"
-            variants={itemVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <h2 className="text-2xl font-serif text-gray-900 dark:text-amber-100 mb-8 text-center transition-colors duration-500">
-              Technical Documentation & Provenance
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Artwork Properties */}
-              <div className="bg-gradient-to-b from-gray-100/80 to-gray-200/60 border border-gray-300/50 dark:bg-gradient-to-b dark:from-amber-900/20 dark:to-amber-800/10 dark:border-amber-700/30 p-6 rounded-lg transition-all duration-500">
-                <h3 className="text-lg font-serif text-gray-900 dark:text-amber-100 mb-4 flex items-center gap-2 transition-colors duration-500">
-                  <Info className="w-5 h-5 text-blue-500 dark:text-amber-400 transition-colors duration-500" />
-                  Artistic Properties
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {nftData.properties.map((property, index) => (
-                    <div
-                      key={index}
-                      className="bg-white/60 dark:bg-black/30 p-3 rounded-lg border border-gray-300/40 dark:border-amber-700/20 group hover:border-gray-400/60 dark:hover:border-amber-600/40 transition-all duration-300"
-                    >
-                      <p className="text-xs text-gray-600 dark:text-amber-300/70 font-serif transition-colors duration-500">
-                        {property.trait}
-                      </p>
-                      <p className="text-gray-900 dark:text-amber-100 font-semibold transition-colors duration-500">
-                        {property.value}
-                      </p>
-                      <p className="text-xs text-blue-600 dark:text-amber-400/80 font-serif transition-colors duration-500">
-                        Rarity: {property.rarity}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-                
-                <button
-                  onClick={() => handleAudioGuide("technique")}
-                  className={`mt-4 flex items-center gap-2 text-sm px-4 py-2 rounded-lg transition-all duration-300 ${
-                    activeAudioGuide === "technique"
-                      ? "bg-blue-500 dark:bg-amber-500 text-white"
-                      : "bg-gray-200/80 dark:bg-amber-900/30 text-blue-600 dark:text-amber-300 hover:bg-gray-300/80 dark:hover:bg-amber-800/40"
-                  }`}
-                >
-                  <Volume2 className="w-4 h-4" />
-                  Audio Guide: Artistic Technique
-                </button>
-              </div>
-
-              {/* Transaction History */}
-              <div className="bg-gradient-to-b from-gray-100/80 to-gray-200/60 border border-gray-300/50 dark:bg-gradient-to-b dark:from-amber-900/20 dark:to-amber-800/10 dark:border-amber-700/30 p-6 rounded-lg transition-all duration-500">
-                <h3 className="text-lg font-serif text-gray-900 dark:text-amber-100 mb-4 flex items-center gap-2 transition-colors duration-500">
-                  <TrendingUp className="w-5 h-5 text-blue-500 dark:text-amber-400 transition-colors duration-500" />
-                  Exhibition History
-                </h3>
-                <div className="space-y-3">
-                  {nftData.history.map((transaction, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-3 bg-white/40 dark:bg-black/20 rounded-lg border border-gray-300/40 dark:border-amber-700/20 transition-all duration-500"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-700 dark:from-amber-600 dark:to-amber-700 rounded-full flex items-center justify-center transition-all duration-500">
-                          <Calendar className="w-4 h-4 text-white" />
-                        </div>
-                        <div>
-                          <p className="text-gray-900 dark:text-amber-100 font-semibold text-sm font-serif transition-colors duration-500">
-                            {transaction.type}
-                          </p>
-                          <p className="text-xs text-gray-600 dark:text-amber-300/70 font-serif transition-colors duration-500">
-                            {transaction.date}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-gray-900 dark:text-amber-100 font-semibold transition-colors duration-500">
-                          {transaction.price}
-                        </p>
-                        <p className="text-xs text-gray-600 dark:text-amber-300/70 font-serif transition-colors duration-500">
-                          {transaction.from} → {transaction.to}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Visitor Book Section */}
-          <motion.div
-            className="mb-16"
-            variants={itemVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <h2 className="text-2xl font-serif text-gray-900 dark:text-amber-100 mb-8 text-center flex items-center justify-center gap-2 transition-colors duration-500">
-              <MessageSquare className="w-6 h-6 text-blue-500 dark:text-amber-400 transition-colors duration-500" />
-              Visitor Book
-            </h2>
-            
-            {/* Add New Comment Form */}
-            <div className="bg-gradient-to-b from-gray-100/80 to-gray-200/60 border border-gray-300/50 dark:bg-gradient-to-b dark:from-amber-900/20 dark:to-amber-800/10 dark:border-amber-700/30 p-8 rounded-lg mb-8 transition-all duration-500">
-              <h3 className="text-lg font-serif text-gray-900 dark:text-amber-100 mb-6 transition-colors duration-500">Leave Your Mark</h3>
-              <form onSubmit={handleAddComment} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input
-                    type="text"
-                    placeholder="Your Name"
-                    value={newCommentName}
-                    onChange={(e) => setNewCommentName(e.target.value)}
-                    className="px-4 py-3 bg-white/70 border border-gray-300/60 dark:bg-black/30 dark:border-amber-700/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-amber-500/50 text-gray-900 dark:text-amber-100 placeholder-gray-500 dark:placeholder-amber-300/50 font-serif transition-all duration-500"
-                    required
-                  />
-                  <input
-                    type="text"
-                    placeholder="Your Location"
-                    value={newCommentLocation}
-                    onChange={(e) => setNewCommentLocation(e.target.value)}
-                    className="px-4 py-3 bg-white/70 border border-gray-300/60 dark:bg-black/30 dark:border-amber-700/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-amber-500/50 text-gray-900 dark:text-amber-100 placeholder-gray-500 dark:placeholder-amber-300/50 font-serif transition-all duration-500"
-                    required
-                  />
-                </div>
-                <textarea
-                  placeholder="Share your thoughts about this masterpiece..."
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  rows={4}
-                  className="w-full px-4 py-3 bg-white/70 border border-gray-300/60 dark:bg-black/30 dark:border-amber-700/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-amber-500/50 text-gray-900 dark:text-amber-100 placeholder-gray-500 dark:placeholder-amber-300/50 font-serif resize-none transition-all duration-500"
-                  required
-                />
-                <button
-                  type="submit"
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-amber-600 dark:to-amber-700 text-white px-8 py-3 rounded-lg font-serif font-semibold hover:from-blue-700 hover:to-blue-800 dark:hover:from-amber-700 dark:hover:to-amber-800 transition-all duration-300"
-                >
-                  Sign the Visitor Book
-                </button>
-              </form>
-            </div>
-
-            {/* Display Comments */}
-            <div className="space-y-6">
-              {[...mockVisitorComments, ...visitorComments].map((comment) => (
-                <div
-                  key={comment.id}
-                  className="bg-gradient-to-r from-gray-100/80 to-gray-200/60 border border-gray-300/50 dark:bg-gradient-to-r dark:from-amber-900/20 dark:to-amber-800/10 dark:border-amber-700/30 p-6 rounded-lg group hover:border-gray-400/60 dark:hover:border-amber-600/50 transition-all duration-300"
-                >
-                  <div className="flex items-start gap-4">
-                    {comment.avatar && (
-                      <img
-                        src={comment.avatar}
-                        alt={comment.name}
-                        className="w-12 h-12 rounded-full border-2 border-gray-300/60 dark:border-amber-700/40 transition-all duration-500"
-                      />
-                    )}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h4 className="font-serif text-gray-900 dark:text-amber-100 font-semibold transition-colors duration-500">
-                          {comment.name}
-                        </h4>
-                        <span className="text-gray-600 dark:text-amber-300/60 font-serif text-sm transition-colors duration-500">
-                          from {comment.location}
-                        </span>
-                        <div className="flex text-blue-500 dark:text-amber-400 text-xs transition-colors duration-500">
-                          {[...Array(comment.rating)].map((_, i) => (
-                            <span key={i}>★</span>
-                          ))}
-                        </div>
-                      </div>
-                      <p className="text-gray-700 dark:text-amber-200/80 font-serif leading-relaxed italic transition-colors duration-500">
-                        "{comment.comment}"
-                      </p>
-                      <p className="text-gray-500 dark:text-amber-300/50 font-serif text-xs mt-2 transition-colors duration-500">
-                        {comment.date}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Related Exhibitions */}
-          <motion.div
-            variants={itemVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <h2 className="text-2xl font-serif text-gray-900 dark:text-amber-100 mb-8 text-center transition-colors duration-500">
-              Related Exhibitions
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {similarNFTs.map((nft) => (
                 <motion.div
-                  key={nft.id}
-                  className="bg-gradient-to-b from-gray-100/80 to-gray-200/60 border border-gray-300/50 dark:bg-gradient-to-b dark:from-amber-900/20 dark:to-amber-800/10 dark:border-amber-700/30 rounded-lg overflow-hidden hover:border-gray-400/60 dark:hover:border-amber-600/50 transition-all duration-300 cursor-pointer group"
-                  whileHover={{ y: -5, scale: 1.02 }}
-                  onClick={() => navigate(`/nft/${nft.id}`)}
+                  className="flex items-center space-x-6 mb-8 text-sm text-gray-500 dark:text-amber-300/70"
+                  variants={itemVariants}
                 >
-                  <div className="aspect-square overflow-hidden bg-gray-200/50 dark:bg-black/30 transition-all duration-500">
-                    <img
-                      src={nft.image}
-                      alt={nft.title}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
+                  <div className="flex items-center">
+                    <Eye className="w-5 h-5 mr-2 text-blue-500 dark:text-amber-500" />
+                    <span>{nftData.viewCount.toLocaleString()} Views</span>
                   </div>
-                  <div className="p-4">
-                    <h3 className="font-serif text-gray-900 dark:text-amber-100 font-semibold mb-1 transition-colors duration-500">
-                      {nft.title}
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-amber-300/70 font-serif mb-2 transition-colors duration-500">
-                      by {nft.artist}
-                    </p>
-                    <p className="font-serif font-bold text-blue-600 dark:text-amber-400 transition-colors duration-500">
-                      {nft.price}
-                    </p>
+                  <div className="flex items-center">
+                    <Heart className="w-5 h-5 mr-2 text-red-500 dark:text-red-400" />
+                    <span>{nftData.likeCount.toLocaleString()} Likes</span>
                   </div>
                 </motion.div>
-              ))}
+                
+                {/* Current Bid Section (Placeholder) */}
+                {nftData.onSale && (
+                  <motion.div className="mb-8" variants={itemVariants}>
+                    <h3 className="text-sm font-semibold text-gray-500 dark:text-amber-300/70 mb-2 uppercase tracking-wider font-sans">
+                      Current Price
+                    </h3>
+                    <p className="text-3xl font-bold text-blue-600 dark:text-amber-400 font-serif">
+                      {nftData.price.toLocaleString()} ETH
+                    </p>
+                    <form onSubmit={handleBidSubmit} className="mt-4 flex gap-3">
+                      <input
+                        type="text"
+                        value={currentBid}
+                        onChange={(e) => setCurrentBid(e.target.value)}
+                        placeholder="Enter your bid (e.g., 2.5 ETH)"
+                        className="flex-grow px-4 py-3 rounded-lg border border-gray-300 dark:border-amber-700/50 focus:ring-2 focus:ring-blue-500 dark:focus:ring-amber-500 outline-none bg-white/80 dark:bg-gray-700/50 dark:text-amber-100 placeholder-gray-400 dark:placeholder-amber-500/70 transition-all duration-300"
+                      />
+                      <button
+                        type="submit"
+                        className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 dark:from-amber-500 dark:to-amber-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg hover:from-blue-600 hover:to-blue-700 dark:hover:from-amber-600 dark:hover:to-amber-700 transition-all duration-300 transform hover:scale-105"
+                      >
+                        Place Bid
+                      </button>
+                    </form>
+                  </motion.div>
+                )}
+
+                <motion.div className="flex space-x-3" variants={itemVariants}>
+                  <button className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-gray-100/80 to-white/80 border border-gray-300/50 dark:bg-gradient-to-r dark:from-amber-900/40 dark:to-amber-800/30 backdrop-blur-sm rounded-lg dark:border dark:border-amber-700/30 hover:from-gray-200/90 hover:to-white/90 dark:hover:from-amber-800/50 dark:hover:to-amber-700/40 transition-all duration-300 text-gray-700 dark:text-amber-200 hover:text-gray-900 dark:hover:text-amber-100 font-medium">
+                    <Heart className="w-5 h-5" />
+                    <span>Favorite</span>
+                  </button>
+                  <button className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-gray-100/80 to-white/80 border border-gray-300/50 dark:bg-gradient-to-r dark:from-amber-900/40 dark:to-amber-800/30 backdrop-blur-sm rounded-lg dark:border dark:border-amber-700/30 hover:from-gray-200/90 hover:to-white/90 dark:hover:from-amber-800/50 dark:hover:to-amber-700/40 transition-all duration-300 text-gray-700 dark:text-amber-200 hover:text-gray-900 dark:hover:text-amber-100 font-medium">
+                    <Share2 className="w-5 h-5" />
+                    <span>Share</span>
+                  </button>
+                </motion.div>
+              </div>
+            </motion.div>
+          </motion.div>
+
+          {/* Detailed Information Tabs - Museum Style */}
+          <motion.div
+            className="bg-gradient-to-br from-white/70 to-gray-100/50 dark:bg-gradient-to-br dark:from-gray-800/60 dark:to-gray-900/50 backdrop-blur-md p-8 rounded-lg shadow-xl border border-gray-200/50 dark:border-amber-700/30 mb-16 transition-all duration-500"
+            variants={itemVariants}
+          >
+            <h2 className="text-3xl font-bold mb-8 text-gray-900 dark:text-amber-100 font-serif tracking-tight">
+              Artwork Details
+            </h2>
+            
+            <div className="mb-10 prose prose-lg dark:prose-invert max-w-none prose-p:text-gray-700 dark:prose-p:text-amber-300/90 prose-headings:font-serif prose-headings:text-gray-800 dark:prose-headings:text-amber-200">
+              <h3 className="text-xl font-semibold mb-3 flex items-center">
+                <Info className="w-6 h-6 mr-3 text-blue-500 dark:text-amber-500" />
+                Curator's Note
+              </h3>
+              <p className="leading-relaxed whitespace-pre-wrap">{nftData.description}</p>
+            </div>
+
+            <div className="mb-10">
+              <h3 className="text-xl font-semibold mb-6 flex items-center text-gray-800 dark:text-amber-200 font-serif">
+                <Award className="w-6 h-6 mr-3 text-purple-500 dark:text-purple-400" />
+                Key Attributes
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {mockProperties.map((prop, index) => (
+                  <motion.div
+                    key={index}
+                    className="bg-gray-50/70 dark:bg-gray-700/50 p-5 rounded-lg border border-gray-200/80 dark:border-amber-800/50 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1"
+                    variants={itemVariants}
+                  >
+                    <p className="text-xs text-gray-500 dark:text-amber-400/80 uppercase tracking-wider font-sans">
+                      {prop.trait}
+                    </p>
+                    <p className="text-lg font-semibold text-gray-800 dark:text-amber-200 mt-1">
+                      {prop.value}
+                    </p>
+                    <p className="text-xs text-gray-400 dark:text-amber-500/70 mt-2">
+                      Rarity: {prop.rarity}
+                    </p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>            <div className="mb-10">
+              <h3 className="text-xl font-semibold mb-6 flex items-center text-gray-800 dark:text-amber-200 font-serif">
+                <Shield className="w-6 h-6 mr-3 text-green-500 dark:text-green-400" />
+                Blockchain Provenance
+              </h3>
+              <div className="space-y-5">                {[
+                  {
+                    label: "Contract Address",
+                    value: truncateAddress(nftData.contractAddress),
+                    fullValue: nftData.contractAddress, // Keep full value for copy or tooltip
+                    icon: (
+                      <Calendar className="w-5 h-5 text-blue-500 dark:text-amber-500" />
+                    ),
+                  },
+                  {
+                    label: "Token ID",
+                    value: nftData.tokenId,
+                    icon: <Tag className="w-5 h-5 text-purple-500 dark:text-purple-400" />,
+                  },
+                  {
+                    label: "NFT Standard",
+                    value: "ERC-721 (Assumed)",
+                    icon: (
+                      <Award className="w-5 h-5 text-yellow-500 dark:text-yellow-400" />
+                    ),
+                  },
+                  {
+                    label: "Minted On",
+                    value: new Date(nftData.mintedAt).toLocaleDateString(),
+                    icon: <Clock className="w-5 h-5 text-gray-500 dark:text-gray-400" />,
+                  },
+                  {
+                    label: "Created On",
+                    value: new Date(nftData.createdAt).toLocaleDateString(),
+                    icon: <Clock className="w-5 h-5 text-gray-500 dark:text-gray-400" />,
+                  },
+                ].map((item, index) => (
+                  <motion.div
+                    key={index}
+                    className="flex items-center justify-between p-4 bg-gray-50/70 dark:bg-gray-700/50 rounded-lg border border-gray-200/80 dark:border-amber-800/50 shadow-sm"
+                    variants={itemVariants}
+                  >
+                    <div className="flex items-center">
+                      {item.icon}
+                      <span className="ml-3 text-sm font-medium text-gray-600 dark:text-amber-300/80">
+                        {item.label}:
+                      </span>
+                    </div>
+                    <span 
+                      className="text-sm text-gray-800 dark:text-amber-200 font-mono break-all cursor-pointer hover:text-blue-600 dark:hover:text-amber-400 transition-colors"
+                      title={item.fullValue || item.value} // Show full value on hover
+                      onClick={() => {
+                        if (item.fullValue) {
+                          navigator.clipboard.writeText(item.fullValue);
+                          console.log('Copied to clipboard:', item.fullValue);
+                        }
+                      }}
+                    >
+                      {item.value}
+                    </span>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+          
+          {/* NEW: Marketplace Insights Section */}
+          <motion.div
+            className="bg-gradient-to-br from-white/70 to-gray-100/50 dark:bg-gradient-to-br dark:from-gray-800/60 dark:to-gray-900/50 backdrop-blur-md p-8 rounded-lg shadow-xl border border-gray-200/50 dark:border-amber-700/30 mb-16 transition-all duration-500"
+            variants={itemVariants}
+          >
+            <h2 className="text-3xl font-bold mb-8 text-gray-900 dark:text-amber-100 font-serif tracking-tight flex items-center">
+              <BarChart2 className="w-8 h-8 mr-3 text-blue-500 dark:text-amber-500" />
+              Marketplace Insights
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Sale Status */}
+              <motion.div
+                className="bg-gray-50/70 dark:bg-gray-700/50 p-6 rounded-lg border border-gray-200/80 dark:border-amber-800/50 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1"
+                variants={itemVariants}
+              >
+                <p className="text-xs text-gray-500 dark:text-amber-400/80 uppercase tracking-wider font-sans flex items-center">
+                  <Tag className="w-4 h-4 mr-2" />
+                  Sale Status
+                </p>
+                <p className={`text-2xl font-semibold mt-2 ${nftData.onSale ? 'text-green-600 dark:text-green-400' : 'text-gray-700 dark:text-amber-300'}`}>
+                  {nftData.onSale ? "Currently For Sale" : "Not For Sale"}
+                </p>
+                {nftData.onSale && (
+                   <p className="text-xs text-gray-400 dark:text-amber-500/70 mt-1">
+                     Available for purchase
+                   </p>
+                )}
+              </motion.div>
+
+              {/* Price */}
+              {nftData.onSale && (
+                <motion.div
+                  className="bg-gray-50/70 dark:bg-gray-700/50 p-6 rounded-lg border border-gray-200/80 dark:border-amber-800/50 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1"
+                  variants={itemVariants}
+                >
+                  <p className="text-xs text-gray-500 dark:text-amber-400/80 uppercase tracking-wider font-sans flex items-center">
+                    <DollarSign className="w-4 h-4 mr-2" />
+                    Current Price
+                  </p>
+                  <p className="text-2xl font-semibold text-blue-600 dark:text-amber-400 mt-2">
+                    {nftData.price.toLocaleString()} ETH
+                  </p>
+                   <p className="text-xs text-gray-400 dark:text-amber-500/70 mt-1">
+                     (Excluding gas fees)
+                   </p>
+                </motion.div>
+              )}
+
+              {/* View Count */}
+              <motion.div
+                className="bg-gray-50/70 dark:bg-gray-700/50 p-6 rounded-lg border border-gray-200/80 dark:border-amber-800/50 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1"
+                variants={itemVariants}
+              >
+                <p className="text-xs text-gray-500 dark:text-amber-400/80 uppercase tracking-wider font-sans flex items-center">
+                  <Eye className="w-4 h-4 mr-2" />
+                  Total Views
+                </p>
+                <p className="text-2xl font-semibold text-gray-800 dark:text-amber-200 mt-2">
+                  {nftData.viewCount.toLocaleString()}
+                </p>
+                 <p className="text-xs text-gray-400 dark:text-amber-500/70 mt-1">
+                   Impressions on this artwork
+                 </p>
+              </motion.div>
+
+              {/* Like Count */}
+              <motion.div
+                className="bg-gray-50/70 dark:bg-gray-700/50 p-6 rounded-lg border border-gray-200/80 dark:border-amber-800/50 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1"
+                variants={itemVariants}
+              >
+                <p className="text-xs text-gray-500 dark:text-amber-400/80 uppercase tracking-wider font-sans flex items-center">
+                  <Heart className="w-4 h-4 mr-2" />
+                  Total Likes
+                </p>
+                <p className="text-2xl font-semibold text-red-600 dark:text-red-400 mt-2">
+                  {nftData.likeCount.toLocaleString()}
+                </p>
+                 <p className="text-xs text-gray-400 dark:text-amber-500/70 mt-1">
+                   Community appreciation
+                 </p>
+              </motion.div>
             </div>
           </motion.div>
 
-          {/* Audio Guide Information Panel */}
-          {activeAudioGuide && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-gray-100 to-gray-200 border border-gray-300 dark:bg-gradient-to-r dark:from-amber-900 dark:to-amber-800 dark:border-amber-600 p-6 rounded-lg shadow-2xl shadow-gray-500/30 dark:shadow-amber-900/50 z-50 max-w-md w-full mx-4 transition-all duration-500"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="font-serif text-gray-900 dark:text-amber-100 font-semibold transition-colors duration-500">
-                  {audioGuideInfo[activeAudioGuide]?.title}
-                </h4>
-                <button
-                  onClick={() => setActiveAudioGuide(null)}
-                  className="text-gray-600 dark:text-amber-300 hover:text-gray-900 dark:hover:text-amber-100 transition-colors duration-300"
+          {/* Audio Guide Section - Museum Style */}
+          <motion.div
+            className="bg-gradient-to-br from-white/70 to-gray-100/50 dark:bg-gradient-to-br dark:from-gray-800/60 dark:to-gray-900/50 backdrop-blur-md p-8 rounded-lg shadow-xl border border-gray-200/50 dark:border-amber-700/30 mb-16 transition-all duration-500"
+            variants={itemVariants}
+          >
+            {/* ... existing Audio Guide ... */}
+            <h2 className="text-3xl font-bold mb-8 text-gray-900 dark:text-amber-100 font-serif tracking-tight flex items-center">
+              <Volume2 className="w-8 h-8 mr-3 text-blue-500 dark:text-amber-500" />
+              Interactive Audio Guide
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              {Object.entries(audioGuideInfo).map(([key, info]) => (
+                <motion.button
+                  key={key}
+                  onClick={() => handleAudioGuide(key)}
+                  className={`p-6 rounded-lg border transition-all duration-300 transform hover:-translate-y-1 ${
+                    activeAudioGuide === key
+                      ? "bg-blue-500 dark:bg-amber-500 text-white shadow-blue-500/40 dark:shadow-amber-500/40"
+                      : "bg-gray-50/70 dark:bg-gray-700/50 border-gray-200/80 dark:border-amber-800/50 hover:shadow-md"
+                  }`}
+                  variants={itemVariants}
                 >
-                  ×
-                </button>
+                  <h4 className="text-lg font-semibold mb-2 text-left">{info.title}</h4>
+                  <p className={`text-sm text-left ${activeAudioGuide === key ? 'text-blue-100 dark:text-amber-100' : 'text-gray-600 dark:text-amber-300/80'}`}>
+                    Duration: {info.duration}
+                  </p>
+                </motion.button>
+              ))}
+            </div>
+            {activeAudioGuide && audioGuideInfo[activeAudioGuide] && (
+              <motion.div
+                className="mt-6 p-6 bg-gray-100/80 dark:bg-gray-700/60 rounded-lg border border-gray-200/80 dark:border-amber-800/50 shadow-inner"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.4 }}
+              >
+                <h4 className="text-xl font-semibold mb-3 text-gray-800 dark:text-amber-200 font-serif">
+                  {audioGuideInfo[activeAudioGuide].title}
+                </h4>
+                <p className="text-gray-700 dark:text-amber-300/90 leading-relaxed whitespace-pre-wrap">
+                  {audioGuideInfo[activeAudioGuide].content}
+                </p>
+              </motion.div>
+            )}
+          </motion.div>
+
+          {/* Similar Artworks Section - Museum Style */}
+          <motion.div
+            className="bg-gradient-to-br from-white/70 to-gray-100/50 dark:bg-gradient-to-br dark:from-gray-800/60 dark:to-gray-900/50 backdrop-blur-md p-8 rounded-lg shadow-xl border border-gray-200/50 dark:border-amber-700/30 transition-all duration-500"
+            variants={itemVariants}
+          >
+            {/* ... existing Similar Artworks ... */}            <h2 className="text-3xl font-bold mb-8 text-gray-900 dark:text-amber-100 font-serif tracking-tight flex items-center">
+              <Sparkles className="w-8 h-8 mr-3 text-purple-500 dark:text-purple-400" />
+              Explore Similar Artworks
+            </h2>
+            
+            {/* Loading state */}
+            {similarNFTsLoading && (
+              <div className="flex justify-center items-center py-12">
+                <div className="w-8 h-8 border-4 border-blue-500 dark:border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                <span className="ml-3 text-gray-600 dark:text-amber-300">Loading similar artworks...</span>
               </div>
-              <p className="text-gray-700 dark:text-amber-200/80 font-serif text-sm mb-3 transition-colors duration-500">
-                {audioGuideInfo[activeAudioGuide]?.content}
-              </p>
-              <div className="flex items-center gap-2 text-gray-600 dark:text-amber-300/70 text-xs transition-colors duration-500">
-                <Volume2 className="w-4 h-4" />
-                <span>Duration: {audioGuideInfo[activeAudioGuide]?.duration}</span>
+            )}
+            
+            {/* Empty state */}
+            {!similarNFTsLoading && similarNFTs.length === 0 && (
+              <div className="text-center py-12">
+                <Sparkles className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                <p className="text-gray-600 dark:text-amber-300/80">
+                  No similar artworks found in this category yet.
+                </p>
               </div>
-            </motion.div>
-          )}
+            )}
+            
+            {/* Similar NFTs grid */}
+            {!similarNFTsLoading && similarNFTs.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {similarNFTs.map((nft) => (
+                  <motion.div
+                    key={nft.id}
+                    className="bg-white/80 dark:bg-gray-700/60 rounded-lg shadow-lg overflow-hidden border border-gray-200/80 dark:border-amber-800/50 group transition-all duration-300 transform hover:shadow-xl hover:-translate-y-1.5"
+                    variants={itemVariants}
+                    whileHover={{ scale: 1.03 }}
+                  >
+                    <div className="relative overflow-hidden aspect-square">
+                      <SmartImage
+                        imageId={nft.imageUrl}
+                        alt={nft.name}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        fallbackCategory={nft.category}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    </div>
+                    <div className="p-6">
+                      <h3 className="text-xl font-semibold mb-2 text-gray-800 dark:text-amber-200 font-serif">
+                        {nft.name}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-amber-300/80 mb-1">
+                        By {nft.creator.startsWith('0x') && nft.creator.length > 20 
+                          ? truncateAddress(nft.creator, 6, 4)
+                          : nft.creator
+                        }
+                      </p>
+                      {nft.onSale && (
+                        <p className="text-lg font-bold text-blue-600 dark:text-amber-400">
+                          {nft.price.toLocaleString()} ETH
+                        </p>
+                      )}
+                      {!nft.onSale && (
+                        <p className="text-sm text-gray-500 dark:text-amber-500/70">
+                          Not for sale
+                        </p>
+                      )}
+                      <button 
+                        onClick={() => navigate(`/Home/nft/${nft.id}`)}
+                        className="mt-4 w-full px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 dark:from-amber-500 dark:to-amber-600 text-white font-medium rounded-lg shadow-md hover:shadow-lg hover:from-blue-600 hover:to-blue-700 dark:hover:from-amber-600 dark:hover:to-amber-700 transition-all duration-300 text-sm">
+                        View Details
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </motion.div>
         </div>
       </div>
     </>

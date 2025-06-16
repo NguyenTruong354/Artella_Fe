@@ -11,6 +11,15 @@ export interface PaginatedResponse<T> {
   hasPrevious: boolean;
 }
 
+// Page response for Spring Boot pagination
+export interface PageResponse<T> {
+  content: T[];
+  number: number; // Current page number
+  size: number; // Page size
+  totalElements: number; // Total number of elements
+  totalPages: number; // Total number of pages
+}
+
 export interface BaseEntity {
   id: string;
   createdAt: string;
@@ -55,6 +64,20 @@ export interface DigitalArtNFT {
   creationMethod: 'UPLOAD' | 'DRAWING'; // "UPLOAD" hoặc "DRAWING"
 }
 
+// NFT model from backend
+export interface NFT {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+  productId: string;
+  owner: string;
+  tokenId: string;
+  contractAddress: string;
+  nftId: string;
+  mintDate: string; // ISO date string
+}
+
 // Request/Response types for NFT API
 export interface GetTrendingNFTsRequest {
   limit?: number;
@@ -64,4 +87,29 @@ export interface GetTrendingNFTsResponse {
   message: string;
   data: DigitalArtNFT[];
   success: boolean;
+}
+
+// Product types (from MongoDB backend)
+export interface Product {
+  id: string;
+  productId: string;
+  name: string;
+  description: string;
+  category: string;
+  price: string; // BigDecimal from backend as string
+  isAuction: boolean;
+  imageIds: string[];
+  sellerAddress: string;
+  certificationId: string;
+  appraisalCert: string; // ID của chứng thư thẩm định đã được phê duyệt
+  status: string; // Default: "Available"
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductQueryParams {
+  page?: number;
+  size?: number;
+  sortBy?: string;
+  sortDir?: 'asc' | 'desc';
 }

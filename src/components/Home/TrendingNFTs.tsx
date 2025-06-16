@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useTrendingNFTs } from '../../hooks/useNFT';
 import { DigitalArtNFT } from '../../api/types';
 import SmartImage from '../SmartImage';
@@ -124,6 +125,8 @@ interface NFTCardProps {
 }
 
 const NFTCard: React.FC<NFTCardProps> = ({ nft, index }) => {
+  const navigate = useNavigate();
+  
   // Special styling for top 3
   const getCardStyling = (position: number) => {
     switch (position) {
@@ -145,16 +148,20 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft, index }) => {
   const handleImageError = useCallback(() => {
     console.log('❌ Smart image failed to load:', nft.imageUrl);
   }, [nft.imageUrl]);
+  const handleCardClick = useCallback(() => {
+    navigate(`/Home/nft/${nft.id}`);
+  }, [navigate, nft.id]);
 
-  return (
-    <motion.div
+  return (    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.2 }}
+      onClick={handleCardClick}
       className={`group bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl 
                  transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700
+                 cursor-pointer hover:scale-105
                  ${getCardStyling(index)}`}
-    >      {/* Image Container */}
+    >{/* Image Container */}
       <div className="relative aspect-square overflow-hidden">        <SmartImage
           imageId={nft.imageUrl}
           alt={nft.name}
@@ -235,9 +242,14 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft, index }) => {
               Không bán
             </span>
           )}
-          
-          <button className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 
-                             dark:hover:text-blue-300 font-medium transition-colors">
+            <button 
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent card click when button is clicked
+              handleCardClick();
+            }}
+            className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 
+                             dark:hover:text-blue-300 font-medium transition-colors"
+          >
             Xem chi tiết
           </button>
         </div>

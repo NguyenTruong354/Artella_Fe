@@ -74,10 +74,21 @@ class ApiClient {
     const response = await this.instance.request<ApiResponse<T>>(config);
     return response.data;
   }
-
   // HTTP methods
   public async get<T>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    return this.request<T>({ ...config, method: 'GET', url });
+    console.log('🔍 API GET Request:', {
+      url: `${this.baseURL}${url}`,
+      config
+    });
+    
+    try {
+      const result = await this.request<T>({ ...config, method: 'GET', url });
+      console.log('✅ API GET Success:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ API GET Error:', error);
+      throw error;
+    }
   }
 
   public async post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
