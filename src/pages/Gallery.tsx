@@ -13,6 +13,7 @@ import {
   ArtworkCard,
   AdvancedSearchPanel,
   CategoryFilter,
+  FilterHelp,
   GalleryHeader,
   MasonryGrid,
   SkeletonCard,
@@ -37,7 +38,7 @@ const galleryItemToArtworkItem = (item: GalleryItem) => ({
   artist: item.artist,
   category: item.category,
   price: item.price.toString(), // Convert to string
-  image: item.imageUrl,
+  image: item.imageUrl, // Sử dụng imageUrl làm imageId cho SmartImage
   tags: item.tags,
   description: item.description,
   likes: 0, // Default value
@@ -54,7 +55,8 @@ const Gallery: React.FC = () => {
   const [state, dispatch] = useReducer(
     galleryPageReducer,
     initialGalleryPageState
-  );  const {
+  );
+  const {
     selectedCategory,
     viewMode,
     searchQuery,
@@ -66,7 +68,9 @@ const Gallery: React.FC = () => {
   } = state;
 
   // Add state for data type selection
-  const [dataType, setDataType] = React.useState<'products' | 'nfts' | 'both'>('both');
+  const [dataType, setDataType] = React.useState<"products" | "nfts" | "both">(
+    "both"
+  );
 
   // Dark mode hook
   const darkMode = useDarkMode();
@@ -78,12 +82,12 @@ const Gallery: React.FC = () => {
     hasMore,
     loadMore,
     refresh,
-    totalItems
+    totalItems,
   } = useGalleryData({
     category: selectedCategory,
     searchQuery: searchQuery,
     dataType: dataType, // Use the dataType state
-    pageSize: 12
+    pageSize: 12,
   });
   useEffect(() => {
     if (inView) {
@@ -99,45 +103,65 @@ const Gallery: React.FC = () => {
   }, [apiLoading]);
 
   // Get all artists and tags from gallery items
-  const allArtists = Array.from(new Set(galleryItems.map(item => item.artist))).filter(Boolean);
-  const allTags = Array.from(new Set(galleryItems.flatMap(item => item.tags))).filter(Boolean);
+  const allArtists = Array.from(
+    new Set(galleryItems.map((item) => item.artist))
+  ).filter(Boolean);
+  const allTags = Array.from(
+    new Set(galleryItems.flatMap((item) => item.tags))
+  ).filter(Boolean);
 
   // Filter items based on advanced filters
-  const filteredArtworks = galleryItems.filter(item => {    // Advanced filters logic
-    const { selectedTags, selectedArtist, priceRange } = advancedFilters;
-    
-    // Tag filter
-    if (selectedTags.length > 0) {
-      const hasMatchingTag = selectedTags.some(tag => item.tags.includes(tag));
-      if (!hasMatchingTag) return false;
-    }
-    
-    // Artist filter
-    if (selectedArtist && selectedArtist !== 'All' && item.artist !== selectedArtist) {
-      return false;
-    }
-    
-    // Price range filter
-    if (item.price < priceRange.min * 1000 || item.price > priceRange.max * 1000) {
-      return false;
-    }
-    
-    return true;
-  }).sort((a, b) => {
-    // Apply sorting
-    const { sortBy } = advancedFilters;
+  const filteredArtworks = galleryItems
+    .filter((item) => {
+      // Advanced filters logic
+      const { selectedTags, selectedArtist, priceRange } = advancedFilters;
+
+      // Tag filter
+      if (selectedTags.length > 0) {
+        const hasMatchingTag = selectedTags.some((tag) =>
+          item.tags.includes(tag)
+        );
+        if (!hasMatchingTag) return false;
+      }
+
+      // Artist filter
+      if (
+        selectedArtist &&
+        selectedArtist !== "All" &&
+        item.artist !== selectedArtist
+      ) {
+        return false;
+      }
+
+      // Price range filter
+      if (
+        item.price < priceRange.min * 1000 ||
+        item.price > priceRange.max * 1000
+      ) {
+        return false;
+      }
+
+      return true;
+    })
+    .sort((a, b) => {
+      // Apply sorting
+      const { sortBy } = advancedFilters;
       switch (sortBy) {
-      case 'price-low':
-        return a.price - b.price;
-      case 'price-high':
-        return b.price - a.price;
-      case 'oldest':
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-      case 'newest':
-      default:
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    }
-  });
+        case "price-low":
+          return a.price - b.price;
+        case "price-high":
+          return b.price - a.price;
+        case "oldest":
+          return (
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+        case "newest":
+        default:
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+      }
+    });
   // Load more artworks function using real API
   const loadMoreArtworks = useCallback(async () => {
     if (isLoadingMore || !hasMore) return;
@@ -147,7 +171,7 @@ const Gallery: React.FC = () => {
     try {
       await loadMore();
     } catch (error) {
-      console.error('Error loading more artworks:', error);
+      console.error("Error loading more artworks:", error);
     } finally {
       dispatch({ type: "SET_LOADING_MORE", payload: false });
     }
@@ -156,16 +180,16 @@ const Gallery: React.FC = () => {
   useEffect(() => {
     const handleScroll = () => {
       if (
-        window.innerHeight + document.documentElement.scrollTop
-        >= document.documentElement.offsetHeight - 1000
+        window.innerHeight + document.documentElement.scrollTop >=
+        document.documentElement.offsetHeight - 1000
       ) {
         loadMoreArtworks();
       }
     };
 
     if (hasMore && !isLoadingMore) {
-      window.addEventListener('scroll', handleScroll);
-      return () => window.removeEventListener('scroll', handleScroll);
+      window.addEventListener("scroll", handleScroll);
+      return () => window.removeEventListener("scroll", handleScroll);
     }
   }, [hasMore, isLoadingMore, loadMoreArtworks]);
 
@@ -298,8 +322,9 @@ const Gallery: React.FC = () => {
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500 dark:bg-amber-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob"></div>
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-cyan-500 dark:bg-orange-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-2000"></div>
           <div className="absolute top-40 left-40 w-80 h-80 bg-purple-500 dark:bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-4000"></div>
-        </div>        {/* Header */}
-        <GalleryHeader 
+        </div>{" "}
+        {/* Header */}
+        <GalleryHeader
           viewMode={viewMode}
           searchQuery={searchQuery}
           isFilteringTransition={isFilteringTransition}
@@ -309,10 +334,11 @@ const Gallery: React.FC = () => {
           onMasonryView={setMasonryView}
           onGridView={setGridView}
           onListView={setListView}
-          onToggleAdvancedSearch={() => dispatch({ type: "TOGGLE_ADVANCED_SEARCH" })}
+          onToggleAdvancedSearch={() =>
+            dispatch({ type: "TOGGLE_ADVANCED_SEARCH" })
+          }
           onDataTypeChange={setDataType}
         />
-
         {/* Advanced Search Panel */}
         {showAdvancedSearch && (
           <AdvancedSearchPanel
@@ -331,20 +357,21 @@ const Gallery: React.FC = () => {
             onSortByChange={(sortBy) =>
               dispatch({ type: "SET_SORT_BY", payload: sortBy })
             }
-            onResetFilters={() =>
-              dispatch({ type: "RESET_ADVANCED_FILTERS" })
-            }
+            onResetFilters={() => dispatch({ type: "RESET_ADVANCED_FILTERS" })}
           />
-        )}
-
-        {/* Category Filter */}
-        <CategoryFilter 
-          categories={categories}
-          selectedCategory={selectedCategory}
-          onCategoryChange={handleCategoryChange}        />
-
-        {/* Results count with animation and active filters display */}
-        {!apiLoading && filteredArtworks.length > 0 && (
+        )}        {/* Category Filter with Help */}
+        <div className="flex justify-between items-start mb-2">
+          <div className="flex-1">
+            <CategoryFilter
+              categories={categories}
+              selectedCategory={selectedCategory}
+              onCategoryChange={handleCategoryChange}
+            />
+          </div>
+          <FilterHelp className="mt-8" />
+          <FilterHelp className="mt-4 mr-2" />
+        </div>{/* Results count with animation and active filters display */}
+        {!apiLoading && (
           <motion.div
             className="mb-6 space-y-3"
             initial={{ opacity: 0, y: -10 }}
@@ -354,34 +381,53 @@ const Gallery: React.FC = () => {
               advancedFilters
             )}`}
           >
-            <div className="flex items-center justify-between">
-              <motion.p
-                className="text-gray-600 dark:text-gray-400 text-sm"
-                initial={{ scale: 0.9 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.2 }}
-              >
-                Showing{" "}
-                <span className="font-semibold text-blue-600 dark:text-amber-400">
-                  {filteredArtworks.length}
-                </span>{" "}
-                artworks
-                {totalItems > 0 && (
-                  <span className="text-gray-500"> of {totalItems} total</span>
-                )}
-                {selectedCategory !== "All" && (
-                  <span>
-                    {" "}
-                    in <span className="font-semibold">{selectedCategory}</span>
+            <div className="flex items-center justify-between">              {filteredArtworks.length > 0 ? (
+                <motion.p
+                  className="text-gray-600 dark:text-gray-400 text-sm"
+                  initial={{ scale: 0.9 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  Showing{" "}
+                  <span className="font-semibold text-blue-600 dark:text-amber-400">
+                    {filteredArtworks.length}
+                  </span>{" "}
+                  artworks
+                  {totalItems > 0 && (
+                    <span className="text-gray-500"> of {totalItems} total</span>
+                  )}
+                  {selectedCategory !== "All" && (
+                    <span>
+                      {" "}
+                      in <span className="font-semibold">{selectedCategory}</span>
+                    </span>
+                  )}
+                  {searchQuery && (
+                    <span>
+                      {" "}
+                      for "<span className="font-semibold">{searchQuery}</span>"
+                    </span>
+                  )}
+                </motion.p>
+              ) : (
+                <motion.p
+                  className="text-gray-600 dark:text-gray-400 text-sm"
+                  initial={{ scale: 0.9 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  No artworks found for{" "}
+                  <span className="font-semibold text-amber-600 dark:text-amber-400">
+                    {selectedCategory}
                   </span>
-                )}
-                {searchQuery && (
-                  <span>
-                    {" "}
-                    for "<span className="font-semibold">{searchQuery}</span>"
-                  </span>
-                )}
-              </motion.p>
+                  {searchQuery && (
+                    <span>
+                      {" "}
+                      with search term "<span className="font-semibold">{searchQuery}</span>"
+                    </span>
+                  )}. Try changing filters or search terms.
+                </motion.p>
+              )}
 
               {/* Filter reset button */}
               {(selectedCategory !== "All" ||
@@ -430,7 +476,6 @@ const Gallery: React.FC = () => {
             )}
           </motion.div>
         )}
-
         {/* Gallery Grid */}
         <motion.div
           key={`${selectedCategory}-${searchQuery}`}
@@ -484,10 +529,9 @@ const Gallery: React.FC = () => {
                       No artworks found
                     </h3>
                     <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                      {apiError 
-                        ? 'Error loading data. Please try refreshing.'
-                        : 'Try adjusting your search or filter criteria to find what you\'re looking for.'
-                      }
+                      {apiError
+                        ? "Error loading data. Please try refreshing."
+                        : "Try adjusting your search or filter criteria to find what you're looking for."}
                     </p>
                     {apiError && (
                       <button
@@ -570,10 +614,9 @@ const Gallery: React.FC = () => {
                       No artworks found
                     </h3>
                     <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                      {apiError 
-                        ? 'Error loading data. Please try refreshing.'
-                        : 'Try adjusting your search or filter criteria to find what you\'re looking for.'
-                      }
+                      {apiError
+                        ? "Error loading data. Please try refreshing."
+                        : "Try adjusting your search or filter criteria to find what you're looking for."}
                     </p>
                     {apiError && (
                       <button

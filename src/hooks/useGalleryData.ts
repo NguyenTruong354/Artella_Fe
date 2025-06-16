@@ -36,6 +36,38 @@ export interface UseGalleryDataReturn {
   currentPage: number;
 }
 
+// Helper function to map frontend categories to product API categories
+const mapProductCategory = (category: string): string => {
+  // Map frontend categories to actual product API categories
+  const categoryMap: Record<string, string> = {
+    'All': 'All',
+    'Digital Art': 'Digital', // If API has a Digital category
+    'Painting': 'Painting',
+    'Abstract': 'Abstract',
+    'Portrait': 'Portrait',
+    'Nature': 'Nature',
+    'Cyberpunk': 'Cyberpunk'
+  };
+  
+  return categoryMap[category] || category;
+};
+
+// We use getNFTFilterInfo to determine whether to use tags or categories
+
+// Helper function to get the correct filter for NFTs (either tag or category)
+const getNFTFilterInfo = (category: string): { useTag: boolean; value: string } => {
+  if (category === 'All') {
+    return { useTag: false, value: 'All' };
+  }
+  
+  if (category === 'Digital Art') {
+    return { useTag: false, value: 'Digital Art' };
+  }
+  
+  // For everything else, use tag filtering
+  return { useTag: true, value: category.toLowerCase() };
+};
+
 // Helper function to convert Product to GalleryItem
 const productToGalleryItem = (product: Product): GalleryItem => ({
   id: product.id,
@@ -43,7 +75,7 @@ const productToGalleryItem = (product: Product): GalleryItem => ({
   artist: product.sellerAddress.slice(0, 8) + '...' + product.sellerAddress.slice(-4), // Format address
   category: product.category,
   price: parseFloat(product.price) || 0,
-  imageUrl: product.imageIds[0] || '/placeholder-image.jpg',
+  imageUrl: product.imageIds[0] || '', // Sử dụng imageId đầu tiên thay vì URL
   tags: [product.category, product.status, ...(product.isAuction ? ['auction'] : [])],
   description: product.description,
   isAuction: product.isAuction,
@@ -60,7 +92,7 @@ const nftToGalleryItem = (nft: DigitalArtNFT): GalleryItem => ({
   artist: nft.creator || nft.owner || 'Unknown Artist',
   category: nft.category || 'Digital Art',
   price: parseFloat(nft.price?.toString() || '0') || 0,
-  imageUrl: nft.imageUrl || nft.metadata?.image || '/placeholder-image.jpg',
+  imageUrl: nft.imageUrl || '', // Sử dụng imageUrl từ NFT làm imageId
   tags: nft.tags || [nft.category || 'Digital Art'],
   description: nft.description || nft.metadata?.description || '',
   isAuction: false, // NFTs are typically not auctions in this context
@@ -86,33 +118,15 @@ export const useGalleryData = (params: UseGalleryDataParams = {}): UseGalleryDat
   const [hasMore, setHasMore] = useState(true);
   const [totalItems, setTotalItems] = useState(0);
 
-  // Reset when filters change
-  useEffect(() => {
-    setItems([]);
-    setCurrentPage(0);
-    setHasMore(true);
-    setError(null);
-    loadInitialData();
-  }, [category, searchQuery, dataType]);
-
-  const loadInitialData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      await loadData(0, true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
-    }
-  }, [category, searchQuery, dataType, pageSize]);
-
+  // Define loadData callback first
   const loadData = useCallback(async (page: number, reset: boolean = false) => {
-    try {      const queryParams: ProductQueryParams = {
+    try {
+      console.log('Loading gallery data with category:', category);
+      
+      const queryParams: ProductQueryParams = {
         page,
         size: pageSize,
-        sortBy: 'price', // Sử dụng 'price' vì đã test thành công trên Postman
+        sortBy: 'price',
         sortDir: 'desc'
       };
 
@@ -122,12 +136,17 @@ export const useGalleryData = (params: UseGalleryDataParams = {}): UseGalleryDat
       if (dataType === 'products' || dataType === 'both') {
         try {
           let productResponse;
+          const mappedProductCategory = mapProductCategory(category);
           
-          if (category !== 'All') {
+          console.log('Mapped product category:', mappedProductCategory);
+          
+          if (mappedProductCategory !== 'All') {
             // Get products by category with pagination
-            productResponse = await productService.getProductsByCategoryPaged(category, queryParams);
+            console.log(`Fetching products by category: ${mappedProductCategory}`);
+            productResponse = await productService.getProductsByCategoryPaged(mappedProductCategory, queryParams);
           } else {
             // Get all products with pagination
+            console.log('Fetching all products');
             productResponse = await productService.getAllProducts(queryParams);
           }
 
@@ -160,12 +179,24 @@ export const useGalleryData = (params: UseGalleryDataParams = {}): UseGalleryDat
       if (dataType === 'nfts' || dataType === 'both') {
         try {
           let nfts: DigitalArtNFT[] = [];
+          const { useTag, value: mappedNFTCategory } = getNFTFilterInfo(category);
+          
+          console.log('Mapped NFT category:', mappedNFTCategory);
 
-          if (category !== 'All') {
-            // Get NFTs by category
-            nfts = await nftService.getDigitalArtNFTsByCategory(category);
+          if (mappedNFTCategory !== 'All') {
+            // Get NFTs by category or tag based on the mapping
+            if (useTag) {
+              // Get NFTs by tag
+              console.log(`Fetching NFTs by tag: ${mappedNFTCategory}`);
+              nfts = await nftService.getDigitalArtNFTsByTag(mappedNFTCategory);
+            } else {
+              // Get NFTs by category
+              console.log(`Fetching NFTs by category: ${mappedNFTCategory}`);
+              nfts = await nftService.getDigitalArtNFTsByCategory(mappedNFTCategory);
+            }
           } else {
             // Get all NFTs
+            console.log('Fetching all NFTs');
             nfts = await nftService.getAllDigitalArtNFTs();
           }
 
@@ -206,11 +237,34 @@ export const useGalleryData = (params: UseGalleryDataParams = {}): UseGalleryDat
       setHasMore(newItems.length === pageSize);
       setCurrentPage(page);
 
-    } catch (err) {
-      console.error('Error loading gallery data:', err);
-      throw err;
+    } catch (error) {
+      console.error('Error loading data:', error);
+      setError(error instanceof Error ? error.message : 'An error occurred while loading data');
     }
-  }, [category, searchQuery, dataType, pageSize]);
+  }, [category, dataType, pageSize, searchQuery]);
+
+  // Define loadInitialData after loadData
+  const loadInitialData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      await loadData(0, true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  }, [loadData]);
+
+  // Reset when filters change
+  useEffect(() => {
+    setItems([]);
+    setCurrentPage(0);
+    setHasMore(true);
+    setError(null);
+    loadInitialData();
+  }, [loadInitialData]);
 
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore) return;

@@ -2,6 +2,7 @@
 export { ArtworkCard } from "./ArtworkCard";
 export { AdvancedSearchPanel } from "./AdvancedSearchPanel";
 export { CategoryFilter } from "./CategoryFilter";
+export { FilterHelp } from "./FilterHelp";
 export { GalleryHeader } from "./GalleryHeader";
 export { MasonryGrid } from "./MasonryGrid";
 export { SkeletonCard, ComponentFallback, LoadingMore } from "./LoadingComponents";
@@ -17,4 +18,4 @@ export { useInfiniteScroll } from "./useInfiniteScroll";
 export { parsePrice, useAllArtists, useAllTags, useFilteredArtworks } from "./galleryUtils";
 
 // Data
-export { mockArtworks, categories, generateMoreArtworks } from "./galleryData";
+export { categories } from "./galleryData";

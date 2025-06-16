@@ -9,6 +9,7 @@ import {
   Download,
 } from "lucide-react";
 import { ArtworkItem } from "./types";
+import SmartImage from "../SmartImage";
 
 interface ArtworkCardProps {
   artwork: ArtworkItem;
@@ -92,13 +93,11 @@ export const ArtworkCard = memo(
               : "w-48 h-32 rounded-xl"
           }`}
           style={viewMode === "masonry" ? { height: `${masonryHeight}px` } : {}}
-        >
-          <img
-            src={artwork.image}
+        >          <SmartImage
+            imageId={artwork.image}
             alt={artwork.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            loading="lazy"
-            decoding="async"
+            fallbackCategory={artwork.category}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
