@@ -49,9 +49,14 @@ const Auctions: React.FC = () => {
     const scheduled = scheduledAuctions.map(convertScheduledAuctionToDisplay);
     return [...live, ...scheduled];
   }, [liveAuctions, scheduledAuctions]);
-
   // Use API data if available, otherwise empty array
-  const allAuctionData = apiAuctionData.length > 0 ? apiAuctionData : [];
+  const allAuctionData = React.useMemo(() => {
+    console.log('🔧 Computing allAuctionData:', {
+      apiAuctionDataLength: apiAuctionData.length,
+      apiAuctionData: apiAuctionData
+    });
+    return apiAuctionData.length > 0 ? apiAuctionData : [];
+  }, [apiAuctionData]);
 
   // Select featured auction - prioritize scheduled auctions, then live auctions
   const featuredAuction = React.useMemo(() => {
@@ -69,16 +74,21 @@ const Auctions: React.FC = () => {
     
     return undefined; // No auctions available
   }, [liveAuctions, scheduledAuctions]);
-
   // Debug logging for API data
   React.useEffect(() => {
+    console.log('📊 Auctions Page - Raw API Data:');
+    console.log(`  • Live auctions (getAllAuctions): ${liveAuctions.length}`, liveAuctions);
+    console.log(`  • Scheduled auctions (getUpcomingScheduledAuctions): ${scheduledAuctions.length}`, scheduledAuctions);
+    console.log(`  • Total combined auctions: ${apiAuctionData.length}`, apiAuctionData);
+    console.log('🎯 Featured auction selected:', featuredAuction);
+    
     if (liveAuctions.length > 0 || scheduledAuctions.length > 0) {
-      console.log(`📊 API Data: ${liveAuctions.length} live auctions, ${scheduledAuctions.length} scheduled`);
-      console.log('🎯 Featured auction selected:', featuredAuction);
-      console.log('🔍 Live auctions data:', liveAuctions);
-      console.log('🔍 Scheduled auctions data:', scheduledAuctions);
+      console.log('� All Auctions tab will show:');
+      console.log(`  • ${liveAuctions.length} auctions from getAllAuctions API`);
+      console.log(`  • ${scheduledAuctions.length} auctions from getUpcomingScheduledAuctions API`);
+      console.log(`  • Combined total: ${apiAuctionData.length} auctions`);
     }
-  }, [liveAuctions, scheduledAuctions, featuredAuction]);
+  }, [liveAuctions, scheduledAuctions, featuredAuction, apiAuctionData]);
 
   const toggleWatch = (auctionId: string) => {
     setWatchedItems((prev) => {
@@ -122,15 +132,26 @@ const Auctions: React.FC = () => {
         duration: 0.4,
       },
     },
-  };
-  const filteredAuctions =
-    activeFilter === "all"
-      ? allAuctionData
-      : activeFilter === "hot"
-      ? allAuctionData.filter((a) => a.isHot)
-      : activeFilter === "ending"
-      ? allAuctionData.filter(a => a.status.includes('Ending') || a.status.includes('ending'))
-      : allAuctionData.filter((a) => watchedItems.has(a.id));
+  };  const filteredAuctions = React.useMemo(() => {
+    let result;
+    if (activeFilter === "all") {
+      result = allAuctionData;
+    } else if (activeFilter === "hot") {
+      result = allAuctionData.filter((a) => a.isHot);
+    } else if (activeFilter === "ending") {
+      result = allAuctionData.filter(a => a.status.includes('Ending') || a.status.includes('ending'));
+    } else {
+      result = allAuctionData.filter((a) => watchedItems.has(a.id));
+    }
+    
+    console.log('🔍 Filter computed:');
+    console.log(`  • activeFilter: "${activeFilter}"`);
+    console.log(`  • allAuctionData.length: ${allAuctionData.length}`);
+    console.log(`  • filteredAuctions.length: ${result.length}`);
+    console.log(`  • Will render AuctionGrid: ${result.length > 0}`);
+    
+    return result;
+  }, [activeFilter, allAuctionData, watchedItems]);
 
   const categories = [
     "all",
@@ -287,9 +308,7 @@ const Auctions: React.FC = () => {
         <BreakingNewsTicker 
           itemVariants={itemVariants} 
           controls={controls} 
-        />
-
-        {/* API Status Banner */}
+        />        {/* API Status Banner */}
         {(liveAuctions.length > 0 || scheduledAuctions.length > 0) && (
           <motion.div
             className="bg-gradient-to-r from-green-500/10 to-blue-500/10 border-l-4 border-green-500 mx-4 sm:mx-6 lg:mx-8 p-4 rounded-r-lg"
@@ -303,7 +322,12 @@ const Auctions: React.FC = () => {
               </span>
               <div className="text-sm text-gray-700 dark:text-gray-300">
                 <span className="font-semibold">Live Data Connected:</span> 
-                <span className="ml-2">{liveAuctions.length} live auctions, {scheduledAuctions.length} scheduled</span>
+                <span className="ml-2">
+                  <span className="font-medium">{apiAuctionData.length} total auctions</span>
+                  <span className="text-xs text-gray-500 ml-1">
+                    ({liveAuctions.length} from getAllAuctions + {scheduledAuctions.length} from getUpcomingScheduled)
+                  </span>
+                </span>
                 <span className="ml-2 text-xs text-gray-500">• Real-time blockchain data</span>
               </div>
             </div>
@@ -347,7 +371,7 @@ const Auctions: React.FC = () => {
                 controls={controls}
               />              {/* News Grid Stories */}
               {filteredAuctions.length > 0 ? (
-                <AuctionGrid 
+                <AuctionGrid
                   auctions={filteredAuctions}
                   watchedItems={watchedItems}
                   onToggleWatch={toggleWatch}
@@ -357,7 +381,27 @@ const Auctions: React.FC = () => {
                   containerVariants={containerVariants}
                   controls={controls}
                 />
-              ) : null}
+              ) : (
+                <motion.div
+                  className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-xl p-8 border border-gray-200/50 dark:border-gray-700/50 text-center"
+                  variants={itemVariants}
+                  animate={controls}
+                >
+                  <div className="text-gray-500 dark:text-gray-400">
+                    <div className="text-lg font-semibold mb-2">No auctions found</div>
+                    <div className="text-sm">
+                      {activeFilter === "all" 
+                        ? `No auctions available. API returned ${allAuctionData.length} auctions.`
+                        : `No auctions match the "${activeFilter}" filter.`}
+                    </div>
+                    {!isLoading && allAuctionData.length === 0 && (
+                      <div className="mt-4 text-xs text-gray-400">
+                        Check console for API debug info
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
             </div>
 
             {/* Magazine Sidebar */}
