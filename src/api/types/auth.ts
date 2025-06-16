@@ -116,3 +116,22 @@ export interface UserProfileResponse {
   fullName?: string;
   phoneNumber?: string;
 }
+
+// Top Sellers related types
+export interface TopSellerRevenueResponse {
+  id: string;
+  fullName: string;
+  email: string;
+  walletAddress?: string;
+  totalRevenue: number;
+  totalSales: number;
+  averagePrice: number;
+  topSalePrice: number;
+  rank: number;
+}
+
+export interface TopSellersParams {
+  year?: number;
+  month?: number;
+  limit?: number;
+}

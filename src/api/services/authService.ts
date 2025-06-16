@@ -12,7 +12,9 @@ import {
   AuthUser,
   PasswordResetRequest,
   PasswordResetConfirmRequest,
-  UserProfileResponse
+  UserProfileResponse,
+  TopSellerRevenueResponse,
+  TopSellersParams
 } from '../types';
 
 export class AuthService {  private readonly endpoints = {
@@ -26,6 +28,7 @@ export class AuthService {  private readonly endpoints = {
     forgotPassword: '/api/users/forgot-password',
     resetPassword: '/api/users/reset-password',
     profile: '/api/users/profile',
+    topSellers: '/api/users/top-sellers',
   };
 
   /**
@@ -410,6 +413,54 @@ export class AuthService {  private readonly endpoints = {
           fullName: '', 
           phoneNumber: '' 
         },
+        success: false
+      };
+    }
+  }
+
+  /**
+   * Get top sellers by revenue for specific month/year
+   * 
+   * @param params Optional parameters for year, month, and limit
+   * @returns ApiResponse with top sellers data
+   */
+  async getTopSellers(params?: TopSellersParams): Promise<ApiResponse<TopSellerRevenueResponse[]>> {
+    try {
+      // Build query parameters
+      const queryParams = new URLSearchParams();
+      
+      if (params?.year) {
+        queryParams.append('year', params.year.toString());
+      }
+      if (params?.month) {
+        queryParams.append('month', params.month.toString());
+      }
+      if (params?.limit) {
+        queryParams.append('limit', params.limit.toString());
+      }
+      
+      const url = `${this.endpoints.topSellers}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      
+      // Debug log
+      console.log('🔍 Getting top sellers...');
+      console.log('🔍 Top Sellers URL:', url);
+      console.log('🔍 Params:', params);
+      
+      // Use regular get method with authentication token
+      const response = await apiClient.get<TopSellerRevenueResponse[]>(url);
+      
+      return {
+        message: response.message,
+        data: response.data || [],
+        success: response.success
+      };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to get top sellers';
+      console.error('❌ Get top sellers error:', errorMessage);
+      
+      return {
+        message: errorMessage,
+        data: [],
         success: false
       };
     }

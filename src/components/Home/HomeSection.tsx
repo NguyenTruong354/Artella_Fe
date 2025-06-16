@@ -8,11 +8,11 @@ import useDarkMode from "../../hooks/useDarkMode";
 import { WaveTransition } from "../WaveTransition";
 import { DarkModeToggle } from "../DarkModeToggle";
 import { authService } from "../../api/services";
-import { UserProfileResponse } from "../../api/types";
+import { UserProfileResponse, TopSellerRevenueResponse } from "../../api/types";
 
 // Direct imports instead of lazy loading
 import BannerSection from './BannerSection';
-import TrendingNFT from './TrendingNFT';
+import TrendingNFTs from './TrendingNFTs';
 import TopSellers from './TopSellers';
 import LiveAuctions from './LiveAuctions';
 
@@ -49,12 +49,29 @@ const HomeSection: React.FC = () => {
   const controls = useAnimation();
   const sectionRef = useRef<HTMLDivElement>(null);
   const inView = useInView(sectionRef, { once: false, amount: 0.1 });
+
   const [watchedItems, setWatchedItems] = useState<Set<number>>(new Set());
   const [userProfile, setUserProfile] = useState<UserProfileResponse | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [topSellersData, setTopSellersData] = useState<TopSellerRevenueResponse[]>([]);
+  const [isLoadingTopSellers, setIsLoadingTopSellers] = useState(false);
 
   // Dark mode hook
   const darkMode = useDarkMode();
+  // Function to transform API data to component format
+  const transformTopSellersData = (apiData: TopSellerRevenueResponse[]): FeaturedArtist[] => {
+    return apiData.map((seller) => ({
+      id: parseInt(seller.id),
+      name: seller.fullName,
+      nationality: "Unknown", // API doesn't provide this, using default
+      birthYear: "Unknown", // API doesn't provide this, using default
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(seller.fullName)}&background=random&color=fff&size=40`,
+      totalWorks: seller.totalSales,
+      averagePrice: `${seller.averagePrice.toFixed(6)} ETH`,
+      topSale: `${seller.topSalePrice.toFixed(2)} ETH`,
+      specialty: "Digital Art", // API doesn't provide this, using default
+    }));
+  };
 
   // Function to generate avatar background color
   const generateAvatarColor = (name: string) => {
@@ -82,7 +99,6 @@ const HomeSection: React.FC = () => {
       .join('')
       .slice(0, 2); // Max 2 characters
   };
-
   // Fetch user profile
   const fetchUserProfile = async () => {
     setIsLoadingProfile(true);
@@ -99,14 +115,31 @@ const HomeSection: React.FC = () => {
       setIsLoadingProfile(false);
     }
   };
+
+  // Fetch top sellers
+  const fetchTopSellers = async () => {
+    setIsLoadingTopSellers(true);
+    try {
+      const response = await authService.getTopSellers({ limit: 3 });
+      if (response.success) {
+        setTopSellersData(response.data);
+      } else {
+        console.error('Failed to fetch top sellers:', response.message);
+      }
+    } catch (error) {
+      console.error('Error fetching top sellers:', error);
+    } finally {
+      setIsLoadingTopSellers(false);
+    }
+  };
   useEffect(() => {
     if (inView) {
       controls.start("visible");
     }
   }, [controls, inView]);
-
   useEffect(() => {
     fetchUserProfile();
+    fetchTopSellers();
   }, []);
 
   // Featured Artworks Data
@@ -174,45 +207,8 @@ const HomeSection: React.FC = () => {
       category: "Digital",
       status: "live",
       auctionHouse: "NFT Marketplace",
-    },
-  ];
-
-  // Featured Artists Data
-  const topSellers: FeaturedArtist[] = [
-    {
-      id: 1,
-      name: "Esther Howard",
-      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face",
-      averagePrice: "0.0000321 BTC",
-      nationality: "USA",
-      birthYear: "1990",
-      totalWorks: 127,
-      topSale: "1 ETH",
-      specialty: "Abstract Digital",
-    },
-    {
-      id: 2,
-      name: "Guy Hawkins",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face",
-      averagePrice: "0.0000520 BTC",
-      nationality: "Canada",
-      birthYear: "1985",
-      totalWorks: 89,
-      topSale: "0.8 ETH",
-      specialty: "Fantasy Art",
-    },
-    {
-      id: 3,
-      name: "Robert Fox",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face",
-      averagePrice: "0.0000319 BTC",
-      nationality: "UK",
-      birthYear: "1992",
-      totalWorks: 156,
-      topSale: "1.2 ETH",
-      specialty: "Pixel Art",
-    },
-  ];
+    },  ];  // Get transformed top sellers data
+  const transformedTopSellers = transformTopSellersData(topSellersData);
 
   const toggleWatch = (artworkId: number) => {
     setWatchedItems((prev) => {
@@ -354,18 +350,10 @@ const HomeSection: React.FC = () => {
             variants={itemVariants}
             role="region"
             aria-label="Featured Content"
-          >
-            <div className="rounded-xl p-4">
+          >            <div className="rounded-xl p-4">
               <BannerSection />
-            </div>
-            
-            <div className="rounded-xl p-4">
-              <TrendingNFT 
-                featuredArtworks={featuredArtworks.slice(0, 2)}
-                watchedItems={watchedItems}
-                toggleWatch={toggleWatch}
-                topSellers={topSellers}
-              />
+            </div>              <div className="rounded-xl p-4">
+              <TrendingNFTs limit={3} showApiStatus={true} />
             </div>
           </motion.div>
           {/* Right Column (Top Sellers & Live Auctions) */}
@@ -374,9 +362,11 @@ const HomeSection: React.FC = () => {
             variants={itemVariants}
             role="complementary"
             aria-label="Sidebar Content"
-          >
-            <div className="rounded-xl p-4">
-              <TopSellers topSellers={topSellers} />
+          >            <div className="rounded-xl p-4">
+              <TopSellers 
+                topSellers={transformedTopSellers} 
+                isLoading={isLoadingTopSellers}
+              />
             </div>
 
             <div className="rounded-xl p-4">

@@ -16,9 +16,10 @@ interface FeaturedArtist {
 
 interface TopSellersProps {
   topSellers: FeaturedArtist[];
+  isLoading?: boolean;
 }
 
-const TopSellers: React.FC<TopSellersProps> = ({ topSellers }) => {
+const TopSellers: React.FC<TopSellersProps> = ({ topSellers, isLoading = false }) => {
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
     visible: {
@@ -52,10 +53,28 @@ const TopSellers: React.FC<TopSellersProps> = ({ topSellers }) => {
           whileHover={{ scale: 1.05 }}
         >
           View All <ArrowUpRight className="w-4 h-4 ml-1" />
-        </motion.button>
-      </div>
+        </motion.button>      </div>
       <div className="space-y-4">
-        {topSellers.map((seller, index) => (
+        {isLoading ? (
+          // Loading skeleton
+          Array.from({ length: 3 }).map((_, index) => (
+            <div
+              key={index}
+              className="flex items-center justify-between p-4 rounded-xl"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 rounded-full bg-gray-300 dark:bg-gray-700 animate-pulse"></div>
+                <div className="flex flex-col space-y-2">
+                  <div className="w-24 h-4 bg-gray-300 dark:bg-gray-700 rounded animate-pulse"></div>
+                  <div className="w-16 h-3 bg-gray-300 dark:bg-gray-700 rounded animate-pulse"></div>
+                  <div className="w-20 h-3 bg-gray-300 dark:bg-gray-700 rounded animate-pulse"></div>
+                </div>
+              </div>
+              <div className="w-16 h-8 bg-gray-300 dark:bg-gray-700 rounded animate-pulse"></div>
+            </div>
+          ))
+        ) : (
+          topSellers.map((seller, index) => (
           <motion.div
             key={seller.id}
             className="flex items-center justify-between p-4 rounded-xl transition-all duration-300 border border-transparent hover:bg-gradient-to-r hover:from-purple-500/5 hover:to-pink-500/5 hover:border-purple-500/20 dark:hover:bg-gradient-to-r dark:hover:from-purple-500/10 dark:hover:to-pink-500/10 dark:hover:border-purple-500/20"
@@ -99,10 +118,10 @@ const TopSellers: React.FC<TopSellersProps> = ({ topSellers }) => {
               whileHover={{ scale: 1 }}
               whileTap={{ scale: 1 }}
             >
-              Follow
-            </motion.button>
+              Follow            </motion.button>
           </motion.div>
-        ))}
+        ))
+        )}
       </div>
     </motion.section>
   );
