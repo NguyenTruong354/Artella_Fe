@@ -8,6 +8,7 @@ import Collections from "../pages/Collections";
 import Profile from "../pages/Profile";
 import CreateNFT from "../pages/CreateNFT";
 import DetailNFT from "../pages/DetailNFT";
+import DetailProduct from "../pages/DetailProduct";
 import ExploreMore from "../pages/ExploreMore";
 import Login from "../pages/Login";
 import Signup from "../pages/Signup";
@@ -36,10 +37,13 @@ const router = createBrowserRouter([
       {
         path: "gallery",
         element: <Gallery />,
-      },
-      {
+      },      {
         path: "nft/:id",
         element: <DetailNFT />,
+      },
+      {
+        path: "product/:id",
+        element: <DetailProduct />,
       },
       {
         path: "auctions",

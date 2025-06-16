@@ -1,6 +1,7 @@
 // Gallery Types
 export interface ArtworkItem {
   id: number;
+  originalId?: string; // Original ID from backend (string)
   title: string;
   artist: string;
   price: string;
@@ -12,6 +13,7 @@ export interface ArtworkItem {
   isFeatured: boolean;
   description: string;
   tags: string[];
+  type?: 'product' | 'nft'; // Type of item
 }
 
 export interface AdvancedFilters {

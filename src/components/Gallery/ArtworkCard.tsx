@@ -5,25 +5,20 @@ import {
   Heart,
   ArrowUpRight,
   Zap,
-  Bookmark,
-  Download,
 } from "lucide-react";
 import { ArtworkItem } from "./types";
 import SmartImage from "../SmartImage";
+import { useNavigate } from "react-router-dom";
 
 interface ArtworkCardProps {
   artwork: ArtworkItem;
   viewMode: "masonry" | "grid" | "list";
-  likedItems: Set<number>;
-  toggleLike: (id: number) => void;
+  likedItems: Set<number>; // Giữ lại để tương thích với component cha
 }
 
 export const ArtworkCard = memo(
-  ({ artwork, viewMode, likedItems, toggleLike }: ArtworkCardProps) => {
-    const isLiked = useMemo(
-      () => likedItems.has(artwork.id),
-      [likedItems, artwork.id]
-    );
+  ({ artwork, viewMode }: ArtworkCardProps) => {
+    const navigate = useNavigate();
 
     // Generate dynamic heights for masonry effect based on content
     const masonryHeight = useMemo(() => {
@@ -101,43 +96,20 @@ export const ArtworkCard = memo(
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-          {/* Hover Actions - Pinterest Style */}
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-            <div className="flex gap-2">
-              <motion.button
-                className="p-2 bg-white/95 dark:bg-gray-800/95 rounded-full text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-lg backdrop-blur-sm"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => toggleLike(artwork.id)}
-                aria-label={`${isLiked ? "Unlike" : "Like"} ${artwork.title}`}
-              >
-                <Heart
-                  className={`w-5 h-5 ${
-                    isLiked ? "fill-red-500 text-red-500" : ""
-                  }`}
-                />
-              </motion.button>
-              <motion.button
-                className="p-2 bg-white/95 dark:bg-gray-800/95 rounded-full text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-lg backdrop-blur-sm"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                aria-label={`Save ${artwork.title}`}
-              >
-                <Bookmark className="w-5 h-5" />
-              </motion.button>
-              <motion.button
-                className="p-2 bg-white/95 dark:bg-gray-800/95 rounded-full text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-lg backdrop-blur-sm"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                aria-label={`Download ${artwork.title}`}
-              >
-                <Download className="w-5 h-5" />
-              </motion.button>
-              <motion.button
+          {/* Hover Actions - Pinterest Style */}          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+            <div className="flex gap-2">              <motion.button
                 className="p-2 bg-blue-500 dark:bg-amber-500 rounded-full text-white hover:bg-blue-600 dark:hover:bg-amber-600 transition-colors shadow-lg backdrop-blur-sm"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 aria-label={`View details of ${artwork.title}`}
+                onClick={() => {
+                  // Navigate to different routes based on item type
+                  if (artwork.type === 'product') {
+                    navigate(`/Home/product/${artwork.originalId || artwork.id}`);
+                  } else {
+                    navigate(`/Home/nft/${artwork.originalId || artwork.id}`);
+                  }
+                }}
               >
                 <ArrowUpRight className="w-5 h-5" />
               </motion.button>
@@ -195,22 +167,26 @@ export const ArtworkCard = memo(
                 <span>{artwork.likes.toLocaleString()}</span>
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-lg font-bold text-blue-600 dark:text-amber-400">
-                {artwork.price}
+            <div className="text-right">            <div className="text-lg font-bold text-blue-600 dark:text-amber-400">
+                {parseFloat(artwork.price) > 0 ? artwork.price : "N/A"}
               </div>
             </div>
           </div>
 
           {/* Action Button */}
           <motion.button
-            className="w-full mt-4 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 dark:from-amber-500 dark:to-orange-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            aria-label={`Place bid on ${artwork.title}`}
+            className={`w-full mt-4 py-3 ${
+              parseFloat(artwork.price) > 0 
+                ? "bg-gradient-to-r from-blue-500 to-cyan-500 dark:from-amber-500 dark:to-orange-500" 
+                : "bg-gradient-to-r from-gray-400 to-gray-500 dark:from-gray-600 dark:to-gray-700"
+            } text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2`}
+            whileHover={parseFloat(artwork.price) > 0 ? { scale: 1.02 } : {}}
+            whileTap={parseFloat(artwork.price) > 0 ? { scale: 0.98 } : {}}
+            aria-label={parseFloat(artwork.price) > 0 ? `Buy ${artwork.title}` : `${artwork.title} not for sale`}
+            disabled={parseFloat(artwork.price) <= 0}
           >
             <Zap className="w-4 h-4" />
-            Place Bid
+            {parseFloat(artwork.price) > 0 ? "Buy" : "Not For Sale"}
           </motion.button>
         </div>
       </motion.div>

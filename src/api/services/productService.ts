@@ -55,10 +55,10 @@ class ProductService {
     });
 
     return apiClient.get<PageResponse<Product>>(`${this.baseEndpoint}?${queryParams}`);
-  }
-
-  /**
+  }  /**
    * Get a product by ID
+   * @param productId The unique identifier of the product
+   * @returns ApiResponse containing the product data
    */
   async getProductById(productId: string): Promise<ApiResponse<Product>> {
     return apiClient.get<Product>(`${this.baseEndpoint}/${productId}`);

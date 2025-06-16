@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { productService, type Product, type ProductQueryParams } from '../api/services/productService';
-import { nftService, type DigitalArtNFT } from '../api/services/nftService';
+import { nftService } from '../api/services/nftService';
+import { DigitalArtNFT } from '../api/types';
 
 export interface GalleryItem {
   id: string;
@@ -16,6 +17,7 @@ export interface GalleryItem {
   createdAt: string;
   type: 'product' | 'nft';
   originalData: Product | DigitalArtNFT;
+  productId?: string; // Optional productId for products
 }
 
 export interface UseGalleryDataParams {
@@ -82,7 +84,8 @@ const productToGalleryItem = (product: Product): GalleryItem => ({
   status: product.status,
   createdAt: product.createdAt,
   type: 'product',
-  originalData: product
+  originalData: product,
+  productId: product.productId // Add productId explicitly
 });
 
 // Helper function to convert DigitalArtNFT to GalleryItem
@@ -91,12 +94,12 @@ const nftToGalleryItem = (nft: DigitalArtNFT): GalleryItem => ({
   title: nft.name,
   artist: nft.creator || nft.owner || 'Unknown Artist',
   category: nft.category || 'Digital Art',
-  price: parseFloat(nft.price?.toString() || '0') || 0,
+  price: nft.price || 0,
   imageUrl: nft.imageUrl || '', // Sử dụng imageUrl từ NFT làm imageId
   tags: nft.tags || [nft.category || 'Digital Art'],
-  description: nft.description || nft.metadata?.description || '',
+  description: nft.description || '',
   isAuction: false, // NFTs are typically not auctions in this context
-  status: nft.status || 'Available',
+  status: nft.onSale ? 'Available' : 'Not Available', // Use onSale to determine status
   createdAt: nft.createdAt || new Date().toISOString(),
   type: 'nft',
   originalData: nft
@@ -183,7 +186,12 @@ export const useGalleryData = (params: UseGalleryDataParams = {}): UseGalleryDat
           
           console.log('Mapped NFT category:', mappedNFTCategory);
 
-          if (mappedNFTCategory !== 'All') {
+          // Check if search query is present
+          if (searchQuery.trim()) {
+            console.log(`Searching NFTs with keyword: ${searchQuery}`);
+            // Use searchDigitalArtNFTs API instead of client-side filtering
+            nfts = await nftService.searchDigitalArtNFTs(searchQuery);
+          } else if (mappedNFTCategory !== 'All') {
             // Get NFTs by category or tag based on the mapping
             if (useTag) {
               // Get NFTs by tag
@@ -200,14 +208,19 @@ export const useGalleryData = (params: UseGalleryDataParams = {}): UseGalleryDat
             nfts = await nftService.getAllDigitalArtNFTs();
           }
 
-          // Apply search filter if provided
-          if (searchQuery.trim()) {
-            nfts = nfts.filter(nft =>
-              nft.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              (nft.description && nft.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-              (nft.category && nft.category.toLowerCase().includes(searchQuery.toLowerCase())) ||
-              (nft.tags && nft.tags.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase())))
-            );
+          // Apply category filter if search was performed and we have a specific category
+          if (searchQuery.trim() && mappedNFTCategory !== 'All') {
+            if (useTag) {
+              nfts = nfts.filter(nft => 
+                nft.tags && nft.tags.some((tag: string) => 
+                  tag.toLowerCase() === mappedNFTCategory
+                )
+              );
+            } else {
+              nfts = nfts.filter(nft => 
+                nft.category && nft.category.toLowerCase() === mappedNFTCategory.toLowerCase()
+              );
+            }
           }
 
           // Apply pagination to NFTs (since API might not support it)

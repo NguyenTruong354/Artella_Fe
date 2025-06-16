@@ -9,6 +9,7 @@ import { motion, useAnimation, useInView } from "framer-motion";
 import { Search, X } from "lucide-react";
 import useDarkMode from "../hooks/useDarkMode";
 import useGalleryData, { GalleryItem } from "../hooks/useGalleryData";
+import { DigitalArtNFT } from "../api/types";
 import {
   ArtworkCard,
   AdvancedSearchPanel,
@@ -32,20 +33,34 @@ const WaveTransition = React.lazy(() =>
 );
 
 // Helper function to convert GalleryItem to ArtworkItem
-const galleryItemToArtworkItem = (item: GalleryItem) => ({
-  id: parseInt(item.id) || Math.random() * 1000000, // Convert to number
-  title: item.title,
-  artist: item.artist,
-  category: item.category,
-  price: item.price.toString(), // Convert to string
-  image: item.imageUrl, // Sử dụng imageUrl làm imageId cho SmartImage
-  tags: item.tags,
-  description: item.description,
-  likes: 0, // Default value
-  views: 0, // Default value
-  isNew: false, // Default value
-  isFeatured: false, // Default value
-});
+const galleryItemToArtworkItem = (item: GalleryItem) => {
+  // Handle NFT data if it's an NFT
+  const nftData = item.type === 'nft' 
+    ? item.originalData as DigitalArtNFT 
+    : null;
+
+  // Get the appropriate ID based on type
+  const originalId = item.type === 'product' && item.productId
+    ? item.productId  // Use productId for products
+    : item.id;        // Use id for NFTs or fallback
+  
+  return {
+    id: parseInt(item.id) || Math.random() * 1000000, // Convert to number
+    originalId: originalId, // Use appropriate ID as string
+    title: item.title,
+    artist: item.artist,
+    category: item.category,
+    price: item.price.toString(), // Convert to string
+    image: item.imageUrl, // Sử dụng imageUrl làm imageId cho SmartImage
+    tags: item.tags,
+    description: item.description,
+    likes: nftData ? nftData.likeCount : 0,
+    views: nftData ? nftData.viewCount : 0,
+    isNew: false, // Default value
+    isFeatured: false, // Default value
+    type: item.type, // Type of item (product or nft)
+  };
+};
 
 const Gallery: React.FC = () => {
   const controls = useAnimation();
@@ -216,11 +231,6 @@ const Gallery: React.FC = () => {
     // The useGalleryData hook will automatically handle data refresh
     // when category or searchQuery changes
   }, [selectedCategory, searchQuery, advancedFilters]);
-
-  // Update toggleLike to dispatch action
-  const toggleLike = useCallback((artworkId: number) => {
-    dispatch({ type: "TOGGLE_LIKE", payload: artworkId });
-  }, []);
 
   // Update category handler to dispatch action with smooth transition
   const handleCategoryChange = useCallback(
@@ -555,7 +565,6 @@ const Gallery: React.FC = () => {
                         artwork={galleryItemToArtworkItem(artwork)}
                         viewMode={viewMode}
                         likedItems={likedItems}
-                        toggleLike={toggleLike}
                       />
                     </motion.div>
                   ))
@@ -640,7 +649,6 @@ const Gallery: React.FC = () => {
                         artwork={galleryItemToArtworkItem(artwork)}
                         viewMode={viewMode}
                         likedItems={likedItems}
-                        toggleLike={toggleLike}
                       />
                     </motion.div>
                   ))

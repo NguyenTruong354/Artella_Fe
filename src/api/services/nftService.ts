@@ -117,6 +117,51 @@ class NFTService {
   }
 
   /**
+   * Tìm kiếm DigitalArtNFT theo từ khóa
+   * @param keyword - Từ khóa tìm kiếm
+   * @returns Promise<DigitalArtNFT[]>
+   */
+  async searchDigitalArtNFTs(keyword: string): Promise<DigitalArtNFT[]> {
+    try {
+      console.log('🔍 Searching digital art NFTs with keyword:', keyword);
+      
+      const response = await apiClient.get(`${this.basePath}/search`, {
+        params: { keyword }
+      });
+      
+      console.log('🔍 Raw search response:', response);
+      
+      // Handle different response structures
+      let nftsData: DigitalArtNFT[];
+      
+      if (Array.isArray(response)) {
+        // Direct array response
+        console.log('📦 Direct array response detected');
+        nftsData = response;
+      } else if (response && response.data && Array.isArray(response.data)) {
+        // Wrapped in ApiResponse
+        console.log('📦 Wrapped ApiResponse detected');
+        nftsData = response.data;
+      } else if (response && Array.isArray(response.data)) {
+        // Another possible structure
+        console.log('📦 Alternative structure detected');
+        nftsData = response.data;
+      } else {
+        console.warn('⚠️ Unexpected response structure:', response);
+        nftsData = [];
+      }
+
+      console.log('✅ Search results:', nftsData);
+      console.log('✅ Search results count:', nftsData.length);
+
+      return nftsData;
+    } catch (error) {
+      console.error('❌ Error searching digital art NFTs:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Lấy NFT của một user cụ thể
    * @param userId - ID của user
    * @param limit - Số lượng NFT cần lấy
