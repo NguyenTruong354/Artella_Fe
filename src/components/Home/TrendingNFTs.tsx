@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useTrendingNFTs } from '../../hooks/useNFT';
 import { DigitalArtNFT } from '../../api/types';
@@ -138,6 +138,14 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft, index }) => {
     }
   };
 
+  const handleImageLoad = useCallback(() => {
+    console.log('✅ Smart image loaded successfully:', nft.imageUrl);
+  }, [nft.imageUrl]);
+
+  const handleImageError = useCallback(() => {
+    console.log('❌ Smart image failed to load:', nft.imageUrl);
+  }, [nft.imageUrl]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -152,12 +160,8 @@ const NFTCard: React.FC<NFTCardProps> = ({ nft, index }) => {
           alt={nft.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           fallbackCategory={nft.category}
-          onLoad={() => {
-            console.log('✅ Smart image loaded successfully:', nft.imageUrl);
-          }}
-          onError={() => {
-            console.log('❌ Smart image failed to load:', nft.imageUrl);
-          }}
+          onLoad={handleImageLoad} // Use memoized callback
+          onError={handleImageError} // Use memoized callback
         />
           {/* Overlay với thông tin trending */}
         <div className="absolute top-3 left-3">

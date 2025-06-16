@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { getFallbackImage } from '../utils/imageUtils';
 
 interface SmartImageProps {
@@ -21,91 +21,98 @@ const SmartImage: React.FC<SmartImageProps> = ({
   const [imageSrc, setImageSrc] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const currentBlobUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
     setIsLoading(true);
     setHasError(false);
-    
+
+    if (currentBlobUrlRef.current) {
+      URL.revokeObjectURL(currentBlobUrlRef.current);
+      currentBlobUrlRef.current = null;
+    }
+
     const loadImage = async () => {
-      try {
-        // Get JWT token from localStorage
-        const token = localStorage.getItem('auth_token');
-        const headers: HeadersInit = {};
-        
-        // Add Authorization header if token exists
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
+      if (!isMounted) return;
 
-        // Multiple endpoints to try (based on your new backend controller)
-        const endpoints = [
-          `http://localhost:8080/api/public/nft-images/${imageId}`, // New public NFT endpoint (preferred)
-          `http://localhost:8080/api/files/${imageId}`,            // Primary GridFS endpoint
-          `http://localhost:8080/api/images/${imageId}`,           // Alternative endpoint
-          `http://localhost:8080/api/gridfs/${imageId}`,           // GridFS specific endpoint
-        ];
+      const token = localStorage.getItem('auth_token');
+      const headers: HeadersInit = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
 
-        // Try each endpoint until one works
-        for (const endpoint of endpoints) {
-          try {
-            console.log(`🔄 Trying endpoint: ${endpoint} ${token ? 'with token' : 'without token'}`);
-            
-            // Make authenticated HEAD request
-            const testResponse = await fetch(endpoint, { 
-              method: 'HEAD',
-              headers: headers
-            });
-            
-            if (testResponse.ok) {
-              console.log(`✅ Found image at: ${endpoint}`);
-              
-              if (isMounted) {
-                // For authenticated images, use the fetch API with proper Authorization header
-                if (token) {
-                  try {
-                    const response = await fetch(endpoint, { headers });
-                    const blob = await response.blob();
-                    const objectUrl = URL.createObjectURL(blob);
-                    setBlobUrl(objectUrl);
-                    setImageSrc(objectUrl);
-                    setIsLoading(false);
-                    onLoad?.();
-                    return;
-                  } catch (error) {
-                    console.error('Error fetching image with authentication:', error);
-                    // If fetching with auth fails, continue to next approach
-                  }
-                } else {
-                  // No auth token, set direct URL
-                  setImageSrc(endpoint);
-                  setIsLoading(false);
-                  onLoad?.();
-                  return;
-                }
-              }
-            } else {
-              console.log(`❌ Endpoint returned status ${testResponse.status}: ${endpoint}`);
-            }
-          } catch (endpointError) {
-            console.log(`❌ Endpoint failed: ${endpoint}`, endpointError);
-            // Continue to next endpoint
+      const endpoints = [
+        `http://localhost:8080/api/public/nft-images/${imageId}`,
+        `http://localhost:8080/api/files/${imageId}`,
+        `http://localhost:8080/api/images/${imageId}`,
+        `http://localhost:8080/api/gridfs/${imageId}`,
+      ];
+
+      let chosenEndpoint: string | null = null;
+
+      // 1. Find the first viable endpoint via HEAD
+      for (const endpoint of endpoints) {
+        if (!isMounted) return;
+        try {
+          console.log(`🔄 Trying HEAD for endpoint: ${endpoint} ${token ? 'with token' : 'without token'}`);
+          const headResponse = await fetch(endpoint, { method: 'HEAD', headers });
+          if (headResponse.ok) {
+            console.log(`✅ HEAD OK for ${endpoint}. This is our candidate.`);
+            chosenEndpoint = endpoint;
+            break; // Found a viable endpoint
+          } else {
+            console.log(`❌ HEAD failed for ${endpoint} (status: ${headResponse.status})`);
           }
+        } catch (headError) {
+          console.log(`❌ Error during HEAD for ${endpoint}:`, headError);
         }
-        
-        // If we get here, none of the endpoints worked
-        throw new Error('No valid endpoints found for image');
-        
-      } catch (error) {
-        console.error('All image endpoints failed:', error);
-        
-        if (isMounted) {
+      }
+
+      if (!isMounted) return;
+
+      // 2. If a viable endpoint was found, try to GET the full image from it
+      if (chosenEndpoint) {
+        try {
+          console.log(`Attempting to GET full image from ${chosenEndpoint}`);
+          const imageResponse = await fetch(chosenEndpoint, { headers }); // Use same headers
+          
+          if (!imageResponse.ok) {
+            throw new Error(`Failed to GET image data (status: ${imageResponse.status}) from ${chosenEndpoint}`);
+          }
+          
+          if (!isMounted) return; // Check again before async blob operation
+
+          const blob = await imageResponse.blob();
+          const newBlobUrl = URL.createObjectURL(blob);
+
+          if (currentBlobUrlRef.current) { // Should be null due to start-of-effect cleanup, but double-check
+              URL.revokeObjectURL(currentBlobUrlRef.current);
+          }
+          currentBlobUrlRef.current = newBlobUrl;
+
+          setImageSrc(newBlobUrl);
+          setIsLoading(false);
+          setHasError(false);
+          onLoad?.();
+          // Successfully loaded. loadImage implicitly ends.
+        } catch (getFullImageError) {
+          // Failed to GET from the chosen endpoint. This is a definitive failure.
+          if (!isMounted) return;
+          console.error(`❌ Failed to GET full image from chosen endpoint ${chosenEndpoint}:`, getFullImageError);
           setImageSrc(getFallbackImage(fallbackCategory));
           setIsLoading(false);
           setHasError(true);
           onError?.();
         }
+      } else {
+        // No endpoint had a successful HEAD request.
+        if (!isMounted) return;
+        console.error('No endpoint had a successful HEAD request for imageId:', imageId);
+        setImageSrc(getFallbackImage(fallbackCategory));
+        setIsLoading(false);
+        setHasError(true);
+        onError?.();
       }
     };
 
@@ -114,12 +121,12 @@ const SmartImage: React.FC<SmartImageProps> = ({
     // Cleanup function
     return () => {
       isMounted = false;
-      // Revoke blob URL to prevent memory leaks
-      if (blobUrl) {
-        URL.revokeObjectURL(blobUrl);
+      if (currentBlobUrlRef.current) {
+        URL.revokeObjectURL(currentBlobUrlRef.current);
+        currentBlobUrlRef.current = null;
       }
     };
-  }, [imageId, fallbackCategory, onLoad, onError]); // Removed blobUrl from dependencies
+  }, [imageId, fallbackCategory, onLoad, onError]); // Dependencies are stable
 
   if (isLoading) {
     return (
@@ -134,13 +141,14 @@ const SmartImage: React.FC<SmartImageProps> = ({
       src={imageSrc}
       alt={alt}
       className={className}
-      crossOrigin="anonymous" // Add crossOrigin to handle CORS
+      crossOrigin="anonymous"
       onError={() => {
-        if (!hasError) {
-          console.log('❌ Image failed to load:', imageSrc);
+        // This onError on the img tag is a final fallback, 
+        // but ideally our loadImage logic should handle errors before this.
+        if (!hasError && imageSrc !== getFallbackImage(fallbackCategory)) { // Avoid loop if fallback itself fails
+          console.log('❌ Native img onError triggered for:', imageSrc);
           setImageSrc(getFallbackImage(fallbackCategory));
-          setHasError(true);
-          onError?.();
+          setHasError(true); // Ensure hasError is set
         }
       }}
     />
