@@ -31,33 +31,57 @@ export interface AuctionDisplayData {
  * Convert AuctionDTO to display format
  */
 export const convertAuctionToDisplay = (auction: AuctionDTO): AuctionDisplayData => {
-  const timeLeft = calculateTimeLeft(auction.endTime);
-  const isEndingSoon = Boolean(auction.endTime && (auction.endTime - Date.now()) < 3600000); // 1 hour
-  const hasHighBids = auction.currentBid > auction.startPrice * 2;
+  // Check if NFT is already minted
+  const isNFTMinted = auction.status === 'NFT_MINTED';
+    // Debug log for currentBid values
+  console.log(`🔍 Auction ${auction.auctionId}:`, {
+    status: auction.status,
+    isNFTMinted,
+    currentBid: auction.currentBid,
+    startPrice: auction.startPrice,
+    // Check if values are already in ETH (small numbers) or Wei (very large numbers)
+    isCurrentBidWei: auction.currentBid > 1000000,
+    isStartPriceWei: auction.startPrice > 1000000
+  });
   
+  // Only calculate time left if NFT is not minted
+  const timeLeft = isNFTMinted ? 'Auction Completed' : calculateTimeLeft(auction.endTime);
+  const isEndingSoon = !isNFTMinted && Boolean(auction.endTime && (auction.endTime - Date.now()) < 3600000); // 1 hour
+  const hasHighBids = auction.currentBid > auction.startPrice * 2;
+  // Helper function to format price (check if it's already in ETH or needs conversion from Wei)
+  const formatPrice = (price: number): string => {
+    // If price is very large (> 1M), assume it's in Wei and convert to ETH
+    if (price > 1000000) {
+      return (price / 1e18).toFixed(2);
+    }
+    // If price is small, assume it's already in ETH
+    return price.toFixed(2);
+  };
+
   return {
     id: auction.auctionId,
     title: auction.productName || `Product #${auction.productId}`,
     artist: auction.owner.slice(0, 6) + '...' + auction.owner.slice(-4), // Shortened wallet address
-    currentBid: `${(auction.currentBid / 1e18).toFixed(2)} ETH`, // Convert wei to ETH
+    currentBid: isNFTMinted 
+      ? `Sold for ${formatPrice(auction.currentBid > 0 ? auction.currentBid : auction.startPrice)} ETH` 
+      : `${formatPrice(auction.currentBid)} ETH`,
     timeLeft,
     image: auction.productImages?.[0] || '/api/placeholder/500/600',
     bidders: Math.floor(Math.random() * 50) + 5, // Mock data - replace with real bidder count
     category: 'Digital Art', // Default category - could be enhanced
     isHot: hasHighBids || isEndingSoon,
-    estimatedValue: `€${((auction.startPrice / 1e18) * 2000).toLocaleString()} - €${((auction.startPrice / 1e18) * 3000).toLocaleString()}`, // Rough EUR conversion
+    estimatedValue: `€${(parseFloat(formatPrice(auction.startPrice)) * 2000).toLocaleString()} - €${(parseFloat(formatPrice(auction.startPrice)) * 3000).toLocaleString()}`, // Rough EUR conversion
     totalBids: Math.floor(Math.random() * 100) + 10, // Mock data
     highestBidder: auction.bidderAddress ? 
       '@' + auction.bidderAddress.slice(0, 6) + '...' + auction.bidderAddress.slice(-4) : 
-      '@anonymous',
-    storyType: isEndingSoon ? 'Bidding Wars' : hasHighBids ? 'Market Analysis' : 'Artist Spotlight',
+      '@anonymous',    storyType: isNFTMinted ? 'NFT Collection' : isEndingSoon ? 'Bidding Wars' : hasHighBids ? 'Market Analysis' : 'Artist Spotlight',
     readingTime: '3 min read',
     tags: [
-      hasHighBids ? 'hot-bid' : 'steady',
-      isEndingSoon ? 'ending-soon' : 'active',
+      isNFTMinted ? 'minted' : hasHighBids ? 'hot-bid' : 'steady',
+      isNFTMinted ? 'completed' : isEndingSoon ? 'ending-soon' : 'active',
       'blockchain'
     ],
-    status: isEndingSoon ? 'Ending soon' : auction.currentBid > auction.startPrice ? 'Active bidding' : 'New auction',
+    status: isNFTMinted ? 'NFT Minted' : isEndingSoon ? 'Ending soon' : auction.currentBid > auction.startPrice ? 'Active bidding' : 'New auction',
     lastUpdate: 'Updated 5 min ago', // Mock - could be calculated from real timestamp
     storyPreview: generateStoryPreview(auction),
     location: 'Global',

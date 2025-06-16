@@ -51,18 +51,26 @@ const AuctionGrid: React.FC<AuctionGridProps> = ({
               >
                 <Heart size={16} className={watchedItems.has(auction.id) ? 'fill-current' : ''} />
               </button>
-            </div>
-
-            {/* Image */}
-            <div className="relative mb-4 overflow-hidden rounded-lg">              <SmartImage
+            </div>            {/* Image */}
+            <div className="relative mb-4 overflow-hidden rounded-lg">
+              <SmartImage
                 imageId={auction.image}
                 alt={auction.title}
                 className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
               />
-              <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
-                <Clock size={12} className="inline mr-1" />
-                {auction.timeLeft}
-              </div>
+              {/* Only show time left if auction is not completed */}
+              {auction.timeLeft !== 'Auction Completed' && (
+                <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
+                  <Clock size={12} className="inline mr-1" />
+                  {auction.timeLeft}
+                </div>
+              )}
+              {/* Show "SOLD" badge if NFT is minted */}
+              {auction.timeLeft === 'Auction Completed' && (
+                <div className="absolute top-2 right-2 bg-green-600 text-white px-3 py-1 rounded text-xs font-bold">
+                  SOLD
+                </div>
+              )}
             </div>
 
             {/* Content */}
@@ -74,17 +82,19 @@ const AuctionGrid: React.FC<AuctionGridProps> = ({
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   by {auction.artist}
                 </p>
-              </div>
-
-              <div className="flex justify-between items-center">
+              </div>              <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Current Bid</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {auction.timeLeft === 'Auction Completed' ? 'Final Price' : 'Current Bid'}
+                  </p>
                   <p className="font-bold text-lg text-gray-900 dark:text-gray-100">
                     {auction.currentBid}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Highest Bidder</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {auction.timeLeft === 'Auction Completed' ? 'Winner' : 'Highest Bidder'}
+                  </p>
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     {auction.highestBidder}
                   </p>
