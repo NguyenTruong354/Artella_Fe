@@ -1,22 +1,87 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, Variants, AnimationControls } from 'framer-motion';
 import { TrendingUp } from 'lucide-react';
+import { auctionService } from '../../api/services/auctionService';
+import { AuctionDTO } from '../../types/auction';
 
 interface TrendingTopicsProps {
   itemVariants: Variants;
   controls: AnimationControls;
 }
 
+// Interface cho trending item
+interface TrendingItem {
+  topic: string;
+  change: string;
+}
+
+// Hàm chuyển đổi từ wei sang ETH
+const weiToEth = (weiValue: string | number): number => {
+  const wei = typeof weiValue === 'string' ? parseFloat(weiValue) : weiValue;
+  return wei / Math.pow(10, 18);
+};
+
 const TrendingTopics: React.FC<TrendingTopicsProps> = ({
   itemVariants,
   controls
-}) => {
-  const trendingItems = [
+}) => {  const [trendingItems, setTrendingItems] = useState<TrendingItem[]>([
     { topic: "AI-Generated Art Surge", change: "+127%" },
     { topic: "Metaverse Galleries", change: "+89%" },
     { topic: "Sustainable NFTs", change: "+156%" },
     { topic: "Celebrity Collections", change: "+67%" },
-  ];
+  ]);
+
+  useEffect(() => {
+    const fetchTrendingData = async () => {
+      try {
+        console.log('TrendingTopics: Fetching trending auction data...');
+        
+        const auctions = await auctionService.getAllAuctions();
+        console.log('TrendingTopics: Raw auctions:', auctions);
+
+        // Lọc các auction có status = 'NFT_MINTED'
+        const mintedAuctions = auctions.filter((auction: AuctionDTO) => auction.status === 'NFT_MINTED');
+        console.log('TrendingTopics: Minted auctions:', mintedAuctions);
+
+        // Tính toán trending data từ auctions
+        const trendingData: TrendingItem[] = [];
+        
+        mintedAuctions.forEach((auction: AuctionDTO) => {
+          const startPriceEth = weiToEth(auction.startPrice);
+          const currentBidEth = weiToEth(auction.currentBid);
+          
+          if (startPriceEth > 0 && currentBidEth > startPriceEth) {
+            const priceIncrease = ((currentBidEth - startPriceEth) / startPriceEth) * 100;
+            const productName = auction.productName || `NFT #${auction.productId}`;
+            
+            trendingData.push({
+              topic: productName,
+              change: `+${priceIncrease.toFixed(1)}%`
+            });
+          }
+        });
+
+        // Sắp xếp theo phần trăm tăng giá và lấy top 4
+        trendingData.sort((a, b) => {
+          const aPercentage = parseFloat(a.change.replace('+', '').replace('%', ''));
+          const bPercentage = parseFloat(b.change.replace('+', '').replace('%', ''));
+          return bPercentage - aPercentage;
+        });
+
+        const topTrending = trendingData.slice(0, 4);
+        console.log('TrendingTopics: Top trending data:', topTrending);
+
+        // Nếu có dữ liệu thật thì dùng, không thì giữ mock data
+        if (topTrending.length > 0) {
+          setTrendingItems(topTrending);
+        }      } catch (error) {
+        console.error('TrendingTopics: Error fetching trending data:', error);
+        // Giữ nguyên mock data nếu có lỗi
+      }
+    };
+
+    fetchTrendingData();
+  }, []);
 
   return (
     <motion.aside

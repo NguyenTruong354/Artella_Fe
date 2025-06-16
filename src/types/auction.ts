@@ -87,6 +87,8 @@ export interface ScheduledAuctionDetailDTO {
 export interface AuctionDTO {
   auctionId: string;
   productId: string;
+  productName?: string; // Tên sản phẩm (được thêm từ backend)
+  productImages?: string[]; // Danh sách hình ảnh sản phẩm (được thêm từ backend)
   startPrice: number;
   endTime: number; // Timestamp in milliseconds
   appraisalCert?: string;

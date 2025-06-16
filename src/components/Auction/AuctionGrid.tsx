@@ -5,8 +5,8 @@ import { AuctionData } from './index';
 
 interface AuctionGridProps {
   auctions: AuctionData[];
-  watchedItems: Set<number>;
-  onToggleWatch: (auctionId: number) => void;
+  watchedItems: Set<string>;
+  onToggleWatch: (auctionId: string) => void;
   getStoryTypeColor: (type: string) => string;
   getStatusColor: (status: string) => string;
   itemVariants: Variants;

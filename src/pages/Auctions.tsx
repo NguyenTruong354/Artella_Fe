@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion, useAnimation, useInView } from "framer-motion";
 import useDarkMode from "../hooks/useDarkMode";
+import { useAuctionData } from "../hooks/useAuctionData";
+import { convertAuctionToDisplay, convertScheduledAuctionToDisplay } from "../utils/auctionHelpers";
 import { WaveTransition } from "../components/WaveTransition";
 import {
   AuctionHeader,
@@ -14,7 +16,6 @@ import {
   SocialProof,
   EditorsPick,
   ExpertsCorner,
-  AuctionData,
   Filter
 } from "../components/Auction";
 
@@ -23,7 +24,7 @@ const Auctions: React.FC = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const inView = useInView(sectionRef, { once: false, amount: 0.1 });
 
-  const [watchedItems, setWatchedItems] = useState<Set<number>>(new Set());
+  const [watchedItems, setWatchedItems] = useState<Set<string>>(new Set());
   const [activeFilter, setActiveFilter] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
   const [priceRange, setPriceRange] = useState({ min: 0, max: 20 });
@@ -31,155 +32,55 @@ const Auctions: React.FC = () => {
   const [showNewsletter, setShowNewsletter] = useState(false);
   // Dark mode hook
   const darkMode = useDarkMode();
+  // API data
+  const { 
+    liveAuctions, 
+    scheduledAuctions, 
+    isLoading  } = useAuctionData();
 
   useEffect(() => {
     if (inView) {
       controls.start("visible");
+    }  }, [controls, inView]);
+
+  // Convert API data to display format
+  const apiAuctionData = React.useMemo(() => {
+    const live = liveAuctions.map(convertAuctionToDisplay);
+    const scheduled = scheduledAuctions.map(convertScheduledAuctionToDisplay);
+    return [...live, ...scheduled];
+  }, [liveAuctions, scheduledAuctions]);
+
+  // Use API data if available, otherwise empty array
+  const allAuctionData = apiAuctionData.length > 0 ? apiAuctionData : [];
+
+  // Select featured auction - prioritize scheduled auctions, then live auctions
+  const featuredAuction = React.useMemo(() => {
+    // Prefer upcoming scheduled auctions for featured section
+    if (scheduledAuctions.length > 0) {
+      const scheduledData = scheduledAuctions.map(convertScheduledAuctionToDisplay);
+      return scheduledData[0]; // Take the first scheduled auction
     }
-  }, [controls, inView]);
+    
+    // Fallback to live auctions if no scheduled ones
+    if (liveAuctions.length > 0) {
+      const liveData = liveAuctions.map(convertAuctionToDisplay);
+      return liveData[0]; // Take the first live auction
+    }
+    
+    return undefined; // No auctions available
+  }, [liveAuctions, scheduledAuctions]);
 
-  const liveAuctions: AuctionData[] = [
-    {
-      id: 1,
-      title: "Digital Dreams Collection",
-      artist: "CryptoArtist",
-      currentBid: "5.2 ETH",
-      timeLeft: "2h 45m",
-      image:
-        "https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?w=500&h=600&fit=crop",
-      bidders: 23,
-      category: "Digital Art",
-      isHot: true,
-      estimatedValue: "€50,000 - €70,000",
-      totalBids: 45,
-      highestBidder: "@cryptowhale",
-      storyType: "Market Analysis",
-      readingTime: "3 min read",
-      tags: ["trending", "investment", "digital"],
-      status: "Reserve met",
-      lastUpdate: "Updated 5 min ago",
-      storyPreview:
-        "Market experts predict this piece could revolutionize the digital art space, with institutional investors showing unprecedented interest in the collection.",
-      location: "Global",
-    },
-    {
-      id: 2,
-      title: "Abstract Reality",
-      artist: "DigitalPicasso",
-      currentBid: "3.8 ETH",
-      timeLeft: "1h 12m",
-      image:
-        "https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?w=500&h=600&fit=crop",
-      bidders: 18,
-      category: "Abstract",
-      isHot: false,
-      estimatedValue: "€40,000 - €55,000",
-      totalBids: 32,
-      highestBidder: "@artlover99",
-      storyType: "Artist Spotlight",
-      readingTime: "4 min read",
-      tags: ["emerging", "abstract", "collectors"],
-      status: "Ending in 1 hour",
-      lastUpdate: "Updated 12 min ago",
-      storyPreview:
-        "Rising star DigitalPicasso's abstract works are capturing the attention of major galleries worldwide, with this piece representing their breakthrough moment.",
-      location: "Europe",
-    },
-    {
-      id: 3,
-      title: "Blockchain Starry Night",
-      artist: "NFTMaster",
-      currentBid: "7.1 ETH",
-      timeLeft: "4h 33m",
-      image:
-        "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=500&h=600&fit=crop",
-      bidders: 41,
-      category: "Classic",
-      isHot: true,
-      estimatedValue: "€80,000 - €120,000",
-      totalBids: 78,
-      highestBidder: "@moonwalker",
-      storyType: "Bidding Wars",
-      readingTime: "2 min read",
-      tags: ["classic", "bidding-war", "record"],
-      status: "New high bid",
-      lastUpdate: "Updated 2 min ago",
-      storyPreview:
-        "An intense bidding war erupted overnight as collectors battle for this modern interpretation of the classic masterpiece, pushing prices to new heights.",
-      location: "Americas",
-    },
-    {
-      id: 4,
-      title: "Neon Dreams",
-      artist: "PixelMaestro",
-      currentBid: "2.9 ETH",
-      timeLeft: "6h 15m",
-      image:
-        "https://images.unsplash.com/photo-1579965342575-15475c126358?w=500&h=600&fit=crop",
-      bidders: 15,
-      category: "Digital Art",
-      isHot: false,
-      estimatedValue: "€30,000 - €45,000",
-      totalBids: 28,
-      highestBidder: "@neonlover",
-      storyType: "Trend Reports",
-      readingTime: "5 min read",
-      tags: ["neon", "cyberpunk", "future"],
-      status: "Active bidding",
-      lastUpdate: "Updated 8 min ago",
-      storyPreview:
-        "The cyberpunk aesthetic is making a strong comeback in digital art, with neon-themed pieces seeing 200% increase in collector interest this quarter.",
-      location: "Asia",
-    },
-    {
-      id: 5,
-      title: "Cosmic Waves",
-      artist: "GalaxyCreator",
-      currentBid: "4.5 ETH",
-      timeLeft: "3h 28m",
-      image:
-        "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=500&h=600&fit=crop",
-      bidders: 29,
-      category: "Space Art",
-      isHot: true,
-      estimatedValue: "€55,000 - €75,000",
-      totalBids: 56,
-      highestBidder: "@spacedreamer",
-      storyType: "Market Analysis",
-      readingTime: "3 min read",
-      tags: ["space", "premium", "limited"],
-      status: "Hot auction",
-      lastUpdate: "Updated 1 min ago",
-      storyPreview:
-        "Space-themed digital art emerges as the next big trend, with this piece leading a new wave of cosmic consciousness in the NFT market.",
-      location: "Global",
-    },
-    {
-      id: 6,
-      title: "Urban Rhapsody",
-      artist: "CityVibes",
-      currentBid: "1.8 ETH",
-      timeLeft: "5h 42m",
-      image:
-        "https://images.unsplash.com/photo-1520637836862-4d197d17c93a?w=500&h=600&fit=crop",
-      bidders: 12,
-      category: "Urban",
-      isHot: false,
-      estimatedValue: "€25,000 - €35,000",
-      totalBids: 21,
-      highestBidder: "@urbanist",
-      storyType: "Artist Spotlight",
-      readingTime: "4 min read",
-      tags: ["urban", "street-art", "contemporary"],
-      status: "Steady growth",
-      lastUpdate: "Updated 15 min ago",
-      storyPreview:
-        "Street art meets digital innovation as CityVibes captures the pulse of urban life through cutting-edge blockchain technology and artistic vision.",
-      location: "Americas",
-    },
-  ];
+  // Debug logging for API data
+  React.useEffect(() => {
+    if (liveAuctions.length > 0 || scheduledAuctions.length > 0) {
+      console.log(`📊 API Data: ${liveAuctions.length} live auctions, ${scheduledAuctions.length} scheduled`);
+      console.log('🎯 Featured auction selected:', featuredAuction);
+      console.log('🔍 Live auctions data:', liveAuctions);
+      console.log('🔍 Scheduled auctions data:', scheduledAuctions);
+    }
+  }, [liveAuctions, scheduledAuctions, featuredAuction]);
 
-  const toggleWatch = (auctionId: number) => {
+  const toggleWatch = (auctionId: string) => {
     setWatchedItems((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(auctionId)) {
@@ -191,13 +92,13 @@ const Auctions: React.FC = () => {
     });
   };
   const filters: Filter[] = [
-    { id: "all", label: "All Auctions", count: liveAuctions.length },
+    { id: "all", label: "All Auctions", count: allAuctionData.length },
     {
       id: "hot",
       label: "🔥 Hot Bids",
-      count: liveAuctions.filter((a) => a.isHot).length,
+      count: allAuctionData.filter((a) => a.isHot).length,
     },
-    { id: "ending", label: "⏰ Ending Soon", count: 3 },
+    { id: "ending", label: "⏰ Ending Soon", count: allAuctionData.filter(a => a.status.includes('Ending') || a.status.includes('ending')).length },
     { id: "watched", label: "👁️ Watched", count: watchedItems.size },
   ];
 
@@ -222,15 +123,14 @@ const Auctions: React.FC = () => {
       },
     },
   };
-
   const filteredAuctions =
     activeFilter === "all"
-      ? liveAuctions
+      ? allAuctionData
       : activeFilter === "hot"
-      ? liveAuctions.filter((a) => a.isHot)
+      ? allAuctionData.filter((a) => a.isHot)
       : activeFilter === "ending"
-      ? liveAuctions.slice(0, 3)
-      : liveAuctions.filter((a) => watchedItems.has(a.id));
+      ? allAuctionData.filter(a => a.status.includes('Ending') || a.status.includes('ending'))
+      : allAuctionData.filter((a) => watchedItems.has(a.id));
 
   const categories = [
     "all",
@@ -389,14 +289,50 @@ const Auctions: React.FC = () => {
           controls={controls} 
         />
 
+        {/* API Status Banner */}
+        {(liveAuctions.length > 0 || scheduledAuctions.length > 0) && (
+          <motion.div
+            className="bg-gradient-to-r from-green-500/10 to-blue-500/10 border-l-4 border-green-500 mx-4 sm:mx-6 lg:mx-8 p-4 rounded-r-lg"
+            variants={itemVariants}
+            animate={controls}
+          >
+            <div className="flex items-center space-x-3">
+              <span className="flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+              </span>
+              <div className="text-sm text-gray-700 dark:text-gray-300">
+                <span className="font-semibold">Live Data Connected:</span> 
+                <span className="ml-2">{liveAuctions.length} live auctions, {scheduledAuctions.length} scheduled</span>
+                <span className="ml-2 text-xs text-gray-500">• Real-time blockchain data</span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {isLoading && (
+          <motion.div
+            className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-l-4 border-yellow-500 mx-4 sm:mx-6 lg:mx-8 p-4 rounded-r-lg"
+            variants={itemVariants}
+            animate={controls}
+          >
+            <div className="flex items-center space-x-3">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-500"></div>
+              <div className="text-sm text-gray-700 dark:text-gray-300">
+                <span className="font-semibold">Loading auction data...</span>
+                <span className="ml-2 text-xs text-gray-500">• Fetching from blockchain</span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Main Content Container */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* Main Content */}
-            <div className="lg:col-span-3 space-y-8">
-              {/* Hero Featured Auction */}
+            <div className="lg:col-span-3 space-y-8">              {/* Hero Featured Auction */}
               <FeaturedAuctionHero 
-                featuredAuction={filteredAuctions[0]} 
+                featuredAuction={featuredAuction} 
                 getStoryTypeColor={getStoryTypeColor}
                 getStatusColor={getStatusColor}
                 itemVariants={itemVariants}
@@ -409,19 +345,19 @@ const Auctions: React.FC = () => {
                 onFilterChange={setActiveFilter}
                 itemVariants={itemVariants}
                 controls={controls}
-              />
-
-              {/* News Grid Stories */}
-              <AuctionGrid 
-                auctions={filteredAuctions}
-                watchedItems={watchedItems}
-                onToggleWatch={toggleWatch}
-                getStoryTypeColor={getStoryTypeColor}
-                getStatusColor={getStatusColor}
-                itemVariants={itemVariants}
-                containerVariants={containerVariants}
-                controls={controls}
-              />
+              />              {/* News Grid Stories */}
+              {filteredAuctions.length > 0 ? (
+                <AuctionGrid 
+                  auctions={filteredAuctions}
+                  watchedItems={watchedItems}
+                  onToggleWatch={toggleWatch}
+                  getStoryTypeColor={getStoryTypeColor}
+                  getStatusColor={getStatusColor}
+                  itemVariants={itemVariants}
+                  containerVariants={containerVariants}
+                  controls={controls}
+                />
+              ) : null}
             </div>
 
             {/* Magazine Sidebar */}
@@ -436,14 +372,14 @@ const Auctions: React.FC = () => {
               <TrendingTopics 
                 itemVariants={itemVariants}
                 controls={controls}
-              />
-
-              {/* Most Watched */}
-              <MostWatched 
-                auctions={filteredAuctions.slice(0, 3)}
-                itemVariants={itemVariants}
-                controls={controls}
-              />
+              />              {/* Most Watched */}
+              {filteredAuctions.length > 0 && (
+                <MostWatched 
+                  auctions={filteredAuctions.slice(0, 3)}
+                  itemVariants={itemVariants}
+                  controls={controls}
+                />
+              )}
 
               {/* Newsletter Signup */}              <NewsletterSignup 
                 onToggleNewsletter={() => setShowNewsletter(!showNewsletter)}
@@ -458,11 +394,13 @@ const Auctions: React.FC = () => {
               />
 
               {/* Editor's Pick Mini */}
-              <EditorsPick 
-                auctions={filteredAuctions.slice(0, 3)}
-                itemVariants={itemVariants}
-                controls={controls}
-              />
+              {filteredAuctions.length > 0 && (
+                <EditorsPick 
+                  auctions={filteredAuctions.slice(0, 3)}
+                  itemVariants={itemVariants}
+                  controls={controls}
+                />
+              )}
             </div>
           </div>
         </div>

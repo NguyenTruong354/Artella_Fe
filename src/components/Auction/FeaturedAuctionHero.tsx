@@ -1,14 +1,15 @@
 import React from 'react';
 import { motion, AnimationControls, Variants } from 'framer-motion';
 import { Clock, Target } from 'lucide-react';
-import { AuctionData } from './index'; // Import AuctionData
+import { AuctionData } from './index';
+import SmartImage from '../SmartImage';
 
 interface FeaturedAuctionHeroProps {
-  featuredAuction: AuctionData;
+  featuredAuction?: AuctionData; // Make optional to handle empty state
   getStoryTypeColor: (type: string) => string;
   getStatusColor: (status: string) => string;
-  itemVariants: Variants; // Updated type
-  controls: AnimationControls; // Updated type
+  itemVariants: Variants;
+  controls: AnimationControls;
 }
 
 const FeaturedAuctionHero: React.FC<FeaturedAuctionHeroProps> = ({
@@ -18,6 +19,33 @@ const FeaturedAuctionHero: React.FC<FeaturedAuctionHeroProps> = ({
   itemVariants,
   controls
 }) => {
+  // Handle empty state when no auction data
+  if (!auction) {
+    return (
+      <motion.section
+        className="relative z-10"
+        variants={itemVariants}
+        initial="hidden"
+        animate={controls}
+      >
+        <div className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl overflow-hidden border border-gray-200/50 dark:border-gray-700/50 shadow-2xl">
+          <div className="p-12 text-center">
+            <div className="text-6xl mb-4">🎨</div>
+            <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-gray-100">
+              No Featured Auction Available
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              No auction data available at the moment. Check your API connection.
+            </p>
+            <div className="animate-pulse">
+              <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4 mx-auto mb-2"></div>
+              <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-1/2 mx-auto"></div>
+            </div>
+          </div>
+        </div>
+      </motion.section>
+    );
+  }
   return (
     <motion.section
       className="relative z-10"
@@ -26,13 +54,13 @@ const FeaturedAuctionHero: React.FC<FeaturedAuctionHeroProps> = ({
       animate={controls}
     >
       <div className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl overflow-hidden border border-gray-200/50 dark:border-gray-700/50 shadow-2xl">
-        <div className="grid lg:grid-cols-2 gap-0">
-          {/* Featured Image */}
+        <div className="grid lg:grid-cols-2 gap-0">          {/* Featured Image */}
           <div className="relative h-96 lg:h-full overflow-hidden">
-            <img
-              src={auction.image}
+            <SmartImage
+              imageId={auction.image}
               alt={auction.title}
               className="w-full h-full object-cover"
+              fallbackCategory="auction"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent"></div>
             <div className="absolute top-6 left-6 flex flex-wrap gap-2">

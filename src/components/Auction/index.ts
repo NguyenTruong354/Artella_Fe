@@ -12,7 +12,7 @@ export { default as ExpertsCorner } from './ExpertsCorner';
 
 // Export types
 export interface AuctionData {
-  id: number;
+  id: string; // Changed to string to match API data
   title: string;
   artist: string;
   currentBid: string;
