@@ -100,15 +100,18 @@ const Auctions: React.FC = () => {
       }
       return newSet;
     });
-  };
-  const filters: Filter[] = [
+  };  const filters: Filter[] = [
     { id: "all", label: "All Auctions", count: allAuctionData.length },
     {
-      id: "hot",
-      label: "🔥 Hot Bids",
-      count: allAuctionData.filter((a) => a.isHot).length,
-    },
-    { id: "ending", label: "⏰ Ending Soon", count: allAuctionData.filter(a => a.status.includes('Ending') || a.status.includes('ending')).length },
+      id: "coming-soon",
+      label: "⏰ Coming Soon",
+      count: scheduledAuctions.length,
+    },    { id: "ending", label: "⏰ Ending Soon", count: allAuctionData.filter(a => 
+        (a.status.includes('Ending') || a.status.includes('ending')) && 
+        a.status !== 'NFT Minted' &&
+        a.timeLeft !== 'Auction Completed' &&
+        a.type === 'live' // Only live auctions can be ending soon
+      ).length },
     { id: "watched", label: "👁️ Watched", count: watchedItems.size },
   ];
 
@@ -136,12 +139,20 @@ const Auctions: React.FC = () => {
     let result;
     if (activeFilter === "all") {
       result = allAuctionData;
-    } else if (activeFilter === "hot") {
-      result = allAuctionData.filter((a) => a.isHot);
-    } else if (activeFilter === "ending") {
-      result = allAuctionData.filter(a => a.status.includes('Ending') || a.status.includes('ending'));
-    } else {
+    } else if (activeFilter === "coming-soon") {
+      // Filter to show only scheduled auctions (coming soon)
+      result = allAuctionData.filter((a) => a.type === 'scheduled');    } else if (activeFilter === "ending") {
+      // Filter to show only auctions that are ending soon AND not minted yet
+      result = allAuctionData.filter(a => 
+        (a.status.includes('Ending') || a.status.includes('ending')) && 
+        a.status !== 'NFT Minted' &&
+        a.timeLeft !== 'Auction Completed' &&
+        a.type === 'live' // Only live auctions can be ending soon
+      );
+    } else if (activeFilter === "watched") {
       result = allAuctionData.filter((a) => watchedItems.has(a.id));
+    } else {
+      result = allAuctionData;
     }
     
     console.log('🔍 Filter computed:');
@@ -182,7 +193,6 @@ const Auctions: React.FC = () => {
         return "bg-gray-500";
     }
   };
-
   const getStatusColor = (status: string) => {
     if (status.includes("Ending")) return "bg-red-500";
     if (status.includes("New high")) return "bg-orange-500";
@@ -190,6 +200,7 @@ const Auctions: React.FC = () => {
     if (status.includes("Hot")) return "bg-pink-500";
     return "bg-blue-500";
   };
+  
   return (
     <>
       <WaveTransition

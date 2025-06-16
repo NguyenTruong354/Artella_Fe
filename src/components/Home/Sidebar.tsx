@@ -140,7 +140,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
       gradient: "from-purple-500 to-indigo-500",
     },
   ];
-
   // Artistic quick actions
   const quickActions = [
     {
@@ -158,11 +157,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
       description: "List Item",
     },
     {
-      icon: "◈",
-      label: "Analytics",
-      action: "analytics",
+      icon: "⚖",
+      label: "Live Auction",
+      action: "live-auction",
       gradient: "from-purple-400 via-pink-500 to-red-500",
-      description: "View Stats",
+      description: "Join Auction",
+    },
+    {
+      icon: "📅",
+      label: "Schedule Auction",
+      action: "schedule-auction",
+      gradient: "from-blue-400 via-cyan-500 to-teal-500",
+      description: "Plan Auction",
     },
   ];
 
@@ -231,7 +237,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, [location]);
-
   // Handle quick action clicks
   const handleQuickAction = (action: string) => {
     switch (action) {
@@ -242,9 +247,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
         // TODO: Add sell functionality
         console.log("Sell action clicked");
         break;
-      case "analytics":
-        // TODO: Add analytics functionality
-        console.log("Analytics action clicked");
+      case "live-auction":
+        // Navigate to Auctions page
+        navigate("/auctions");
+        console.log("Live Auction action clicked - navigating to /auctions");
+        break;
+      case "schedule-auction":
+        // Navigate to Create Scheduled Auction page
+        navigate("/Home/create-scheduled-auction");
+        console.log("Schedule Auction action clicked - navigating to /Home/create-scheduled-auction");
         break;
       default:
         break;

@@ -7,6 +7,7 @@ import AuctionParticipation from "../pages/AuctionParticipation";
 import Collections from "../pages/Collections";
 import Profile from "../pages/Profile";
 import CreateNFT from "../pages/CreateNFT";
+import CreateScheduledAuction from "../pages/CreateScheduledAuction";
 import DetailNFT from "../pages/DetailNFT";
 import DetailProduct from "../pages/DetailProduct";
 import ExploreMore from "../pages/ExploreMore";
@@ -60,10 +61,13 @@ const router = createBrowserRouter([
       {
         path: "profile",
         element: <Profile />,
-      },
-      {
+      },      {
         path: "create-nft",
         element: <CreateNFT />,
+      },
+      {
+        path: "create-scheduled-auction",
+        element: <CreateScheduledAuction />,
       },
       {
         path: "explore-more",

@@ -21,10 +21,12 @@ export interface Product {
 
 export interface PageResponse<T> {
   content: T[];
-  number: number; // Current page number
-  size: number; // Page size
+  pageNumber: number; // Current page number (backend uses pageNumber instead of number)
+  pageSize: number; // Page size (backend uses pageSize instead of size)
   totalElements: number; // Total number of elements
   totalPages: number; // Total number of pages
+  first: boolean; // Is first page
+  last: boolean; // Is last page
 }
 
 export interface ProductQueryParams {
@@ -140,20 +142,27 @@ class ProductService {
     });
 
     return apiClient.get<PageResponse<Product>>(`${this.baseEndpoint}/search?${queryParams}`);
-  }
-
-  /**
-   * Get products by seller address
+  }  /**
+   * API to get products by seller with pagination
+   * Endpoint: GET /api/products/seller/{address}/page
+   * @param sellerAddress - The wallet address of the seller
+   * @param params - Pagination and sorting parameters
+   * @returns ApiResponse containing paginated list of seller's products
    */
   async getProductsBySeller(
     sellerAddress: string, 
     params: ProductQueryParams = {}
   ): Promise<ApiResponse<PageResponse<Product>>> {
+    // Validate seller address
+    if (!sellerAddress || sellerAddress.trim() === '') {
+      throw new Error('Seller address is required');
+    }
+
     const {
       page = 0,
       size = 10,
-      sortBy = 'name',
-      sortDir = 'asc'
+      sortBy = 'createdAt',
+      sortDir = 'desc'
     } = params;
 
     const queryParams = new URLSearchParams({
@@ -163,7 +172,14 @@ class ProductService {
       sortDir
     });
 
-    return apiClient.get<PageResponse<Product>>(`${this.baseEndpoint}/seller/${sellerAddress}?${queryParams}`);
+    try {
+      return await apiClient.get<PageResponse<Product>>(
+        `${this.baseEndpoint}/seller/${encodeURIComponent(sellerAddress)}/page?${queryParams}`
+      );
+    } catch (error) {
+      console.error(`Failed to fetch products for seller ${sellerAddress}:`, error);
+      throw error;
+    }
   }
 
   /**
