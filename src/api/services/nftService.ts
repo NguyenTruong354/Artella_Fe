@@ -740,9 +740,21 @@ class NFTService {
       console.log('🦊 Preparing MetaMask payment for NFT:', id);
       console.log('🔍 Full URL will be:', `${this.basePath}/${id}/prepare-metamask-payment`);
       
-      const response = await apiClient.get(`${this.basePath}/${id}/prepare-metamask-payment`);
+      const response = await apiClient.get(`${this.basePath}/${id}/prepare-metamask-payment`);      console.log('🔍 Raw MetaMask preparation response:', response);
       
-      console.log('🔍 Raw MetaMask preparation response:', response);
+      // Debug the transactionData.value specifically
+      const responseData = response?.data as unknown;
+      const responseUnknown = response as unknown;
+      
+      if (response && response.data && responseData && typeof responseData === 'object' && 'transactionData' in responseData) {
+        const txData = (responseData as { transactionData: { value: unknown } }).transactionData;
+        console.log('🔍 Transaction Data from response.data:', txData);
+        console.log('🔍 Value from response.data:', txData.value, 'Type:', typeof txData.value);
+      } else if (response && responseUnknown && typeof responseUnknown === 'object' && 'transactionData' in responseUnknown) {
+        const txData = (responseUnknown as { transactionData: { value: unknown } }).transactionData;
+        console.log('🔍 Transaction Data from direct response:', txData);
+        console.log('🔍 Value from direct response:', txData.value, 'Type:', typeof txData.value);
+      }
       
       // Handle response structure
       if (response && response.data) {

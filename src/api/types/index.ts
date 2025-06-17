@@ -148,7 +148,7 @@ export interface Transaction {
 export interface MetaMaskTransactionData {
   from: string;
   to: string;
-  value: number;
+  value: number | string; // Can be number (ETH) or string (Wei)
   nftId: string;
   tokenId: string;
   contractAddress: string;
