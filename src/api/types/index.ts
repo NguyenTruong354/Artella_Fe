@@ -89,6 +89,17 @@ export interface GetTrendingNFTsResponse {
   success: boolean;
 }
 
+// Request types for creating NFT from drawing
+export interface CreateDigitalArtNFTFromDrawingRequest {
+  image: string; // base64 image data
+  name: string;
+  description: string;
+  category?: string;
+  owner?: string; // optional, will be overridden by JWT
+  tags?: string; // comma-separated tags
+  royaltyPercentage?: string; // default is "0"
+}
+
 // Product types (from MongoDB backend)
 export interface Product {
   id: string;

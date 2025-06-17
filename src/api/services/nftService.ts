@@ -1,5 +1,5 @@
 import { apiClient } from '../client/apiClient';
-import { DigitalArtNFT, GetTrendingNFTsRequest, ApiResponse, NFT } from '../types';
+import { DigitalArtNFT, GetTrendingNFTsRequest, ApiResponse, NFT, CreateDigitalArtNFTFromDrawingRequest } from '../types';
 
 class NFTService {
   private readonly basePath = '/api/v1/digital-arts';
@@ -388,6 +388,70 @@ class NFTService {
       return nftsData;
     } catch (error) {
       console.error('❌ Error fetching digital art NFTs by tag:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Tạo DigitalArtNFT từ dữ liệu vẽ (base64) - phương thức đơn giản hóa
+   * @param requestData - Dữ liệu request để tạo NFT từ drawing
+   * @returns Promise<DigitalArtNFT>
+   */
+  async createDigitalArtNFTFromDrawingSimple(requestData: CreateDigitalArtNFTFromDrawingRequest): Promise<DigitalArtNFT> {
+    try {
+      console.log('🎨 Creating digital art NFT from drawing with data:', {
+        name: requestData.name,
+        description: requestData.description,
+        category: requestData.category,
+        hasImage: !!requestData.image,
+        imageLength: requestData.image?.length || 0
+      });
+
+      // Tạo FormData để gửi request với multipart/form-data
+      const formData = new FormData();
+      formData.append('image', requestData.image);
+      formData.append('name', requestData.name);
+      formData.append('description', requestData.description);
+      
+      if (requestData.category) {
+        formData.append('category', requestData.category);
+      }
+      
+      if (requestData.owner) {
+        formData.append('owner', requestData.owner);
+      }
+      
+      if (requestData.tags) {
+        formData.append('tags', requestData.tags);
+      }
+      
+      if (requestData.royaltyPercentage) {
+        formData.append('royaltyPercentage', requestData.royaltyPercentage);
+      }
+
+      const response = await apiClient.post(`${this.basePath}/draw-simple`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      console.log('🎨 Raw create NFT from drawing response:', response);
+
+      // Handle different response structures
+      if (response && typeof response === 'object' && 'id' in response) {
+        // Direct DigitalArtNFT object response
+        console.log('✅ Successfully created digital art NFT from drawing:', response.id);
+        return response as unknown as DigitalArtNFT;
+      } else if (response && response.data && typeof response.data === 'object') {
+        // Wrapped in ApiResponse
+        console.log('✅ Wrapped create NFT from drawing response');
+        return response.data as DigitalArtNFT;
+      } else {
+        console.warn('⚠️ Unexpected create NFT from drawing response structure:', response);
+        throw new Error('Invalid create NFT from drawing response structure');
+      }
+    } catch (error) {
+      console.error('❌ Error creating digital art NFT from drawing:', error);
       throw error;
     }
   }
