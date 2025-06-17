@@ -1,0 +1,248 @@
+/* CSS để giải quyết vấn đề background che phủ form/tab */
+.scheduled-auctions-container {
+  position: relative;
+  z-index: 1;
+}
+
+.scheduled-auctions-container .background-decoration {
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.01;
+}
+
+.scheduled-auctions-container .main-content {
+  position: relative;
+  z-index: 10;
+}
+
+.scheduled-auctions-container .header-section {
+  position: relative;
+  z-index: 20;
+}
+
+.scheduled-auctions-container .navigation-tabs {
+  position: relative;
+  z-index: 30;
+}
+
+.scheduled-auctions-container .tab-content {
+  position: relative;
+  z-index: 40;
+}
+
+.scheduled-auctions-container .form-container {
+  position: relative;
+  z-index: 50;
+  isolation: isolate;
+}
+
+.scheduled-auctions-container .content-card {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.scheduled-auctions-container .form-container {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Responsive Product Cards */
+.product-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 380px;
+}
+
+@media (min-width: 640px) {
+  .product-card {
+    min-height: 400px;
+  }
+}
+
+.product-card-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 0.75rem;
+  min-height: 0; /* Important for flex children */
+}
+
+@media (min-width: 640px) {
+  .product-card-content {
+    padding: 1rem;
+  }
+}
+
+/* Fixed height sections to prevent overlap */
+.product-name-section {
+  min-height: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.product-description-section {
+  min-height: 2rem;
+  margin-bottom: 0.75rem;
+  flex-shrink: 0;
+}
+
+.product-info-cards {
+  min-height: 3rem;
+  margin-bottom: 0.75rem;
+  flex-shrink: 0;
+}
+
+.product-category-section {
+  min-height: 1.5rem;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+}
+
+.product-status-section {
+  min-height: 3.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid;
+  flex-shrink: 0;
+  margin-top: auto; /* Push to bottom */
+}
+
+/* Ensure proper spacing and prevent text overflow */
+.product-card-spacer {
+  flex: 1;
+  min-height: 0.5rem;
+}
+
+/* Line clamping for better text handling */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+/* Enhanced responsive grid for products */
+.products-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .products-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Smooth transitions for responsive elements */
+.responsive-transition {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Improved badge positioning for mobile */
+.product-badge {
+  position: absolute;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 20; /* Ensure badges are always on top */
+}
+
+.product-badge-top-left {
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 20;
+}
+
+.product-badge-top-right {
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 20;
+}
+
+.product-badge-bottom-right {
+  bottom: 0.5rem;
+  right: 0.5rem;
+  z-index: 20;
+}
+
+/* Ensure image container has proper stacking context */
+.product-image-container {
+  position: relative;
+  z-index: 10;
+  isolation: isolate;
+}
+
+/* Ensure content doesn't interfere with badges */
+.product-content-area {
+  position: relative;
+  z-index: 5;
+}
+
+/* Enhanced text truncation */
+.text-truncate-responsive {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+@media (max-width: 640px) {
+  .text-truncate-responsive {
+    max-width: 120px;
+  }
+}
+
+/* Flexible content areas */
+.flex-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.flex-shrink-0 {
+  flex-shrink: 0;
+}
+
+/* Enhanced status indicators */
+.status-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  text-align: center;
+  word-break: break-word;
+}
+
+@media (min-width: 640px) {
+  .status-indicator {
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+  }
+}
