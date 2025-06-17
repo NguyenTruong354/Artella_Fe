@@ -110,14 +110,24 @@ const AuctionParticipation: React.FC = () => {
 
   // Realtime polling for auction updates
   useEffect(() => {
-    if (!auctionId || !isPolling || isLoading) return;
-
-    const pollAuctionData = async () => {
+    if (!auctionId || !isPolling || isLoading) return;    const pollAuctionData = async () => {
       try {
         console.log("🔄 Polling auction data for updates...");
         const updatedAuction = await auctionService.getAuction(auctionId);
         
-        // Check if there are any changes
+        // Check if auction status changed to NFT_MINTED
+        if (auctionData && updatedAuction.status !== auctionData.status) {
+          console.log("🔍 Auction status changed:", {
+            oldStatus: auctionData.status,
+            newStatus: updatedAuction.status
+          });
+          
+          // If status changed to NFT_MINTED, the useEffect will handle the redirect
+          setAuctionData(updatedAuction);
+          return; // Exit early to let useEffect handle the redirect
+        }
+        
+        // Check if there are any bid changes
         if (auctionData && updatedAuction.currentBid !== auctionData.currentBid) {
           console.log("🔥 New bid detected!", {
             oldBid: auctionData.currentBid,
@@ -127,13 +137,12 @@ const AuctionParticipation: React.FC = () => {
           
           // Update auction data
           setAuctionData(updatedAuction);
-          
-          // Add new bid to history if it's from another user
+            // Add new bid to history if it's from another user
           if (updatedAuction.bidderAddress && updatedAuction.bidderAddress !== authState.user?.walletAddress) {
             const newBid: BidHistory = {
               id: bidHistory.length + 1,
               bidder: '@' + updatedAuction.bidderAddress.slice(0, 6) + '...' + updatedAuction.bidderAddress.slice(-4),
-              amount: `$${updatedAuction.currentBid.toLocaleString()}`,
+              amount: `${(updatedAuction.currentBid / 1000).toFixed(2)} ETH`,
               timestamp: "Just now",
               isWinning: true,
             };
@@ -171,11 +180,23 @@ const AuctionParticipation: React.FC = () => {
       setIsPolling(true);
     }
   }, [timeLeft, auctionData]);
-
   // Pause polling when user is placing a bid to avoid conflicts
   useEffect(() => {
     setIsPolling(!isPlacingBid);
-  }, [isPlacingBid]);
+  }, [isPlacingBid]);  // Check if auction status is NFT_MINTED and redirect to EndAuctionLive
+  useEffect(() => {
+    console.log("🔍 Checking auction status for redirect:", {
+      auctionData: auctionData ? {
+        auctionId: auctionData.auctionId,
+        status: auctionData.status
+      } : null
+    });
+    
+    if (auctionData && auctionData.status === 'NFT_MINTED') {
+      console.log("✅ Auction status is NFT_MINTED, redirecting to EndAuctionLive...");
+      navigate(`/Home/end-auction-live/${auctionData.auctionId}`);
+    }
+  }, [auctionData, navigate]);
     // Check if current user is the owner of the auction
   const isOwner = auctionData && userProfile && auctionData.owner === userProfile.walletAddress;
   
@@ -226,13 +247,32 @@ const AuctionParticipation: React.FC = () => {
     if (isOwner) {
       alert("You cannot bid on your own auction");
       return;
+    }    
+    
+    // Convert ETH string to base units (1 ETH = 1000 units)
+    // First strip out non-numeric characters except decimal point
+    const ethValue = parseFloat(bidAmount.replace(/[^0-9.]/g, ""));
+    
+    // Check if the value is valid
+    if (isNaN(ethValue)) {
+      alert("Please enter a valid bid amount");
+      return;
     }
-
-    const bidValue = parseInt(bidAmount.replace(/[^0-9]/g, ""));
+    
+    // Convert ETH to internal units (1 ETH = 1000 units)
+    const bidValue = Math.floor(ethValue * 1000);
     const minimumBid = auctionData.currentBid + 500; // Minimum increment
 
+    console.log("Bidding:", { 
+      inputValue: bidAmount,
+      cleanedValue: bidAmount.replace(/[^0-9.]/g, ""),
+      ethValue,
+      bidValue,
+      minimumBid
+    });
+
     if (bidValue < minimumBid) {
-      alert(`Minimum bid is $${minimumBid.toLocaleString()}`);
+      alert(`Minimum bid is ${(minimumBid / 1000).toFixed(2)} ETH`);
       return;
     }
 
@@ -254,13 +294,11 @@ const AuctionParticipation: React.FC = () => {
       const updatedAuction = await auctionService.placeBid(auctionData.auctionId, bidRequest);
       
       // Update local auction data
-      setAuctionData(updatedAuction);
-
-      // Update bid history
+      setAuctionData(updatedAuction);      // Update bid history
       const newBid: BidHistory = {
         id: bidHistory.length + 1,
         bidder: "You",
-        amount: `$${bidValue.toLocaleString()}`,
+        amount: `${(bidValue / 1000).toFixed(2)} ETH`,
         timestamp: "Just now",
         isWinning: true,
       };
@@ -282,14 +320,22 @@ const AuctionParticipation: React.FC = () => {
     } finally {
       setIsPlacingBid(false);
       setIsPolling(true); // Resume polling after bid is complete
-    }
-  };
-  const handleQuickBid = (increment: number) => {
+    }  };  const handleQuickBid = (increment: number) => {
     if (!auctionData) return;
+    
+    // Calculate the new bid amount (current bid + increment)
     const newBid = auctionData.currentBid + increment;
-    setBidAmount(`$${newBid.toLocaleString()}`);
+    
+    // Format as ETH with 2 decimal places
+    setBidAmount(`${(newBid / 1000).toFixed(2)} ETH`);
+    
+    console.log("Quick Bid:", { 
+      increment,
+      currentBid: auctionData.currentBid,
+      newBid,
+      displayValue: `${(newBid / 1000).toFixed(2)} ETH` 
+    });
   };
-
   // Handle ending auction (only for owner)
   const handleEndAuction = async () => {
     if (!auctionData || !isOwner) {
@@ -304,11 +350,17 @@ const AuctionParticipation: React.FC = () => {
     setIsEndingAuction(true);
 
     try {
+      console.log("🔍 Ending auction:", auctionData.auctionId);
       const endedAuction = await auctionService.endAuction(auctionData.auctionId);
+      console.log("✅ Auction ended successfully:", endedAuction);
+      
       setAuctionData(endedAuction);
-      alert("Auction ended successfully!");
+      
+      // Redirect all participants to the EndAuctionLive page
+      navigate(`/Home/end-auction-live/${auctionData.auctionId}`);
+      
     } catch (error) {
-      console.error("Error ending auction:", error);
+      console.error("❌ Error ending auction:", error);
       alert("Failed to end auction. Please try again.");
     } finally {
       setIsEndingAuction(false);
@@ -346,9 +398,16 @@ const AuctionParticipation: React.FC = () => {
   const handleShowAnalytics = () => {
     setShowAnalytics(true);
   };
-
   const handleCloseAnalytics = () => {
     setShowAnalytics(false);
+  };
+
+  // Test function to simulate NFT_MINTED status (for debugging)
+  const handleTestNftMinted = () => {
+    if (auctionData) {
+      console.log("🧪 Testing NFT_MINTED status...");
+      setAuctionData({ ...auctionData, status: 'NFT_MINTED' });
+    }
   };
   return (
     <motion.div
@@ -493,8 +552,7 @@ const AuctionParticipation: React.FC = () => {
             </div>
           </div>
             {/* Auction Details */}
-          <AuctionDetails
-            currentBid={`$${auctionData.currentBid.toLocaleString()}`}
+          <AuctionDetails            currentBid={`${(auctionData.currentBid / 1000).toFixed(2)} ETH`}
             currentBidValue={auctionData.currentBid}
             bidCount={bidHistory.length}
             watchers={0} // Will be updated when API supports it
@@ -526,12 +584,11 @@ const AuctionParticipation: React.FC = () => {
                           You are the owner of this auction. You can end it at any time.
                         </p>
                       </div>
-                      
-                      {/* Auction Statistics */}
+                        {/* Auction Statistics */}
                       <div className="grid grid-cols-2 gap-4 mb-6">
                         <div className="bg-gray-800/50 rounded-lg p-4 text-center">
                           <div className="text-2xl font-bold text-green-400">
-                            ${auctionData.currentBid.toLocaleString()}
+                            {(auctionData.currentBid / 1000).toFixed(2)} ETH
                           </div>
                           <div className="text-sm text-gray-400">Current Bid</div>
                         </div>
@@ -542,12 +599,11 @@ const AuctionParticipation: React.FC = () => {
                           <div className="text-sm text-gray-400">Total Bids</div>
                         </div>
                       </div>
-                      
-                      {/* End Auction Button */}
+                        {/* End Auction Button */}
                       <button
                         onClick={handleEndAuction}
                         disabled={isEndingAuction || timeLeft <= 0}
-                        className="w-full px-6 py-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all duration-300 shadow-lg transform hover:scale-105 disabled:transform-none"
+                        className="w-full px-6 py-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all duration-300 shadow-lg transform hover:scale-105 disabled:transform-none mb-4"
                       >
                         {isEndingAuction ? (
                           <div className="flex items-center justify-center">
@@ -559,6 +615,14 @@ const AuctionParticipation: React.FC = () => {
                         ) : (
                           "🔨 End Auction Now"
                         )}
+                      </button>
+                      
+                      {/* Test NFT Minted Button (for debugging) */}
+                      <button
+                        onClick={handleTestNftMinted}
+                        className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white text-sm font-medium rounded-lg transition-all duration-300"
+                      >
+                        🧪 Test NFT Minted Status
                       </button>
                     </div>
                   ) : (

@@ -4,6 +4,7 @@ import Landing from "../pages/Landing";
 import Gallery from "../pages/Gallery";
 import Auctions from "../pages/Auctions";
 import AuctionParticipation from "../pages/AuctionParticipation";
+import EndAuctionLive from "../pages/EndAuctionLive";
 import Collections from "../pages/Collections";
 import Profile from "../pages/Profile";
 import CreateNFT from "../pages/CreateNFT";
@@ -57,10 +58,13 @@ const router = createBrowserRouter([
       },      {
         path: "auction-participation/:auctionId",
         element: <AuctionParticipation />,
-      },
-      {
+      },      {
         path: "auction-debug/:auctionId",
         element: <AuctionParticipationDebug />,
+      },
+      {
+        path: "end-auction-live/:auctionId",
+        element: <EndAuctionLive />,
       },
       {
         path: "collections",

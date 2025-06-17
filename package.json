@@ -14,6 +14,7 @@
     "@react-three/fiber": "^9.1.2",
     "@vueuse/head": "^2.0.0",
     "axios": "^1.9.0",
+    "canvas-confetti": "^1.9.3",
     "chart.js": "^4.4.9",
     "framer-motion": "^12.4.1",
     "lucide-react": "^0.511.0",
@@ -26,6 +27,7 @@
     "three": "^0.177.0"
   },
   "devDependencies": {
+    "@types/canvas-confetti": "^1.9.0",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "@types/react-helmet": "^6.1.11",

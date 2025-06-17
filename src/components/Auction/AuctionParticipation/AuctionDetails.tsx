@@ -4,7 +4,7 @@ import { Users, Eye, TrendingUp } from "lucide-react";
 import { BidHistory } from "../../../types/auction";
 
 interface AuctionDetailsProps {
-  currentBid: string;
+  currentBid: string; // Now in ETH format
   currentBidValue: number;
   bidCount: number;
   watchers: number;
