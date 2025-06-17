@@ -124,3 +124,53 @@ export interface ProductQueryParams {
   sortBy?: string;
   sortDir?: 'asc' | 'desc';
 }
+
+// Payment related types
+export interface PaymentRequestDTO {
+  paymentMethod: string; // "CRYPTO" | "FIAT"
+  transactionHash?: string; // For MetaMask transactions
+  amount?: number;
+}
+
+export interface Transaction {
+  id: string;
+  nftId: string;
+  buyerWalletAddress: string;
+  sellerWalletAddress: string;
+  amount: number;
+  paymentMethod: string;
+  transactionHash?: string;
+  status: string; // "PENDING" | "COMPLETED" | "FAILED"
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MetaMaskTransactionData {
+  from: string;
+  to: string;
+  value: number;
+  nftId: string;
+  tokenId: string;
+  contractAddress: string;
+}
+
+export interface PaymentResponse {
+  message: string;
+  transaction: Transaction;
+  nft: DigitalArtNFT;
+}
+
+export interface MetaMaskPaymentResponse {
+  message: string;
+  transactionData: MetaMaskTransactionData;
+}
+
+export interface PaymentConfirmationData {
+  transactionId: string;
+  status: string;
+}
+
+export interface PaymentConfirmationResponse {
+  message: string;
+  transactionStatus: string;
+}

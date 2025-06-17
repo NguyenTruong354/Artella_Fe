@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   RotateCcw,
@@ -10,6 +10,8 @@ import {
   Save,
   HelpCircle, // Import HelpCircle icon for the shortcut button
   X, // Import X icon for closing the shortcut guide
+  Upload, // Import Upload icon for NFT creation button
+  RefreshCw, // Import RefreshCw icon for refreshing user info
 } from "lucide-react";
 
 import {
@@ -22,8 +24,11 @@ import {
 import CreationView from "./CreationView.tsx";
 import GalleryView from "./GalleryView.tsx";
 import NFTMetadataForm from "./NFTMetadataForm.tsx";
+import NFTSuccessModal from "./NFTSuccessModal.tsx";
 import useDarkMode from "../../hooks/useDarkMode";
 import { WaveTransition } from "../WaveTransition";
+import { nftService } from "../../api/services/nftService";
+import { authService } from "../../api/services/authService";
 
 const CreateNFTPage: React.FC = () => {
   const darkMode = useDarkMode();
@@ -76,10 +81,27 @@ const CreateNFTPage: React.FC = () => {
       background: "dark",
       frame: "modern",
       lighting: "spotlight",
-      environment: "gallery",
-    });
+      environment: "gallery",  });
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [showShortcutGuide, setShowShortcutGuide] = useState(false); // State for shortcut guide visibility
+  const [showNFTForm, setShowNFTForm] = useState(false); // State for NFT creation form visibility
+  const [isCreatingNFT, setIsCreatingNFT] = useState(false); // State for NFT creation loading
+  const [showSuccessModal, setShowSuccessModal] = useState(false); // State for success modal
+  const [createdNFTData, setCreatedNFTData] = useState<{
+    id?: string;
+    name?: string;
+    description?: string;
+    tokenId?: string;
+    nftId?: string;
+    category?: string;
+    owner?: string;
+    creator?: string;
+    contractAddress?: string;
+    imageUrl?: string;
+    royaltyPercentage?: number;
+    createdAt?: string;
+    mintedAt?: string;
+  } | null>(null); // Store created NFT data
 
   // Initialize history when canvas is ready
   useEffect(() => {
@@ -106,11 +128,51 @@ const CreateNFTPage: React.FC = () => {
           historyIndex: 0,
         }));
       }
-    }
-  }, [creationState.history.length]);
+    }  }, [creationState.history.length]);
+
+  // Auto-fill creator information from user profile
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        if (authService.isAuthenticated()) {
+          console.log('🔍 Fetching user profile for creator info...');
+          const response = await authService.getUserProfile();
+          
+          if (response.success && response.data) {
+            const { walletAddress, fullName, email } = response.data;
+            
+            // Determine creator name: prefer wallet address, then full name, then email
+            let creatorName = 'Current User';
+            if (walletAddress && walletAddress.trim()) {
+              creatorName = walletAddress;
+            } else if (fullName && fullName.trim()) {
+              creatorName = fullName;
+            } else if (email && email.trim()) {
+              creatorName = email;
+            }
+            
+            console.log('✅ Auto-filling creator:', creatorName);
+            
+            // Update NFT metadata with creator info
+            setNftMetadata(prev => ({
+              ...prev,
+              creator: creatorName
+            }));
+          }
+        } else {
+          console.log('⚠️ User not authenticated, using default creator');
+        }
+      } catch (error) {
+        console.error('❌ Error fetching user profile:', error);
+        // Keep default creator value on error
+      }
+    };
+
+    fetchUserProfile();
+  }, []); // Run once on component mount
   
-  // Available tools
-  const tools: CanvasTool[] = [
+  // Available tools (memoized to prevent useEffect dependency issues)
+  const tools: CanvasTool[] = useMemo(() => [
     { id: "brush", name: "Brush", icon: "brush", type: "brush" },
     { id: "eraser", name: "Eraser", icon: "eraser", type: "eraser" },
     { id: "text", name: "Text", icon: "type", type: "text" },
@@ -143,14 +205,13 @@ const CreateNFTPage: React.FC = () => {
     { id: "pattern-stone", name: "Stone Pattern", icon: "mountain", type: "pattern",
       settings: { patternType: "stone", patternScale: 1, opacity: 0.8 }
     },
-    { id: "pattern-fabric", name: "Fabric Pattern", icon: "grid", type: "pattern",
-      settings: { patternType: "fabric", patternScale: 1, opacity: 0.8 }
+    { id: "pattern-fabric", name: "Fabric Pattern", icon: "grid", type: "pattern",      settings: { patternType: "fabric", patternScale: 1, opacity: 0.8 }
     },
     // Symmetry tool
     { id: "symmetry", name: "Symmetry", icon: "reflect", type: "symmetry",
       settings: { symmetryType: "bilateral", symmetryPoints: 2 }
     }
-  ];
+  ], []);
 
   // Toggle view modes with smooth transition
   const toggleViewMode = useCallback(async (newMode: ViewMode["type"]) => {
@@ -269,8 +330,146 @@ const CreateNFTPage: React.FC = () => {
     const link = document.createElement("a");
     link.download = `${nftMetadata.name || "nft-project"}.json`;
     link.href = URL.createObjectURL(blob);
-    link.click();
-  }, [nftMetadata, creationState, gallerySettings]);
+    link.click();  }, [nftMetadata, creationState, gallerySettings]);
+
+  // Handle NFT creation
+  const handleCreateNFT = useCallback(async () => {
+    if (!canvasRef.current) {
+      alert('Canvas not available');
+      return;
+    }
+
+    if (!nftMetadata.name.trim()) {
+      alert('Please enter NFT name');
+      return;
+    }
+
+    if (!nftMetadata.description.trim()) {
+      alert('Please enter NFT description');
+      return;
+    }
+
+    setIsCreatingNFT(true);
+    
+    try {
+      // Get image data from canvas as base64
+      const canvas = canvasRef.current;
+      const imageData = canvas.toDataURL('image/png');
+      
+      // Prepare request data
+      const requestData = {
+        image: imageData,
+        name: nftMetadata.name,
+        description: nftMetadata.description,
+        category: nftMetadata.category || 'Art',
+        owner: nftMetadata.creator || 'Current User',
+        tags: nftMetadata.attributes?.map(attr => attr.value).join(', ') || '',
+        royaltyPercentage: nftMetadata.royalty?.toString() || '5'
+      };      console.log('🎨 Creating NFT with data:', {
+        name: requestData.name,
+        description: requestData.description,
+        category: requestData.category,
+        owner: requestData.owner,
+        hasImage: !!requestData.image
+      });      // Call API to create NFT
+      const createdNFT = await nftService.createDigitalArtNFTFromDrawingSimple(requestData);
+      
+      console.log('✅ NFT created successfully:', createdNFT);
+      
+      // Store created NFT data for modal
+      setCreatedNFTData({
+        id: createdNFT?.id,
+        name: createdNFT?.name || requestData.name,
+        description: createdNFT?.description || requestData.description,
+        tokenId: createdNFT?.tokenId,
+        nftId: createdNFT?.nftId,
+        category: createdNFT?.category || requestData.category,
+        owner: createdNFT?.owner || requestData.owner,
+        creator: createdNFT?.creator,
+        contractAddress: createdNFT?.contractAddress,
+        imageUrl: createdNFT?.imageUrl,
+        royaltyPercentage: createdNFT?.royaltyPercentage || parseFloat(requestData.royaltyPercentage),
+        createdAt: createdNFT?.createdAt,
+        mintedAt: createdNFT?.mintedAt,
+      });
+      
+      // Close form and show success modal
+      setShowNFTForm(false);
+      setShowSuccessModal(true);
+      
+      // Optionally reset form or navigate
+      // You can add navigation logic here if needed
+      
+    } catch (error) {
+      console.error('❌ Error creating NFT:', error);
+      
+      // Better error handling
+      let errorMessage = 'Failed to create NFT. Please try again.';
+        if (error && typeof error === 'object') {
+        if ('message' in error && error.message) {
+          errorMessage = error.message as string;
+        } else if ('response' in error && error.response) {
+          const response = error.response as { data?: { message?: string }; message?: string };
+          if (response.data && response.data.message) {
+            errorMessage = response.data.message;
+          } else if (response.message) {
+            errorMessage = response.message;
+          }
+        }
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
+      console.log('📝 Formatted error message:', errorMessage);
+      alert(errorMessage);
+    } finally {
+      setIsCreatingNFT(false);
+    }}, [nftMetadata]);
+
+  // Handle refresh user profile for creator field
+  const handleRefreshUserProfile = useCallback(async () => {
+    try {
+      if (authService.isAuthenticated()) {
+        console.log('🔄 Refreshing user profile for creator info...');
+        const response = await authService.getUserProfile();
+        
+        if (response.success && response.data) {
+          const { walletAddress, fullName, email } = response.data;
+          
+          // Determine creator name: prefer wallet address, then full name, then email
+          let creatorName = 'Current User';
+          if (walletAddress && walletAddress.trim()) {
+            creatorName = walletAddress;
+          } else if (fullName && fullName.trim()) {
+            creatorName = fullName;
+          } else if (email && email.trim()) {
+            creatorName = email;
+          }
+          
+          console.log('✅ Refreshed creator info:', creatorName);
+          
+          // Update NFT metadata with creator info
+          setNftMetadata(prev => ({
+            ...prev,
+            creator: creatorName
+          }));
+        }
+      } else {
+        console.log('⚠️ User not authenticated');
+        alert('Please login to auto-fill creator information');
+      }
+    } catch (error) {
+      console.error('❌ Error refreshing user profile:', error);
+      alert('Failed to refresh user information');
+    }  }, []);
+
+  // Handle success modal close and reset for creating another NFT
+  const handleSuccessModalClose = useCallback(() => {
+    setShowSuccessModal(false);
+    setCreatedNFTData(null);
+    // Optionally reset some form fields
+    // setNftMetadata(prev => ({ ...prev, name: '', description: '' }));
+  }, []);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -403,8 +602,7 @@ const CreateNFTPage: React.FC = () => {
               </h1>
               <div className="text-sm text-gray-500 dark:text-gray-400">
                 Dual-Reality Studio
-              </div>
-              {/* Shortcut Button */}
+              </div>              {/* Shortcut Button */}
               <button
                 onClick={() => setShowShortcutGuide(!showShortcutGuide)}
                 className="hidden lg:flex items-center space-x-1 text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
@@ -412,6 +610,15 @@ const CreateNFTPage: React.FC = () => {
               >
                 <HelpCircle className="w-3 h-3" />
                 <span>Shortcuts</span>
+              </button>
+              {/* Create NFT Button */}
+              <button
+                onClick={() => setShowNFTForm(!showNFTForm)}
+                className="flex items-center space-x-2 text-xs bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-4 py-2 rounded-full hover:from-emerald-600 hover:to-teal-600 transition-all duration-200 shadow-md hover:shadow-lg"
+                title="Create NFT from Drawing"
+              >
+                <Upload className="w-3 h-3" />
+                <span>Create NFT</span>
               </button>
             </div>
             {/* View Mode Controls */}
@@ -523,66 +730,282 @@ const CreateNFTPage: React.FC = () => {
                   <li><strong>E:</strong> Select Eraser Tool</li>
                   <li><strong>T:</strong> Select Text Tool</li>
                 </ul>
-              </motion.div>
-            )}
+              </motion.div>            )}
           </AnimatePresence>
 
-          {/* Main Content Area */}
+          {/* NFT Creation Form Modal */}
+          <AnimatePresence>
+            {showNFTForm && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                onClick={() => setShowNFTForm(false)}
+              >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                  transition={{ duration: 0.2 }}
+                  className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-md max-h-[90vh] overflow-y-auto"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="p-6">
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
+                        Create NFT from Drawing
+                      </h3>
+                      <button
+                        onClick={() => setShowNFTForm(false)}
+                        className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
+                        title="Close"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {/* NFT Name */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          NFT Name *
+                        </label>
+                        <input
+                          type="text"
+                          value={nftMetadata.name}
+                          onChange={(e) => setNftMetadata(prev => ({ ...prev, name: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          placeholder="Enter NFT name"
+                          disabled={isCreatingNFT}
+                        />
+                      </div>
+
+                      {/* NFT Description */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Description *
+                        </label>
+                        <textarea
+                          value={nftMetadata.description}
+                          onChange={(e) => setNftMetadata(prev => ({ ...prev, description: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 resize-none"
+                          placeholder="Describe your NFT artwork"
+                          rows={3}
+                          disabled={isCreatingNFT}
+                        />
+                      </div>
+
+                      {/* Category */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Category
+                        </label>
+                        <select
+                          value={nftMetadata.category}
+                          onChange={(e) => setNftMetadata(prev => ({ ...prev, category: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          disabled={isCreatingNFT}
+                        >
+                          <option value="Art">Art</option>
+                          <option value="Photography">Photography</option>
+                          <option value="Music">Music</option>
+                          <option value="Video">Video</option>
+                          <option value="Gaming">Gaming</option>
+                          <option value="Collectibles">Collectibles</option>
+                          <option value="Utility">Utility</option>
+                        </select>
+                      </div>                      {/* Creator */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Creator
+                        </label>
+                        <div className="flex space-x-2">
+                          <input
+                            type="text"
+                            value={nftMetadata.creator}
+                            onChange={(e) => setNftMetadata(prev => ({ ...prev, creator: e.target.value }))}
+                            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            placeholder="Creator name or wallet address"
+                            disabled={isCreatingNFT}
+                          />
+                          <button
+                            type="button"
+                            onClick={handleRefreshUserProfile}
+                            disabled={isCreatingNFT}
+                            className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            title="Refresh from profile"
+                          >
+                            <RefreshCw className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                          </button>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Auto-filled from your profile. Wallet address preferred, then name, then email.
+                        </p>
+                      </div>
+
+                      {/* Royalty */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Royalty Percentage
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="50"
+                          value={nftMetadata.royalty}
+                          onChange={(e) => setNftMetadata(prev => ({ ...prev, royalty: parseInt(e.target.value) || 0 }))}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          placeholder="5"
+                          disabled={isCreatingNFT}
+                        />
+                      </div>
+
+                      {/* Tags */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Tags (optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={nftMetadata.attributes?.map(attr => attr.value).join(', ') || ''}
+                          onChange={(e) => {
+                            const tags = e.target.value.split(',').map(tag => tag.trim()).filter(Boolean);
+                            const attributes = tags.map(tag => ({ trait_type: 'tag', value: tag }));
+                            setNftMetadata(prev => ({ ...prev, attributes }));
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          placeholder="art, digital, creative"
+                          disabled={isCreatingNFT}
+                        />
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Separate tags with commas
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <button
+                        onClick={() => setShowNFTForm(false)}
+                        disabled={isCreatingNFT}
+                        className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 disabled:opacity-50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleCreateNFT}
+                        disabled={isCreatingNFT || !nftMetadata.name.trim() || !nftMetadata.description.trim()}
+                        className="px-6 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg hover:from-emerald-600 hover:to-teal-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center space-x-2"
+                      >
+                        {isCreatingNFT ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                            <span>Creating...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-4 h-4" />
+                            <span>Create NFT</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>          {/* Main Content Area */}
           <motion.main
             className={`grid gap-6 ${getViewClasses()}`}
             variants={itemVariants}
           >
-            <AnimatePresence mode="wait">
-              {/* Creation View */}
-              {(viewMode.type === "creation" || viewMode.type === "split") && (
+            {viewMode.type === "split" ? (
+              // Split view without AnimatePresence to avoid conflicts
+              <>
                 <motion.div
-                  key="creation-view"
+                  key="creation-view-split"
                   initial={{ opacity: 0, x: -50 }}
                   animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
                   transition={{ duration: 0.3 }}
                   className="space-y-6"
-                >                  <CreationView
+                >
+                  <CreationView
                     creationState={creationState}
                     onStateUpdate={handleCanvasUpdate}
                     canvasRef={canvasRef}
                   />
-
-                  {viewMode.type === "creation" && (
-                    <NFTMetadataForm
-                      metadata={nftMetadata}
-                      onMetadataChange={setNftMetadata}
-                    />
-                  )}
                 </motion.div>
-              )}
 
-              {/* Gallery View */}
-              {(viewMode.type === "gallery" || viewMode.type === "split") && (
                 <motion.div
-                  key="gallery-view"
+                  key="gallery-view-split"
                   initial={{ opacity: 0, x: 50 }}
                   animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 50 }}
                   transition={{ duration: 0.3 }}
                   className="space-y-6"
                 >
-                  {" "}
                   <GalleryView
                     nftMetadata={nftMetadata}
                     gallerySettings={gallerySettings}
                     onSettingsChange={setGallerySettings}
                   />
-                  {viewMode.type === "gallery" && (
+                </motion.div>
+              </>
+            ) : (
+              // Single view with AnimatePresence mode="wait"
+              <AnimatePresence mode="wait">
+                {viewMode.type === "creation" && (
+                  <motion.div
+                    key="creation-view"
+                    initial={{ opacity: 0, x: -50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -50 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-6"
+                  >
+                    <CreationView
+                      creationState={creationState}
+                      onStateUpdate={handleCanvasUpdate}
+                      canvasRef={canvasRef}
+                    />
+
                     <NFTMetadataForm
                       metadata={nftMetadata}
                       onMetadataChange={setNftMetadata}
                     />
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.main>
+                  </motion.div>
+                )}
+
+                {viewMode.type === "gallery" && (
+                  <motion.div
+                    key="gallery-view"
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 50 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-6"
+                  >
+                    <GalleryView
+                      nftMetadata={nftMetadata}
+                      gallerySettings={gallerySettings}
+                      onSettingsChange={setGallerySettings}
+                    />
+                    
+                    <NFTMetadataForm
+                      metadata={nftMetadata}
+                      onMetadataChange={setNftMetadata}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>            )}
+          </motion.main>          {/* NFT Success Modal */}
+          <NFTSuccessModal
+            isOpen={showSuccessModal}
+            onClose={handleSuccessModalClose}
+            nftData={createdNFTData || {}}
+            imagePreview={canvasRef.current?.toDataURL('image/png')}
+          />
         </motion.div>
       </div>
     </>

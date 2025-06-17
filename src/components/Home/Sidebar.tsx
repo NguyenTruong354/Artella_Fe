@@ -101,7 +101,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
   const [activeSection, setActiveSection] = useState("");
   const [time, setTime] = useState(new Date());
   const prefersReducedMotion = useReducedMotion();
-
   // Navigation items with artistic icons
   const navigationItems = [
     {
@@ -133,11 +132,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
       gradient: "from-pink-500 to-purple-500",
     },
     {
+      icon: "⚝",
+      label: "Sell Art",
+      path: "/Home/sell-art",
+      description: "My NFTs",
+      gradient: "from-purple-500 to-indigo-500",
+    },
+    {
       icon: "⌘",
       label: "Profile",
       path: "/Home/profile",
       description: "Your Space",
-      gradient: "from-purple-500 to-indigo-500",
+      gradient: "from-indigo-500 to-blue-500",
     },
   ];
   // Artistic quick actions

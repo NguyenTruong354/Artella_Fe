@@ -8,7 +8,7 @@ import EndAuctionLive from "../pages/EndAuctionLive";
 import Collections from "../pages/Collections";
 import Profile from "../pages/Profile";
 import CreateNFT from "../pages/CreateNFT";
-//import CreateScheduledAuction from "../pages/CreateScheduledAuction";
+import SellArt from "../pages/SellArt";
 import ScheduledAuctions from "../pages/ScheduledAuctions";
 import DetailNFT from "../pages/DetailNFT";
 import DetailProduct from "../pages/DetailProduct";
@@ -41,24 +41,28 @@ const router = createBrowserRouter([
       {
         path: "gallery",
         element: <Gallery />,
-      },      {
+      },
+      {
         path: "nft/:id",
         element: <DetailNFT />,
       },
       {
         path: "product/:id",
         element: <DetailProduct />,
-      },      {
+      },
+      {
         path: "auctions",
         element: <Auctions />,
       },
       {
         path: "auction/:auctionId",
         element: <AuctionParticipation />,
-      },      {
+      },
+      {
         path: "auction-participation/:auctionId",
         element: <AuctionParticipation />,
-      },      {
+      },
+      {
         path: "auction-debug/:auctionId",
         element: <AuctionParticipationDebug />,
       },
@@ -73,10 +77,15 @@ const router = createBrowserRouter([
       {
         path: "profile",
         element: <Profile />,
-      },      {
+      },
+      {
         path: "create-nft",
         element: <CreateNFT />,
-      },      
+      },
+      {
+        path: "sell-art",
+        element: <SellArt />,
+      },
       {
         path: "scheduled-auctions",
         element: <ScheduledAuctions />,
@@ -112,7 +121,8 @@ const router = createBrowserRouter([
         <Signup />
       </ProtectedRoute>
     ),
-  },  {
+  },
+  {
     path: "/forgot-password",
     element: (
       <ProtectedRoute requireAuth={false}>
