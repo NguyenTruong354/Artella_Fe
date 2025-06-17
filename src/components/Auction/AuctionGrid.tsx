@@ -1,5 +1,6 @@
 import React from 'react';
 import { Heart, Eye, Clock, TrendingUp } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { AuctionDisplayData } from '../../utils/auctionHelpers';
 import SmartImage from '../SmartImage';
 
@@ -9,9 +10,9 @@ export interface AuctionGridProps {
   onToggleWatch: (id: string) => void;
   getStoryTypeColor: (type: string) => string;
   getStatusColor: (status: string) => string;
-  itemVariants?: any;
-  containerVariants?: any;
-  controls?: any;
+  itemVariants?: object;
+  containerVariants?: object;
+  controls?: object;
 }
 
 const AuctionGrid: React.FC<AuctionGridProps> = ({ 
@@ -22,15 +23,46 @@ const AuctionGrid: React.FC<AuctionGridProps> = ({
   getStatusColor
 }) => {
   console.log('🎨 AuctionGrid rendering:', auctions.length, 'auctions');
+  const navigate = useNavigate();
 
-  return (
-    <div className="relative space-y-4 px-4 sm:px-6 lg:px-8">
+  // Check if auction is currently live (ongoing)
+  const isAuctionLive = (auction: AuctionDisplayData): boolean => {
+    return auction.type === 'live' && 
+           auction.timeLeft !== 'Auction Completed' && 
+           !auction.status.includes('NFT Minted');
+  };
+  // Handle auction card click
+  const handleAuctionClick = (auction: AuctionDisplayData) => {
+    if (isAuctionLive(auction)) {
+      // Navigate to auction participation page for live auctions
+      navigate(`/Home/auction-participation/${auction.id}`);
+    } else if (auction.type === 'scheduled') {
+      // Navigate to scheduled auctions page for scheduled auctions
+      navigate('/scheduled-auctions');
+    }
+    // For completed auctions, do nothing or show details
+  };
+
+  return (    <div className="relative space-y-4 px-4 sm:px-6 lg:px-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {auctions.map((auction) => (
           <div
             key={auction.id}
-            className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-xl p-6 border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-300 group"
+            className={`bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-xl p-6 border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl transition-all duration-300 group relative ${
+              isAuctionLive(auction) ? 'cursor-pointer hover:scale-[1.02]' : ''
+            }`}
+            onClick={() => handleAuctionClick(auction)}
           >
+            {/* LIVE Badge - top right corner */}
+            {isAuctionLive(auction) && (
+              <div className="absolute top-4 right-4 z-10">
+                <div className="bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center space-x-1 shadow-lg">
+                  <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                  <span>LIVE</span>
+                </div>
+              </div>
+            )}
+
             {/* Header with status and watch button */}
             <div className="flex justify-between items-start mb-4">
               <div className="flex space-x-2">
@@ -42,7 +74,10 @@ const AuctionGrid: React.FC<AuctionGridProps> = ({
                 </span>
               </div>
               <button
-                onClick={() => onToggleWatch(auction.id)}
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent card click when clicking watch button
+                  onToggleWatch(auction.id);
+                }}
                 className={`p-2 rounded-full transition-all duration-300 ${
                   watchedItems.has(auction.id)
                     ? 'bg-red-500 text-white'
@@ -51,7 +86,7 @@ const AuctionGrid: React.FC<AuctionGridProps> = ({
               >
                 <Heart size={16} className={watchedItems.has(auction.id) ? 'fill-current' : ''} />
               </button>
-            </div>            {/* Image */}
+            </div>{/* Image */}
             <div className="relative mb-4 overflow-hidden rounded-lg">
               <SmartImage
                 imageId={auction.image}
@@ -110,13 +145,21 @@ const AuctionGrid: React.FC<AuctionGridProps> = ({
                   <TrendingUp size={14} className="mr-1" />
                   {auction.totalBids} bids
                 </span>
-              </div>
-
-              {/* Location and reading time */}
+              </div>              {/* Location and reading time */}
               <div className="flex justify-between items-center text-xs text-gray-400 dark:text-gray-500 pt-2 border-t border-gray-200 dark:border-gray-700">
                 <span>{auction.location}</span>
                 <span>{auction.readingTime} read</span>
               </div>
+
+              {/* Click to join live auction indicator */}
+              {isAuctionLive(auction) && (
+                <div className="mt-3 text-center">
+                  <div className="inline-flex items-center space-x-2 text-xs text-red-600 dark:text-red-400 font-medium">
+                    <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                    <span>Click to join live auction</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         ))}

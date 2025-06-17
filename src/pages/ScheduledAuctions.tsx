@@ -103,6 +103,17 @@ const ScheduledAuctions: React.FC = () => {
   >("idle");
   const [submitMessage, setSubmitMessage] = useState("");
 
+  // Real-time timer for active auctions
+  const [currentTime, setCurrentTime] = useState(Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
   useEffect(() => {
     if (inView) {
       controls.start("visible");
@@ -490,6 +501,44 @@ const ScheduledAuctions: React.FC = () => {
       setIsSubmitting(false);
     }
   };
+  // Check if auction is currently active/running
+  const isAuctionActive = (auction: ScheduledAuctionDetailDTO): boolean => {
+    if (auction.status !== "PROCESSED") return false;
+    
+    const scheduledTime = new Date(auction.scheduledTime).getTime();
+    const endTime = auction.endTime;
+    
+    return currentTime >= scheduledTime && currentTime <= endTime;
+  };// Calculate time remaining for active auction
+  const getTimeRemaining = (auction: ScheduledAuctionDetailDTO): string => {
+    if (!isAuctionActive(auction)) return "";
+    
+    const endTime = auction.endTime;
+    const timeLeft = Math.max(0, endTime - currentTime);
+    
+    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+    
+    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  };  // Navigate to auction participation page
+  const handleViewAuction = (auction: ScheduledAuctionDetailDTO) => {
+    console.log("🔍 handleViewAuction called with auction:", auction);
+    console.log("🔍 isAuctionActive:", isAuctionActive(auction));
+    console.log("🔍 createdAuctionId:", auction.createdAuctionId);
+    
+    if (isAuctionActive(auction) && auction.createdAuctionId) {
+      // If auction is active and has been created, navigate to participation page
+      const targetUrl = `/Home/auction-participation/${auction.createdAuctionId}`;
+      console.log("🔍 Navigating to:", targetUrl);
+      navigate(targetUrl);
+    } else {
+      // If auction is not active, show details (could be a modal or details page)
+      console.log("Viewing auction details:", auction);
+      // For now, just log - you can implement a details modal later
+      alert(`Auction details:\nProduct: ${auction.productName || 'Unknown'}\nStatus: ${auction.status}\nStart Price: ${auction.startPrice} ETH`);
+    }
+  };
 
   // Dashboard Overview
   const renderDashboard = () => (
@@ -726,7 +775,8 @@ const ScheduledAuctions: React.FC = () => {
                     not already in auction
                   </p>
                 </div>
-              ) : (                <div className="space-y-4">
+              ) : (
+                <div className="space-y-4">
                   {/* Products Stats */}
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl border border-purple-200/50 dark:border-purple-700/50 space-y-3 sm:space-y-0">
                     <div className="flex items-center space-x-3 sm:space-x-4">
@@ -1138,13 +1188,20 @@ const ScheduledAuctions: React.FC = () => {
             </p>
           </div>
         ) : scheduledAuctions.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {scheduledAuctions.map((auction) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">            {scheduledAuctions.map((auction) => (
               <motion.div
                 key={auction.id}
-                className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 hover:shadow-lg transition-shadow"
+                className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 hover:shadow-lg transition-shadow relative"
                 whileHover={{ y: -2 }}
               >
+                {/* Active Auction Indicator */}
+                {isAuctionActive(auction) && auction.createdAuctionId && (
+                  <div className="absolute top-2 right-2 flex items-center space-x-1">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-xs text-green-600 dark:text-green-400 font-medium">LIVE</span>
+                  </div>
+                )}
+                
                 <div className="aspect-square rounded-lg overflow-hidden mb-4 bg-gray-200 dark:bg-gray-700">
                   <SmartImage
                     imageId={
@@ -1175,8 +1232,7 @@ const ScheduledAuctions: React.FC = () => {
                     <span className="font-medium">
                       {new Date(auction.scheduledTime).toLocaleDateString()}
                     </span>
-                  </div>
-                  <div className="flex justify-between">
+                  </div>                  <div className="flex justify-between">
                     <span className="text-gray-600 dark:text-gray-400">
                       Status:
                     </span>
@@ -1192,11 +1248,28 @@ const ScheduledAuctions: React.FC = () => {
                       {auction.status}
                     </span>
                   </div>
-                </div>
-                <div className="flex space-x-2 mt-4">
-                  <button className="flex-1 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm">
+                  {/* Time Remaining for Active Auctions */}
+                  {isAuctionActive(auction) && auction.createdAuctionId && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Time Left:
+                      </span>
+                      <span className="font-medium text-green-600 dark:text-green-400">
+                        {getTimeRemaining(auction)}
+                      </span>
+                    </div>
+                  )}
+                </div>                <div className="flex space-x-2 mt-4">
+                  <button 
+                    onClick={() => handleViewAuction(auction)}
+                    className={`flex-1 px-3 py-2 rounded-lg transition-colors text-sm ${
+                      isAuctionActive(auction) && auction.createdAuctionId
+                        ? "bg-green-500 hover:bg-green-600 text-white"
+                        : "bg-blue-500 hover:bg-blue-600 text-white"
+                    }`}
+                  >
                     <Eye className="w-4 h-4 inline mr-1" />
-                    View
+                    {isAuctionActive(auction) && auction.createdAuctionId ? "Join Auction" : "View Details"}
                   </button>
                   {auction.status === "PENDING" && (
                     <button className="flex-1 px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm">
@@ -1356,6 +1429,14 @@ const ScheduledAuctions: React.FC = () => {
       </motion.div>
     </div>
   );
+
+  // Call debug when data changes
+  useEffect(() => {
+    if (scheduledAuctions.length > 0) {
+      console.log("🔍 Current scheduledAuctions:", scheduledAuctions);
+      console.log("🔍 Duplicate check:", scheduledAuctions.map(a => ({ id: a.id, endTime: a.endTime })));
+    }
+  }, [scheduledAuctions]);
 
   // Render different content based on active tab
   const renderTabContent = () => {

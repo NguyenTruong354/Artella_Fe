@@ -246,16 +246,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
       case "sell":
         // TODO: Add sell functionality
         console.log("Sell action clicked");
-        break;
-      case "live-auction":
+        break;      case "live-auction":
         // Navigate to Auctions page
-        navigate("/auctions");
-        console.log("Live Auction action clicked - navigating to /auctions");
-        break;
-      case "schedule-auction":
-        // Navigate to Create Scheduled Auction page
-        navigate("/Home/create-scheduled-auction");
-        console.log("Schedule Auction action clicked - navigating to /Home/create-scheduled-auction");
+        navigate("/Home/auctions");
+        console.log("Live Auction action clicked - navigating to /Home/auctions");
+        break;case "schedule-auction":
+        // Navigate to Scheduled Auctions page
+        navigate("/Home/scheduled-auctions");
+        console.log("Schedule Auction action clicked - navigating to /Home/scheduled-auctions");
         break;
       default:
         break;

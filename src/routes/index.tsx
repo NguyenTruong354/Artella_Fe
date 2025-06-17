@@ -22,6 +22,7 @@ import HtmlPage from "../pages/HtmlPage";
 import MainLayout from "../layouts/MainLayout";
 import HomeLayout from "../layouts/HomeLayout";
 import ProtectedRoute from "../components/ProtectedRoute";
+import AuctionParticipationDebug from "../components/AuctionParticipationDebug";
 
 const router = createBrowserRouter([
   {
@@ -46,14 +47,20 @@ const router = createBrowserRouter([
       {
         path: "product/:id",
         element: <DetailProduct />,
-      },
-      {
+      },      {
         path: "auctions",
         element: <Auctions />,
       },
       {
-        path: "auction/1",
+        path: "auction/:auctionId",
         element: <AuctionParticipation />,
+      },      {
+        path: "auction-participation/:auctionId",
+        element: <AuctionParticipation />,
+      },
+      {
+        path: "auction-debug/:auctionId",
+        element: <AuctionParticipationDebug />,
       },
       {
         path: "collections",
