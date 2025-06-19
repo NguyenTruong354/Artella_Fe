@@ -135,3 +135,15 @@ export interface TopSellersParams {
   month?: number;
   limit?: number;
 }
+
+// Wallet Update related types
+export interface WalletUpdateRequest {
+  walletAddress: string;
+}
+
+// Profile Update related types
+export interface UpdateProfileRequest {
+  email?: string;
+  fullName?: string;
+  phoneNumber?: string;
+}

@@ -1,16 +1,15 @@
 import React, { useEffect, useRef, useState, Suspense, useCallback } from 'react';
 import { motion, useAnimation, useInView } from 'framer-motion';
-import { Bell, Search, Copy, Heart, Wallet, PenLine, Share2, LogOut, X, Save, User, Mail, Phone } from 'lucide-react';
+import { Bell, Search, Copy, Heart, Wallet, PenLine, Share2, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../api/auth';
 import { authService } from '../api/services';
 import { productService } from '../api/services/productService';
 import { nftService } from '../api/services/nftService';
-import { UserProfileResponse, DigitalArtNFT, Product, UpdateProfileRequest } from '../api/types';
+import { UserProfileResponse, DigitalArtNFT, Product } from '../api/types';
 import useDarkMode from '../hooks/useDarkMode';
 import { WaveTransition } from '../components/WaveTransition';
 import { DarkModeToggle } from '../components/DarkModeToggle';
-import SmartImage from '../components/SmartImage';
 import FloatingAvatar from '../components/Profile/FloatingAvatar';
 import LiquidContentWrapper from '../components/Profile/LiquidContentWrapper';
 import '../styles/holographic.css';
@@ -22,23 +21,6 @@ const Profile: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('owned');
   const [watchedItems, setWatchedItems] = useState<Set<string>>(new Set());
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  
-  // Edit modal states
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editForm, setEditForm] = useState({
-    fullName: '',
-    email: '',
-    phoneNumber: '',
-    walletAddress: ''
-  });
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [updateErrors, setUpdateErrors] = useState<{
-    fullName?: string;
-    email?: string;
-    phoneNumber?: string;
-    walletAddress?: string;
-    general?: string;
-  }>({});
   
   // API data states
   const [userProfile, setUserProfile] = useState<UserProfileResponse | null>(null);
@@ -62,6 +44,7 @@ const Profile: React.FC = () => {
       controls.start('visible');
     }
   }, [controls, inView]);
+
   // Fetch user profile data
   const fetchUserProfile = useCallback(async () => {
     try {
@@ -71,15 +54,18 @@ const Profile: React.FC = () => {
       const response = await authService.getUserProfile();
       if (response.success && response.data) {
         setUserProfile(response.data);
-        return response.data; // Return data for further processing
+        
+        // Sau khi có user profile, fetch NFTs và products
+        if (response.data.walletAddress) {
+          fetchOwnedNFTs(response.data.walletAddress);
+          fetchSellerProducts(response.data.walletAddress);
+        }
       } else {
         setErrors(prev => ({ ...prev, profile: response.message || 'Failed to fetch profile' }));
-        return null;
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
       setErrors(prev => ({ ...prev, profile: 'Failed to fetch profile' }));
-      return null;
     } finally {
       setIsLoadingProfile(false);
     }
@@ -132,19 +118,8 @@ const Profile: React.FC = () => {
 
   // Initialize data on component mount
   useEffect(() => {
-    const initializeData = async () => {
-      const userProfileData = await fetchUserProfile();
-      if (userProfileData?.walletAddress) {
-        // Fetch both NFTs and products in parallel
-        await Promise.all([
-          fetchOwnedNFTs(userProfileData.walletAddress),
-          fetchSellerProducts(userProfileData.walletAddress)
-        ]);
-      }
-    };
-    
-    initializeData();
-  }, [fetchUserProfile, fetchOwnedNFTs, fetchSellerProducts]);
+    fetchUserProfile();
+  }, [fetchUserProfile]);
 
   const userStats = {
     ownedNFTs: userProfile ? ownedNFTs.length : 0,
@@ -173,114 +148,6 @@ const Profile: React.FC = () => {
       navigate('/login');
     } finally {
       setIsLoggingOut(false);
-    }
-  };
-
-  // Handle edit modal functions
-  const openEditModal = () => {
-    if (userProfile) {
-      setEditForm({
-        fullName: userProfile.fullName || '',
-        email: userProfile.email || '',
-        phoneNumber: userProfile.phoneNumber || '',
-        walletAddress: userProfile.walletAddress || ''
-      });
-    }
-    setUpdateErrors({});
-    setIsEditModalOpen(true);
-  };
-
-  const closeEditModal = () => {
-    setIsEditModalOpen(false);
-    setEditForm({
-      fullName: '',
-      email: '',
-      phoneNumber: '',
-      walletAddress: ''
-    });
-    setUpdateErrors({});
-  };
-
-  const handleInputChange = (field: keyof typeof editForm, value: string) => {
-    setEditForm(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    // Clear error for this field when user starts typing
-    if (updateErrors[field]) {
-      setUpdateErrors(prev => ({
-        ...prev,
-        [field]: undefined
-      }));
-    }
-  };
-
-  const validateForm = (): boolean => {
-    const errors: typeof updateErrors = {};
-    
-    if (!editForm.fullName.trim()) {
-      errors.fullName = 'Full name is required';
-    }
-    
-    if (!editForm.email.trim()) {
-      errors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editForm.email)) {
-      errors.email = 'Invalid email format';
-    }
-    
-    if (editForm.phoneNumber && !/^[\d\s\-+()]+$/.test(editForm.phoneNumber)) {
-      errors.phoneNumber = 'Invalid phone number format';
-    }
-
-    if (editForm.walletAddress && !/^0x[a-fA-F0-9]{40}$/.test(editForm.walletAddress)) {
-      errors.walletAddress = 'Invalid wallet address format';
-    }
-
-    setUpdateErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleUpdateProfile = async () => {
-    if (!validateForm()) return;
-    
-    try {
-      setIsUpdating(true);
-      setUpdateErrors({});
-
-      // Update profile first
-      const profileUpdateRequest: UpdateProfileRequest = {
-        email: editForm.email,
-        fullName: editForm.fullName,
-        phoneNumber: editForm.phoneNumber || undefined
-      };
-
-      const profileResponse = await authService.updateUserProfile(profileUpdateRequest);
-      
-      if (!profileResponse.success) {
-        setUpdateErrors({ general: profileResponse.message || 'Failed to update profile' });
-        return;
-      }      // Update wallet address if it changed
-      if (editForm.walletAddress && editForm.walletAddress !== userProfile?.walletAddress) {
-        const walletResponse = await authService.updateWalletAddress(editForm.walletAddress);
-        
-        if (!walletResponse.success) {
-          setUpdateErrors({ general: walletResponse.message || 'Failed to update wallet address' });
-          return;
-        }
-      }
-
-      // Refresh user profile after successful update
-      await fetchUserProfile();
-      closeEditModal();
-      
-      // Show success message (you can add a toast notification here)
-      console.log('Profile updated successfully!');
-      
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      setUpdateErrors({ general: 'An unexpected error occurred' });
-    } finally {
-      setIsUpdating(false);
     }
   };
 
@@ -413,7 +280,6 @@ const Profile: React.FC = () => {
                 <motion.button 
                   className="px-6 py-2 bg-gradient-to-r from-amber-500 to-orange-500 dark:from-blue-500 dark:to-purple-600 text-white rounded-xl hover:from-amber-600 hover:to-orange-600 dark:hover:from-blue-600 dark:hover:to-purple-700 transition-all duration-300 shadow-md flex items-center justify-center"
                   whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                  onClick={openEditModal}
                 >
                   <PenLine className="w-4 h-4 mr-2" /> Edit Profile
                 </motion.button>
@@ -509,7 +375,8 @@ const Profile: React.FC = () => {
                   <motion.div 
                     className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
                     id="owned-tab" role="tabpanel" aria-labelledby="owned-tab"
-                  >                    {ownedNFTs.map((nft) => (
+                  >
+                    {ownedNFTs.map((nft) => (
                       <motion.div
                         key={nft.id}
                         className="backdrop-blur-sm rounded-2xl overflow-hidden transition-all duration-500 shadow-xl bg-gradient-to-r from-white/80 to-gray-50/80 border border-gray-200/50 dark:bg-gradient-to-r dark:from-[#1A1A1A] dark:to-[#1F1F1F] dark:border dark:border-gray-800/50 group"
@@ -518,13 +385,10 @@ const Profile: React.FC = () => {
                         animate="visible"
                       >
                         <div className="relative">
-                          <SmartImage 
-                            imageId={nft.imageUrl || nft.id} 
+                          <img 
+                            src={nft.imageUrl || '/src/assets/placeholder.jpg'} 
                             alt={nft.name} 
                             className="w-full h-48 object-cover" 
-                            fallbackCategory={nft.category || 'Digital Art'}
-                            priority={false}
-                            lazyLoad={true}
                           />
                           <div className="absolute top-3 right-3 flex space-x-2">
                             <motion.button
@@ -617,23 +481,13 @@ const Profile: React.FC = () => {
                         variants={itemVariants}
                         initial="hidden"
                         animate="visible"
-                      >                        <div className="relative">
-                          {product.imageIds && product.imageIds.length > 0 ? (
-                            <SmartImage 
-                              imageId={product.imageIds[0]} 
-                              alt={product.name} 
-                              className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" 
-                              fallbackCategory={product.category || 'Product'}
-                              priority={false}
-                              lazyLoad={true}
-                            />
-                          ) : (
-                            <div className="w-full h-48 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
-                              <div className="text-gray-500 dark:text-gray-400 text-sm">
-                                {product.category || 'Product Image'}
-                              </div>
+                      >
+                        <div className="relative">
+                          <div className="w-full h-48 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
+                            <div className="text-gray-500 dark:text-gray-400 text-sm">
+                              {product.category || 'Product Image'}
                             </div>
-                          )}
+                          </div>
                           <div className="absolute top-3 right-3">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                               product.status === 'Available' 
@@ -692,221 +546,7 @@ const Profile: React.FC = () => {
             </motion.div>
           )}
         </motion.main>
-      </div>      {/* Edit Profile Modal */}
-      {isEditModalOpen && (
-        <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={closeEditModal}
-          />
-          
-          {/* Modal Content */}
-          <motion.div
-            className="relative w-full max-w-md mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700"
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            transition={{ type: "spring", duration: 0.3 }}
-            role="dialog"
-            aria-modal="true"
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
-                <PenLine className="w-5 h-5 mr-2 text-amber-500 dark:text-blue-400" />
-                Edit Profile
-              </h2>
-              <motion.button
-                onClick={closeEditModal}
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-              </motion.button>
-            </div>
-            
-            {/* Form */}
-            <div className="p-6 space-y-4">
-              {updateErrors.general && (
-                <motion.div 
-                  className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                >
-                  <p className="text-red-600 dark:text-red-400 text-sm">{updateErrors.general}</p>
-                </motion.div>
-              )}
-              
-              {/* Full Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  <User className="w-4 h-4 inline mr-2" />
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  value={editForm.fullName}
-                  onChange={(e) => handleInputChange('fullName', e.target.value)}
-                  className={`w-full px-4 py-3 rounded-xl border transition-all duration-300 
-                    ${updateErrors.fullName 
-                      ? 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20' 
-                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'
-                    } 
-                    focus:ring-2 focus:ring-amber-500 dark:focus:ring-blue-400 focus:border-transparent
-                    text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400`}
-                  placeholder="Enter your full name"
-                />
-                {updateErrors.fullName && (
-                  <motion.p 
-                    className="mt-1 text-sm text-red-600 dark:text-red-400"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                  >
-                    {updateErrors.fullName}
-                  </motion.p>
-                )}
-              </div>
-              
-              {/* Email */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  <Mail className="w-4 h-4 inline mr-2" />
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={editForm.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  className={`w-full px-4 py-3 rounded-xl border transition-all duration-300 
-                    ${updateErrors.email 
-                      ? 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20' 
-                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'
-                    } 
-                    focus:ring-2 focus:ring-amber-500 dark:focus:ring-blue-400 focus:border-transparent
-                    text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400`}
-                  placeholder="Enter your email"
-                />
-                {updateErrors.email && (
-                  <motion.p 
-                    className="mt-1 text-sm text-red-600 dark:text-red-400"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                  >
-                    {updateErrors.email}
-                  </motion.p>
-                )}
-              </div>
-              
-              {/* Phone Number */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  <Phone className="w-4 h-4 inline mr-2" />
-                  Phone Number <span className="text-gray-400">(Optional)</span>
-                </label>
-                <input
-                  type="tel"
-                  value={editForm.phoneNumber}
-                  onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                  className={`w-full px-4 py-3 rounded-xl border transition-all duration-300 
-                    ${updateErrors.phoneNumber 
-                      ? 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20' 
-                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'
-                    } 
-                    focus:ring-2 focus:ring-amber-500 dark:focus:ring-blue-400 focus:border-transparent
-                    text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400`}
-                  placeholder="Enter your phone number"
-                />
-                {updateErrors.phoneNumber && (
-                  <motion.p 
-                    className="mt-1 text-sm text-red-600 dark:text-red-400"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                  >
-                    {updateErrors.phoneNumber}
-                  </motion.p>
-                )}
-              </div>
-              
-              {/* Wallet Address */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  <Wallet className="w-4 h-4 inline mr-2" />
-                  Wallet Address <span className="text-gray-400">(Optional)</span>
-                </label>
-                <input
-                  type="text"
-                  value={editForm.walletAddress}
-                  onChange={(e) => handleInputChange('walletAddress', e.target.value)}
-                  className={`w-full px-4 py-3 rounded-xl border transition-all duration-300 
-                    ${updateErrors.walletAddress 
-                      ? 'border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20' 
-                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'
-                    } 
-                    focus:ring-2 focus:ring-amber-500 dark:focus:ring-blue-400 focus:border-transparent
-                    text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400`}
-                  placeholder="0x..."
-                />
-                {updateErrors.walletAddress && (
-                  <motion.p 
-                    className="mt-1 text-sm text-red-600 dark:text-red-400"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                  >
-                    {updateErrors.walletAddress}
-                  </motion.p>
-                )}
-              </div>
-            </div>
-            
-            {/* Footer */}
-            <div className="flex justify-end space-x-3 p-6 border-t border-gray-200 dark:border-gray-700">
-              <motion.button
-                onClick={closeEditModal}
-                className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-300"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                disabled={isUpdating}
-              >
-                Cancel
-              </motion.button>
-              <motion.button
-                onClick={handleUpdateProfile}
-                disabled={isUpdating}
-                className="px-6 py-2 bg-gradient-to-r from-amber-500 to-orange-500 dark:from-blue-500 dark:to-purple-600 text-white rounded-xl hover:from-amber-600 hover:to-orange-600 dark:hover:from-blue-600 dark:hover:to-purple-700 transition-all duration-300 shadow-md flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                whileHover={!isUpdating ? { scale: 1.02 } : {}}
-                whileTap={!isUpdating ? { scale: 0.98 } : {}}
-              >
-                {isUpdating ? (
-                  <>
-                    <motion.div
-                      className="w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"
-                      animate={{ rotate: 360 }}
-                      transition={{
-                        duration: 1,
-                        repeat: Infinity,
-                        ease: "linear",
-                      }}
-                    />
-                    Updating...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 mr-2" />
-                    Save Changes
-                  </>
-                )}
-              </motion.button>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
+      </div>
     </>
   );
 };

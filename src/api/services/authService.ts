@@ -14,7 +14,9 @@ import {
   PasswordResetConfirmRequest,
   UserProfileResponse,
   TopSellerRevenueResponse,
-  TopSellersParams
+  TopSellersParams,
+  WalletUpdateRequest,
+  UpdateProfileRequest
 } from '../types';
 
 export class AuthService {  private readonly endpoints = {
@@ -28,6 +30,7 @@ export class AuthService {  private readonly endpoints = {
     forgotPassword: '/api/users/forgot-password',
     resetPassword: '/api/users/reset-password',
     profile: '/api/users/profile',
+    wallet: '/api/users/wallet',
     topSellers: '/api/users/top-sellers',
   };
 
@@ -461,6 +464,86 @@ export class AuthService {  private readonly endpoints = {
       return {
         message: errorMessage,
         data: [],
+        success: false
+      };
+    }
+  }
+
+  /**
+   * Update wallet address for the current user
+   * 
+   * @param walletAddress - The new wallet address to set
+   * @returns ApiResponse with updated user profile data
+   */
+  async updateWalletAddress(walletAddress: string): Promise<ApiResponse<UserProfileResponse>> {
+    try {
+      // Debug log
+      console.log('🔍 Updating wallet address...');
+      console.log('🔍 Wallet URL:', this.endpoints.wallet);
+      console.log('🔍 New wallet address:', walletAddress);
+      
+      const request: WalletUpdateRequest = {
+        walletAddress
+      };
+      
+      // Use PUT method with authentication token
+      const response = await apiClient.put<UserProfileResponse>(this.endpoints.wallet, request);
+      
+      return {
+        message: response.message,
+        data: response.data,
+        success: response.success
+      };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update wallet address';
+      console.error('❌ Update wallet address error:', errorMessage);
+      
+      return {
+        message: errorMessage,
+        data: { 
+          email: '', 
+          walletAddress: '', 
+          fullName: '', 
+          phoneNumber: '' 
+        },
+        success: false
+      };
+    }
+  }
+
+  /**
+   * Update user profile information
+   * 
+   * @param profileData - The profile data to update (email, fullName, phoneNumber)
+   * @returns ApiResponse with updated user profile data
+   */
+  async updateUserProfile(profileData: UpdateProfileRequest): Promise<ApiResponse<UserProfileResponse>> {
+    try {
+      // Debug log
+      console.log('🔍 Updating user profile...');
+      console.log('🔍 Profile URL:', this.endpoints.profile);
+      console.log('🔍 Profile data:', profileData);
+      
+      // Use PUT method with authentication token
+      const response = await apiClient.put<UserProfileResponse>(this.endpoints.profile, profileData);
+      
+      return {
+        message: response.message,
+        data: response.data,
+        success: response.success
+      };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update user profile';
+      console.error('❌ Update user profile error:', errorMessage);
+      
+      return {
+        message: errorMessage,
+        data: { 
+          email: '', 
+          walletAddress: '', 
+          fullName: '', 
+          phoneNumber: '' 
+        },
         success: false
       };
     }
