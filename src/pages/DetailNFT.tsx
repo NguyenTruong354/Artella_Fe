@@ -21,22 +21,12 @@ import {
   Wallet, // For wallet connection
 } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
+import { MetaMaskInpageProvider as MetaMaskEthereumProvider } from "@metamask/providers";
 import useDarkMode from "../hooks/useDarkMode";
 import { WaveTransition } from "../components/WaveTransition";
 import { nftService } from "../api/services";
 import { DigitalArtNFT, PaymentRequestDTO } from "../api/types";
 import SmartImage from "../components/SmartImage";
-
-// Define a type for the provider injected by MetaMask
-interface MetaMaskEthereumProvider {
-  isMetaMask?: boolean;
-  request: <T>(args: { method: string; params?: unknown[] }) => Promise<T>;
-  on: (event: string, handler: (...args: unknown[]) => void) => void;
-  removeListener: (
-    event: string,
-    handler: (...args: unknown[]) => void
-  ) => void;
-}
 
 // Define a type for the Web3 constructor if it's loaded from a script
 // We are defining a simplified Web3 interface here because the project doesn't have 'web3' in package.json
@@ -72,7 +62,6 @@ interface Web3Constructor {
 // Extend the Window interface
 declare global {
   interface Window {
-    ethereum?: MetaMaskEthereumProvider;
     Web3?: Web3Constructor;
   }
 }
@@ -149,16 +138,17 @@ const DetailNFT: React.FC = () => {
         return null;
       }
 
-      const accounts = await window.ethereum.request<string[]>({
+      const accounts = await window.ethereum.request<string[] | null>({
         method: "eth_requestAccounts",
       });
 
-      if (!accounts || accounts.length === 0) {
+      const account = accounts?.[0];
+
+      if (!account) {
         setPaymentStatus("No accounts found. Please connect your wallet.");
         return null;
       }
 
-      const account = accounts[0];
       setCurrentAccount(account);
       setPaymentStatus(`Connected: ${truncateAddress(account)}`);
       return account;
@@ -224,7 +214,8 @@ const DetailNFT: React.FC = () => {
         return {
           value,
           gas: "0x" + (210000).toString(16),
-          gasPrice: "0x" + web3Instance.utils.toWei("20", "gwei").toString(16),
+          gasPrice:
+            "0x" + BigInt(web3Instance.utils.toWei("20", "gwei")).toString(16),
         };
       }
     },
@@ -321,14 +312,17 @@ const DetailNFT: React.FC = () => {
       if (typeof window.ethereum !== "undefined") {
         try {
           // Check if already connected
-          const accounts = await window.ethereum.request<string[]>({
+          const accounts = await window.ethereum.request<string[] | null>({
             method: "eth_accounts",
           });
-          if (accounts.length > 0) {
-            setCurrentAccount(accounts[0]);
-            const web3Instance = await initializeWeb3();
-            if (web3Instance) {
-              setWeb3(web3Instance);
+          if (accounts && accounts.length > 0) {
+            const account = accounts[0];
+            if (account) {
+              setCurrentAccount(account);
+              const web3Instance = await initializeWeb3();
+              if (web3Instance) {
+                setWeb3(web3Instance);
+              }
             }
           }
         } catch (error) {
@@ -513,7 +507,7 @@ const DetailNFT: React.FC = () => {
 
       console.log("� Interpreted ETH amount:", ethAmount);
 
-      // Safety check - if the amount seems too large, something is wrong
+      // Safety check - if the amount seems to large, something is wrong
       if (ethAmount > 100) {
         console.error(
           "🚨 DANGEROUS: Trying to send",
@@ -719,7 +713,7 @@ const DetailNFT: React.FC = () => {
       // Step 6: Confirm payment with backend
       const paymentRequest: PaymentRequestDTO = {
         paymentMethod: "CRYPTO",
-        transactionHash: txHash,
+        transactionHash: txHash ?? undefined,
       };
 
       const confirmResponse = await nftService.processNFTPayment(

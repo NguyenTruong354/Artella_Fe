@@ -17,13 +17,6 @@ interface ScheduleAuctionRequest {
   imageUrl?: string; // Backend sẽ lấy từ product
 }
 
-// Interface for API responses
-interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data: T;
-}
-
 class AuctionScheduleService {
   private readonly basePath = "/api/scheduled-auctions"; // Thử với singular form
   /**

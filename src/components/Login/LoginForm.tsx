@@ -4,16 +4,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../api/auth";
 import { formatErrorMessage, isValidEmail } from "../../api/utils";
 
-// Extend window interface for MetaMask
-declare global {
-  interface Window {
-    ethereum?: {
-      request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
-      isMetaMask?: boolean;
-    };
-  }
-}
-
 const LoginForm = () => {
   const controls = useAnimation();
   const formRef = useRef(null);

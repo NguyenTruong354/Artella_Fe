@@ -126,7 +126,7 @@ const NFTSearchComponent: React.FC = () => {
                       {nft.price ? `${nft.price} ETH` : 'Price not available'}
                     </div>
                     <div className="text-gray-500 text-sm dark:text-gray-400">
-                      {nft.creator ? `Created by ${nft.creator.name || 'Unknown'}` : 'Unknown creator'}
+                      {nft.creator ? `By ${nft.creator.substring(0, 6)}...${nft.creator.substring(nft.creator.length - 4)}` : 'Unknown creator'}
                     </div>
                   </div>
                 </div>

@@ -3,52 +3,70 @@
 /**
  * Format error messages for display
  */
-export const formatErrorMessage = (error: any): string => {
+export const formatErrorMessage = (error: unknown): string => {
   if (typeof error === 'string') {
     return error;
   }
-  
-  if (error?.message) {
-    return error.message;
+
+  if (error instanceof Object) {
+    if ('message' in error && typeof error.message === 'string') {
+      return error.message;
+    }
+
+    if ('errors' in error && typeof error.errors === 'object' && error.errors) {
+      // Handle validation errors
+      const errorMessages = Object.values(error.errors).flat();
+      return errorMessages.join(', ');
+    }
   }
-  
-  if (error?.errors && typeof error.errors === 'object') {
-    // Handle validation errors
-    const errorMessages = Object.values(error.errors).flat();
-    return errorMessages.join(', ');
-  }
-  
+
   return 'An unexpected error occurred';
 };
 
 /**
  * Check if error is a network error
  */
-export const isNetworkError = (error: any): boolean => {
-  return error?.code === 'NETWORK_ERROR' || 
-         error?.message?.includes('Network Error') ||
-         !error?.status;
+export const isNetworkError = (error: unknown): boolean => {
+    if (error instanceof Object) {
+        return (
+            ('code' in error && error.code === 'NETWORK_ERROR') ||
+            ('message' in error &&
+                typeof error.message === 'string' &&
+                error.message.includes('Network Error')) ||
+            !('status' in error)
+        );
+    }
+    return !error;
 };
 
 /**
  * Check if error is an authentication error
  */
-export const isAuthError = (error: any): boolean => {
-  return error?.status === 401 || error?.status === 403;
+export const isAuthError = (error: unknown): boolean => {
+    if (error instanceof Object && 'status' in error) {
+        return error.status === 401 || error.status === 403;
+    }
+    return false;
 };
 
 /**
  * Check if error is a validation error
  */
-export const isValidationError = (error: any): boolean => {
-  return error?.status === 400 && error?.errors;
+export const isValidationError = (error: unknown): boolean => {
+    if (error instanceof Object && 'status' in error && 'errors' in error) {
+        return error.status === 400 && !!error.errors;
+    }
+    return false;
 };
 
 /**
  * Check if error is a rate limit error
  */
-export const isRateLimitError = (error: any): boolean => {
-  return error?.status === 429;
+export const isRateLimitError = (error: unknown): boolean => {
+    if (error instanceof Object && 'status' in error) {
+        return error.status === 429;
+    }
+    return false;
 };
 
 /**
@@ -59,41 +77,41 @@ export const retryWithBackoff = async <T>(
   maxRetries: number = 3,
   baseDelay: number = 1000
 ): Promise<T> => {
-  let lastError: any;
-  
+  let lastError: unknown;
+
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       return await fn();
     } catch (error) {
       lastError = error;
-      
+
       if (attempt === maxRetries) {
         break;
       }
-      
+
       // Don't retry on certain errors
       if (isAuthError(error) || isValidationError(error)) {
         break;
       }
-      
+
       // Calculate delay with exponential backoff
       const delay = baseDelay * Math.pow(2, attempt);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
-  
+
   throw lastError;
 };
 
 /**
  * Debounce function for API calls
  */
-export const debounce = <T extends (...args: any[]) => any>(
+export const debounce = <T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number
 ): ((...args: Parameters<T>) => void) => {
-  let timeout: NodeJS.Timeout;
-  
+  let timeout: ReturnType<typeof setTimeout>;
+
   return (...args: Parameters<T>) => {
     clearTimeout(timeout);
     timeout = setTimeout(() => func.apply(this, args), wait);
