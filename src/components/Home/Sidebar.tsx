@@ -132,13 +132,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
       gradient: "from-pink-500 to-purple-500",
     },
     {
-      icon: "⚝",
-      label: "Sell Art",
-      path: "/Home/sell-art",
-      description: "My NFTs",
-      gradient: "from-purple-500 to-indigo-500",
-    },
-    {
       icon: "⌘",
       label: "Profile",
       path: "/Home/profile",
@@ -250,13 +243,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
         navigate("/Home/create-nft");
         break;
       case "sell":
-        // TODO: Add sell functionality
-        console.log("Sell action clicked");
-        break;      case "live-auction":
+        // Navigate to Sell Art page
+        navigate("/Home/sell-art");
+        console.log("Sell action clicked - navigating to /Home/sell-art");
+        break;
+      case "live-auction":
         // Navigate to Auctions page
         navigate("/Home/auctions");
         console.log("Live Auction action clicked - navigating to /Home/auctions");
-        break;case "schedule-auction":
+        break;
+      case "schedule-auction":
         // Navigate to Scheduled Auctions page
         navigate("/Home/scheduled-auctions");
         console.log("Schedule Auction action clicked - navigating to /Home/scheduled-auctions");
@@ -548,7 +544,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
                 className="space-y-3"
                 role="group"
                 aria-labelledby="quick-actions-heading"
-              >                {quickActions.map((action, index) => (
+              >
+                {quickActions.map((action, index) => (
                   <motion.button
                     key={action.action}
                     title={action.description}
