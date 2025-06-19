@@ -5,6 +5,18 @@
 [build.environment]
   NODE_VERSION = "18"
   NPM_FLAGS = "--legacy-peer-deps"
+  # Environment variables are configured in Netlify UI or via CLI
+  # See scripts/setup-netlify-env.sh or scripts/setup-netlify-env.ps1
+
+# Environment variables can also be set here for different contexts
+[context.production.environment]
+  VITE_NODE_ENV = "production"
+
+[context.deploy-preview.environment]
+  VITE_NODE_ENV = "staging"
+
+[context.branch-deploy.environment]
+  VITE_NODE_ENV = "development"
 
 [[redirects]]
   from = "/*"
