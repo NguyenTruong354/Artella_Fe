@@ -108,11 +108,12 @@ const SmartImage: React.FC<SmartImageProps> = ({
       
       // If no cached pattern or pattern failed, try all endpoints
       if (!chosenEndpoint) {
+        const baseUrl = import.meta.env.VITE_API_BASE_URL;
         const endpoints = [
-          `http://localhost:8080/api/public/nft-images/${imageId}`,
-          `http://localhost:8080/api/files/${imageId}`,
-          `http://localhost:8080/api/images/${imageId}`,
-          `http://localhost:8080/api/gridfs/${imageId}`,
+          `${baseUrl}/api/public/nft-images/${imageId}`,
+          `${baseUrl}/api/files/${imageId}`,
+          `${baseUrl}/api/images/${imageId}`,
+          `${baseUrl}/api/gridfs/${imageId}`,
         ];
 
         // Try HEAD requests in parallel instead of sequentially

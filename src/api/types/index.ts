@@ -14,10 +14,12 @@ export interface PaginatedResponse<T> {
 // Page response for Spring Boot pagination
 export interface PageResponse<T> {
   content: T[];
-  number: number; // Current page number
-  size: number; // Page size
+  pageNumber: number; // Current page number (backend uses pageNumber instead of number)
+  pageSize: number; // Page size (backend uses pageSize instead of size)
   totalElements: number; // Total number of elements
   totalPages: number; // Total number of pages
+  first: boolean; // Is first page
+  last: boolean; // Is last page
 }
 
 export interface BaseEntity {

@@ -160,67 +160,6 @@ const DetailNFT: React.FC = () => {
       return null;
     }
   }, [initializeWeb3, truncateAddress]);
-  // Get optimal gas settings (currently unused - keeping for future use)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const getOptimalGasSettings = useCallback(
-    async (web3Instance: Web3, to: string, value: string) => {
-      try {
-        const latestBlock = await web3Instance.eth.getBlock("latest");
-        const supportsEIP1559 =
-          latestBlock.baseFeePerGas !== undefined &&
-          latestBlock.baseFeePerGas !== null;
-        const gasSettings: {
-          maxFeePerGas?: string;
-          maxPriorityFeePerGas?: string;
-          gasPrice?: string;
-          gas?: string;
-        } = {};
-
-        if (supportsEIP1559 && latestBlock.baseFeePerGas) {
-          const baseFeePerGas = BigInt(latestBlock.baseFeePerGas);
-          const maxPriorityFeePerGas = web3Instance.utils.toWei("2", "gwei");
-          const maxFeePerGas = (
-            baseFeePerGas * BigInt(2) +
-            BigInt(maxPriorityFeePerGas)
-          ).toString();
-
-          gasSettings.maxFeePerGas = "0x" + BigInt(maxFeePerGas).toString(16);
-          gasSettings.maxPriorityFeePerGas =
-            "0x" + BigInt(maxPriorityFeePerGas).toString(16);
-        } else {
-          const gasPrice = await web3Instance.eth.getGasPrice();
-          gasSettings.gasPrice =
-            "0x" + (BigInt(gasPrice) * BigInt(2)).toString(16);
-        }
-
-        // Estimate gas limit
-        let gasLimit = 210000; // Increased default gas limit
-        try {
-          const estimatedGas = await web3Instance.eth.estimateGas({
-            from: currentAccount,
-            to: to,
-            value: value,
-          });
-          gasLimit = Math.floor(Number(estimatedGas) * 1.2);
-        } catch (gasEstError) {
-          console.warn("Gas estimation failed, using default:", gasEstError);
-        }
-
-        gasSettings.gas = "0x" + gasLimit.toString(16);
-        return gasSettings;
-      } catch (error) {
-        console.error("Error getting gas settings:", error);
-        // Fallback gas settings
-        return {
-          value,
-          gas: "0x" + (210000).toString(16),
-          gasPrice:
-            "0x" + BigInt(web3Instance.utils.toWei("20", "gwei")).toString(16),
-        };
-      }
-    },
-    [currentAccount]
-  );
 
   // Fetch similar NFTs by category
   const fetchSimilarNFTs = useCallback(

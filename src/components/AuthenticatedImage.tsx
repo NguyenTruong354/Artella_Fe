@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getFallbackImage } from '../utils/imageUtils';
+const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
 interface SmartImageProps {
   imageId: string;
@@ -9,6 +10,7 @@ interface SmartImageProps {
   onLoad?: () => void;
   onError?: () => void;
 }
+
 
 const SmartImage: React.FC<SmartImageProps> = ({
   imageId,
@@ -41,10 +43,10 @@ const SmartImage: React.FC<SmartImageProps> = ({
         
         // Multiple endpoints to try (based on your new backend controller)
         const endpoints = [
-          `http://localhost:8080/api/public/nft-images/${imageId}`, // New public NFT endpoint (preferred)
-          `http://localhost:8080/api/files/${imageId}`,            // Primary GridFS endpoint
-          `http://localhost:8080/api/images/${imageId}`,           // Alternative endpoint
-          `http://localhost:8080/api/gridfs/${imageId}`,           // GridFS specific endpoint
+          `${baseUrl}/api/public/nft-images/${imageId}`, 
+          `${baseUrl}/api/files/${imageId}`,           
+          `${baseUrl}/api/images/${imageId}`,         
+          `${baseUrl}/api/gridfs/${imageId}`,           
         ];
 
         // Try each endpoint until one works

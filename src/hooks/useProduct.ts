@@ -73,10 +73,10 @@ export function useProducts(params: UseProductsParams = {}): UseProductsResult {
         const pageData = response.data;
         setProducts(append ? prev => [...prev, ...pageData.content] : pageData.content);
         setPagination({
-          currentPage: pageData.number,
+          currentPage: pageData.pageNumber,
           totalPages: pageData.totalPages,
           totalElements: pageData.totalElements,
-          pageSize: pageData.size,
+          pageSize: pageData.pageSize,
         });
       } else {
         setError(response.message || 'Failed to load products');

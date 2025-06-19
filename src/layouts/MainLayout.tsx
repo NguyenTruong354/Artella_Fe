@@ -1,12 +1,13 @@
-import React from "react";
-import { Outlet } from "react-router-dom";
+import React, { ReactNode } from "react";
 
-const MainLayout: React.FC = () => {
+interface MainLayoutProps {
+  children?: ReactNode;
+}
+
+const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   return (
     <div className="theme-transition">
-      <main>
-        <Outlet />
-      </main>
+      <main>{children}</main>
     </div>
   );
 };
