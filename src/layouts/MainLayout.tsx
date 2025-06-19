@@ -1,4 +1,5 @@
 import React, { ReactNode } from "react";
+import { Outlet } from "react-router-dom";
 
 interface MainLayoutProps {
   children?: ReactNode;
@@ -7,7 +8,10 @@ interface MainLayoutProps {
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   return (
     <div className="theme-transition">
-      <main>{children}</main>
+      <main>
+        {children}
+        <Outlet />
+      </main>
     </div>
   );
 };
