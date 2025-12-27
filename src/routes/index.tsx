@@ -24,6 +24,7 @@ import MainLayout from "../layouts/MainLayout";
 import HomeLayout from "../layouts/HomeLayout";
 import ProtectedRoute from "../components/ProtectedRoute";
 import AuctionParticipationDebug from "../components/AuctionParticipationDebug";
+import HappyNewYear from "../happy_new_year/happy_new_year";
 
 const router = createBrowserRouter([
   {
@@ -141,6 +142,10 @@ const router = createBrowserRouter([
   {
     path: "/verification",
     element: <Verification />,
+  },
+  {
+    path: "/happy-new-year",
+    element: <HappyNewYear />,
   },
   {
     path: "/MinhAnh/SendMyLove",
