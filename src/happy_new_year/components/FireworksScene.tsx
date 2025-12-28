@@ -122,7 +122,7 @@ const FireworksScene: React.FC = () => {
     // --- 4. Firework Logic ---
     
     // Types
-    type FireworkType = 'sphere' | 'willow' | 'ring' | 'crossette' | 'heart' | 'palm' | 'dahlia' | 'kamuro' | 'spiral';
+    type FireworkType = 'sphere' | 'willow' | 'ring' | 'crossette' | 'heart' | 'palm' | 'dahlia' | 'kamuro' | 'spiral' | 'text';
     
     interface Particle {
         position: THREE.Vector3;
@@ -138,7 +138,8 @@ const FireworksScene: React.FC = () => {
         palette?: THREE.Color[];
         shouldSparkle?: boolean;
         shapeIndex: number; // 0: Circle, 1: Star, 2: Diamond, 3: Cross
-        behavior?: 'simple' | 'spiral';
+        behavior?: 'simple' | 'spiral' | 'text';
+        textPayload?: string;
     }
 
     const particles: Particle[] = [];
@@ -200,9 +201,50 @@ const FireworksScene: React.FC = () => {
     const points = new THREE.Points(geometry, material);
     scene.add(points);
 
+    // Helper: Text Points Generation
+    const getTextPoints = (text: string): THREE.Vector3[] => {
+        const canvas = document.createElement('canvas');
+        const size = 512; // Increased resolution for longer text
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return [];
+
+        const fontSize = text.length > 10 ? 60 : 100;
+        ctx.font = `bold ${fontSize}px Arial`; 
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, size/2, size/2);
+
+        const imageData = ctx.getImageData(0, 0, size, size);
+        const data = imageData.data;
+        const points: THREE.Vector3[] = [];
+
+        // Scan pixels
+        for (let y = 0; y < size; y += 4) { // Step 4 for performance with larger canvas
+            for (let x = 0; x < size; x += 4) {
+                const i = (y * size + x) * 4;
+                if (data[i] > 128) { 
+                    // Map to world space
+                    const wx = (x - size/2) * 0.25; // Scale down
+                    const wy = -(y - size/2) * 0.25;
+                    points.push(new THREE.Vector3(wx, wy, 0));
+                }
+            }
+        }
+        return points;
+    };
+
     // Helper: Create Explosion
-    const createExplosion = (position: THREE.Vector3, palette: THREE.Color[], type: FireworkType) => {
-        const count = type === 'ring' ? 600 : (type === 'crossette' ? 300 : (type === 'heart' ? 400 : 1500));
+    const createExplosion = (position: THREE.Vector3, palette: THREE.Color[], type: FireworkType, text?: string) => {
+        let count = type === 'ring' ? 600 : (type === 'crossette' ? 300 : (type === 'heart' ? 400 : 1500));
+        let textPoints: THREE.Vector3[] = [];
+        
+        if (type === 'text' && text) {
+            textPoints = getTextPoints(text);
+            count = textPoints.length;
+        }
         
         // Camera shake on explosion
         shakeIntensity.current += 0.5;
@@ -222,10 +264,21 @@ const FireworksScene: React.FC = () => {
             if (Math.random() < 0.3) shapeIndex = 1; // Star
             else if (Math.random() < 0.1) shapeIndex = 2; // Diamond
             
-            let behavior: 'simple' | 'spiral' = 'simple';
+            let behavior: 'simple' | 'spiral' | 'text' = 'simple';
 
             // Velocity distribution based on type
-            if (type === 'sphere' || type === 'dahlia' || type === 'spiral') {
+            if (type === 'text') {
+                 behavior = 'text';
+                 const pt = textPoints[i];
+                 // Explode outwards to form the text
+                 // We want them to reach 'pt' relative to center.
+                 // Let's give them velocity proportional to distance
+                 v.copy(pt).multiplyScalar(3.0); 
+                 // Add some random jitter
+                 v.x += (Math.random() - 0.5) * 0.5;
+                 v.y += (Math.random() - 0.5) * 0.5;
+                 v.z += (Math.random() - 0.5) * 0.5;
+            } else if (type === 'sphere' || type === 'dahlia' || type === 'spiral') {
                 const theta = Math.random() * Math.PI * 2;
                 const phi = Math.acos((Math.random() * 2) - 1);
                 const speed = 15 + Math.random() * 10; 
@@ -302,6 +355,9 @@ const FireworksScene: React.FC = () => {
         }
     };
 
+    const WISHES = ["2026", "Happy New Year", "Sức Khỏe", "Thành Công", "Hạnh Phúc", "An Khang", "Thịnh Vượng"];
+    let wishIndex = 0;
+
     // Helper: Launch Rocket
     const launchRocket = () => {
         const startX = (Math.random() - 0.5) * 150; 
@@ -318,6 +374,13 @@ const FireworksScene: React.FC = () => {
         const palette = PALETTES[Math.floor(Math.random() * PALETTES.length)];
         const color = palette[0]; // Use primary color for rocket
 
+        let textPayload: string | undefined;
+        // 20% chance for text firework
+        if (Math.random() < 0.2) {
+             textPayload = WISHES[wishIndex % WISHES.length];
+             wishIndex++;
+        }
+
         particles.push({
             position: startPos,
             velocity: velocity,
@@ -329,7 +392,8 @@ const FireworksScene: React.FC = () => {
             size: 3.0, 
             type: 'rocket',
             palette: palette,
-            shapeIndex: 0 // Rockets are always circles
+            shapeIndex: 0, // Rockets are always circles
+            textPayload: textPayload
         });
     };
 
@@ -383,10 +447,13 @@ const FireworksScene: React.FC = () => {
             }
 
             // Air resistance (Drag)
-            // Apply stronger drag to horizontal movement for graceful fall
-            p.velocity.x *= 0.995; 
-            p.velocity.z *= 0.995;
-            p.velocity.y *= 0.995; 
+            if (p.behavior === 'text') {
+                 p.velocity.multiplyScalar(0.9); // High drag for text to keep shape
+            } else {
+                p.velocity.x *= 0.995; 
+                p.velocity.z *= 0.995;
+                p.velocity.y *= 0.995; 
+            }
 
             p.position.addScaledVector(p.velocity, delta);
 
@@ -444,8 +511,8 @@ const FireworksScene: React.FC = () => {
                 if (p.velocity.y < 0 || p.life > p.maxLife) {
                     // Explode
                     const types: FireworkType[] = ['sphere', 'willow', 'ring', 'crossette', 'palm', 'dahlia', 'kamuro', 'heart', 'spiral'];
-                    const type = types[Math.floor(Math.random() * types.length)];
-                    createExplosion(p.position, p.palette || [p.color], type);
+                    const type = p.textPayload ? 'text' : types[Math.floor(Math.random() * types.length)];
+                    createExplosion(p.position, p.palette || [p.color], type, p.textPayload);
                     particles[i] = particles[particles.length - 1];
                     particles.pop();
                     continue;
