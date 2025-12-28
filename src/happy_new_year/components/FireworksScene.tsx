@@ -59,23 +59,59 @@ const FireworksScene: React.FC = () => {
     composer.addPass(renderScene);
     composer.addPass(bloomPass);
 
-    // --- 3. Particle Texture Generation ---
+    // --- 3. Particle Texture Generation (Atlas) ---
     const getParticleTexture = () => {
         const canvas = document.createElement('canvas');
-        canvas.width = 32;
-        canvas.height = 32;
-        const context = canvas.getContext('2d');
-        if (!context) return new THREE.Texture();
+        canvas.width = 64;
+        canvas.height = 64;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return new THREE.Texture();
         
-        // Radial gradient for soft particle
-        const gradient = context.createRadialGradient(16, 16, 0, 16, 16, 16);
-        gradient.addColorStop(0, 'rgba(255,255,255,1)');
-        gradient.addColorStop(0.2, 'rgba(255,255,255,0.8)');
-        gradient.addColorStop(0.5, 'rgba(255,255,255,0.2)');
-        gradient.addColorStop(1, 'rgba(0,0,0,0)');
-        
-        context.fillStyle = gradient;
-        context.fillRect(0, 0, 32, 32);
+        // Helper: Glow Gradient
+        const drawGlow = (x: number, y: number, color: string = 'rgba(255,255,255,1)') => {
+            const grad = ctx.createRadialGradient(x+16, y+16, 0, x+16, y+16, 16);
+            grad.addColorStop(0, color);
+            grad.addColorStop(0.2, 'rgba(255,255,255,0.8)');
+            grad.addColorStop(0.5, 'rgba(255,255,255,0.2)');
+            grad.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(x, y, 32, 32);
+        };
+
+        // 1. Circle (Top Left) - 0
+        drawGlow(0, 0);
+
+        // 2. Star (Top Right) - 1
+        ctx.save();
+        ctx.translate(48, 16);
+        ctx.beginPath();
+        for(let i=0; i<5; i++){
+            const angle = (i * 4 * Math.PI) / 5 - Math.PI/2;
+            ctx.lineTo(Math.cos(angle)*12, Math.sin(angle)*12);
+        }
+        ctx.closePath();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fill();
+        ctx.restore();
+        drawGlow(32, 0, 'rgba(255,255,255,0.5)');
+
+        // 3. Diamond (Bottom Left) - 2
+        ctx.save();
+        ctx.translate(16, 48);
+        ctx.rotate(Math.PI/4);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(-8, -8, 16, 16);
+        ctx.restore();
+        drawGlow(0, 32, 'rgba(255,255,255,0.5)');
+
+        // 4. Cross (Bottom Right) - 3
+        ctx.save();
+        ctx.translate(48, 48);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(-3, -12, 6, 24);
+        ctx.fillRect(-12, -3, 24, 6);
+        ctx.restore();
+        drawGlow(32, 32, 'rgba(255,255,255,0.5)');
         
         const texture = new THREE.Texture(canvas);
         texture.needsUpdate = true;
@@ -86,13 +122,14 @@ const FireworksScene: React.FC = () => {
     // --- 4. Firework Logic ---
     
     // Types
-    type FireworkType = 'sphere' | 'willow' | 'ring' | 'crossette';
+    type FireworkType = 'sphere' | 'willow' | 'ring' | 'crossette' | 'heart' | 'palm' | 'dahlia' | 'kamuro' | 'spiral';
     
     interface Particle {
         position: THREE.Vector3;
         velocity: THREE.Vector3;
         color: THREE.Color;
         baseColor: THREE.Color;
+        secondaryColor?: THREE.Color;
         alpha: number;
         life: number;
         maxLife: number;
@@ -100,32 +137,39 @@ const FireworksScene: React.FC = () => {
         type: 'rocket' | 'spark' | 'trail';
         palette?: THREE.Color[];
         shouldSparkle?: boolean;
+        shapeIndex: number; // 0: Circle, 1: Star, 2: Diamond, 3: Cross
+        behavior?: 'simple' | 'spiral';
     }
 
     const particles: Particle[] = [];
-    const gravity = new THREE.Vector3(0, -15, 0); // Stronger gravity
+    const gravity = new THREE.Vector3(0, -15, 0); 
     
-    // Reusable geometry for drawing particles
+    // Reusable geometry
     const geometry = new THREE.BufferGeometry();
-    const maxParticles =20000; // Limit active particles
+    const maxParticles = 20000; 
     const positions = new Float32Array(maxParticles * 3);
     const colors = new Float32Array(maxParticles * 3);
     const sizes = new Float32Array(maxParticles);
+    const shapeIndices = new Float32Array(maxParticles);
     
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+    geometry.setAttribute('shapeIndex', new THREE.BufferAttribute(shapeIndices, 1));
 
-    // Custom ShaderMaterial for per-particle size and soft texture
+    // Custom ShaderMaterial with Atlas Support
     const material = new THREE.ShaderMaterial({
         uniforms: {
             pointTexture: { value: particleTexture }
         },
         vertexShader: `
             attribute float size;
+            attribute float shapeIndex;
             varying vec3 vColor;
+            varying float vShapeIndex;
             void main() {
                 vColor = color;
+                vShapeIndex = shapeIndex;
                 vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
                 gl_PointSize = size * (300.0 / -mvPosition.z);
                 gl_Position = projectionMatrix * mvPosition;
@@ -134,8 +178,17 @@ const FireworksScene: React.FC = () => {
         fragmentShader: `
             uniform sampler2D pointTexture;
             varying vec3 vColor;
+            varying float vShapeIndex;
             void main() {
-                gl_FragColor = vec4(vColor, 1.0) * texture2D(pointTexture, gl_PointCoord);
+                vec2 uv = gl_PointCoord;
+                // 2x2 Atlas
+                float col = mod(vShapeIndex, 2.0);
+                float row = floor(vShapeIndex / 2.0);
+                
+                float u = (uv.x * 0.5) + (col * 0.5);
+                float v = (uv.y * 0.5) + (1.0 - (row + 1.0) * 0.5); 
+                
+                gl_FragColor = vec4(vColor, 1.0) * texture2D(pointTexture, vec2(u, v));
             }
         `,
         blending: THREE.AdditiveBlending,
@@ -149,7 +202,7 @@ const FireworksScene: React.FC = () => {
 
     // Helper: Create Explosion
     const createExplosion = (position: THREE.Vector3, palette: THREE.Color[], type: FireworkType) => {
-        const count = type === 'ring' ? 600 : (type === 'crossette' ? 300 : 1500);
+        const count = type === 'ring' ? 600 : (type === 'crossette' ? 300 : (type === 'heart' ? 400 : 1500));
         
         // Camera shake on explosion
         shakeIntensity.current += 0.5;
@@ -162,9 +215,17 @@ const FireworksScene: React.FC = () => {
             
             // Pick color from palette
             const targetColor = palette[Math.floor(Math.random() * palette.length)];
+            const secondaryColor = palette[Math.floor(Math.random() * palette.length)];
             
+            // Shape selection (mix shapes)
+            let shapeIndex = 0; // Default circle
+            if (Math.random() < 0.3) shapeIndex = 1; // Star
+            else if (Math.random() < 0.1) shapeIndex = 2; // Diamond
+            
+            let behavior: 'simple' | 'spiral' = 'simple';
+
             // Velocity distribution based on type
-            if (type === 'sphere') {
+            if (type === 'sphere' || type === 'dahlia' || type === 'spiral') {
                 const theta = Math.random() * Math.PI * 2;
                 const phi = Math.acos((Math.random() * 2) - 1);
                 const speed = 15 + Math.random() * 10; 
@@ -172,10 +233,26 @@ const FireworksScene: React.FC = () => {
                 v.x = speed * Math.sin(phi) * Math.cos(theta);
                 v.y = speed * Math.sin(phi) * Math.sin(theta);
                 v.z = speed * Math.cos(phi);
-            } else if (type === 'willow') {
+                
+                if (type === 'dahlia') {
+                    if (i % 2 === 0) v.multiplyScalar(0.6); 
+                }
+                if (type === 'spiral') {
+                    behavior = 'spiral';
+                    v.multiplyScalar(0.8); 
+                }
+            } else if (type === 'willow' || type === 'kamuro') {
                 const theta = Math.random() * Math.PI * 2;
                 const phi = Math.acos((Math.random() * 2) - 1);
                 const speed = 10 + Math.random() * 10; 
+                
+                v.x = speed * Math.sin(phi) * Math.cos(theta);
+                v.y = speed * Math.sin(phi) * Math.sin(theta);
+                v.z = speed * Math.cos(phi);
+            } else if (type === 'palm') {
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos((Math.random() * 1) - 1) * 0.5; 
+                const speed = 20 + Math.random() * 5;
                 
                 v.x = speed * Math.sin(phi) * Math.cos(theta);
                 v.y = speed * Math.sin(phi) * Math.sin(theta);
@@ -192,23 +269,35 @@ const FireworksScene: React.FC = () => {
                  v.x = Math.cos(angle) * speed;
                  v.y = Math.sin(angle) * speed;
                  v.z = (Math.random() - 0.5) * 10;
+            } else if (type === 'heart') {
+                const t = Math.random() * Math.PI * 2;
+                const scale = 1.0 + Math.random() * 0.2;
+                const hx = 16 * Math.pow(Math.sin(t), 3);
+                const hy = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+                v.x = hx * scale;
+                v.y = hy * scale;
+                v.z = (Math.random() - 0.5) * 5;
+                shapeIndex = 3; 
             }
 
             // Size variation
-            let size = type === 'willow' ? 0.8 : 1.5;
-            if (Math.random() < 0.1) size *= 2.0; // Occasional large particles
+            let size = (type === 'willow' || type === 'kamuro') ? 0.8 : 1.5;
+            if (Math.random() < 0.1) size *= 2.0; 
 
             particles.push({
                 position: p,
                 velocity: v,
                 color: new THREE.Color(1, 1, 0.8), 
                 baseColor: targetColor.clone(),
+                secondaryColor: secondaryColor.clone(),
                 alpha: 1.0,
                 life: 0,
-                maxLife: type === 'willow' ? 3.0 : 2.0, 
+                maxLife: (type === 'willow' || type === 'kamuro') ? 3.5 : 2.0, 
                 size: size,
                 type: 'spark',
-                shouldSparkle: Math.random() < 0.2 // 20% sparkle chance
+                shouldSparkle: Math.random() < 0.2,
+                shapeIndex: shapeIndex,
+                behavior: behavior
             });
         }
     };
@@ -239,7 +328,8 @@ const FireworksScene: React.FC = () => {
             maxLife: 1.5 + Math.random() * 0.5, 
             size: 3.0, 
             type: 'rocket',
-            palette: palette
+            palette: palette,
+            shapeIndex: 0 // Rockets are always circles
         });
     };
 
@@ -285,9 +375,16 @@ const FireworksScene: React.FC = () => {
             // Physics
             p.velocity.addScaledVector(gravity, delta);
             
+            if (p.behavior === 'spiral') {
+                // Add a small tangential force for spiral effect
+                const up = new THREE.Vector3(0, 1, 0);
+                const tangent = new THREE.Vector3().crossVectors(p.velocity, up).normalize();
+                p.velocity.addScaledVector(tangent, 15 * delta);
+            }
+
             // Air resistance (Drag)
             // Apply stronger drag to horizontal movement for graceful fall
-            p.velocity.x *= 0.995; // Reduced drag (was 0.96)
+            p.velocity.x *= 0.995; 
             p.velocity.z *= 0.995;
             p.velocity.y *= 0.995; 
 
@@ -303,13 +400,19 @@ const FireworksScene: React.FC = () => {
                 const progress = p.life / p.maxLife;
                 
                 if (progress < 0.15) {
+                    // White -> Base
                     p.color.lerpColors(new THREE.Color(1, 1, 0.8), p.baseColor, progress * 6.6);
+                } else if (progress < 0.6) {
+                    // Base -> Secondary (Color Shift)
+                    if (p.secondaryColor) {
+                        const t = (progress - 0.15) / 0.45;
+                        p.color.lerpColors(p.baseColor, p.secondaryColor, t);
+                    } else {
+                        p.color.copy(p.baseColor);
+                    }
                 } else if (progress > 0.7) {
-                    p.color.copy(p.baseColor);
+                    // Fade out
                     p.alpha = 1.0 - ((progress - 0.7) / 0.3);
-                } else {
-                    p.color.copy(p.baseColor);
-                    p.alpha = 1.0;
                 }
             } else if (p.type === 'trail') {
                  p.alpha = 1.0 - (p.life / p.maxLife);
@@ -330,7 +433,8 @@ const FireworksScene: React.FC = () => {
                          life: 0,
                          maxLife: 0.3, // Short life for continuous trail look
                          size: p.size * 0.6,
-                         type: 'trail'
+                         type: 'trail',
+                         shapeIndex: 0 // Trails are always circles
                      });
                  }
             }
@@ -339,7 +443,7 @@ const FireworksScene: React.FC = () => {
             if (p.type === 'rocket') {
                 if (p.velocity.y < 0 || p.life > p.maxLife) {
                     // Explode
-                    const types: FireworkType[] = ['sphere', 'willow', 'ring', 'crossette'];
+                    const types: FireworkType[] = ['sphere', 'willow', 'ring', 'crossette', 'palm', 'dahlia', 'kamuro', 'heart', 'spiral'];
                     const type = types[Math.floor(Math.random() * types.length)];
                     createExplosion(p.position, p.palette || [p.color], type);
                     particles[i] = particles[particles.length - 1];
@@ -361,17 +465,12 @@ const FireworksScene: React.FC = () => {
                 positions[activeCount * 3 + 1] = p.position.y;
                 positions[activeCount * 3 + 2] = p.position.z;
 
-                colors[activeCount * 3] = p.color.r * p.alpha; // Premultiply alpha roughly or just use opacity?
-                // Actually PointsMaterial vertexColors uses the color attribute. 
-                // To handle alpha per particle in a single draw call is tricky without custom shader.
-                // Standard PointsMaterial uses the texture alpha * material opacity * vertex color.
-                // But vertex color is usually RGB. 
-                // We can simulate fade by darkening the color (fade to black)
-                colors[activeCount * 3] = p.color.r * p.alpha;
+                colors[activeCount * 3] = p.color.r * p.alpha; 
                 colors[activeCount * 3 + 1] = p.color.g * p.alpha;
                 colors[activeCount * 3 + 2] = p.color.b * p.alpha;
 
                 sizes[activeCount] = p.size;
+                shapeIndices[activeCount] = p.shapeIndex;
                 activeCount++;
             }
         }
@@ -381,6 +480,7 @@ const FireworksScene: React.FC = () => {
         geometry.attributes.position.needsUpdate = true;
         geometry.attributes.color.needsUpdate = true;
         geometry.attributes.size.needsUpdate = true;
+        geometry.attributes.shapeIndex.needsUpdate = true;
 
         // Render
         composer.render();
