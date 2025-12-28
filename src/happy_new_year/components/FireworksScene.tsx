@@ -10,6 +10,18 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 const FireworksScene: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const isMountedRef = useRef(true);
+  const shakeIntensity = useRef(0);
+  const baseCameraPos = useRef(new THREE.Vector3(0, 20, 100));
+
+  // Color Palettes
+  const PALETTES = [
+    [new THREE.Color('#FFD700'), new THREE.Color('#FFFFFF')], // Gold/White
+    [new THREE.Color('#FF4500'), new THREE.Color('#FF8C00'), new THREE.Color('#FFFF00')], // Fire
+    [new THREE.Color('#00FFFF'), new THREE.Color('#1E90FF'), new THREE.Color('#9400D3')], // Ice/Galaxy
+    [new THREE.Color('#FF1493'), new THREE.Color('#FF69B4'), new THREE.Color('#FFFFFF')], // Pink
+    [new THREE.Color('#32CD32'), new THREE.Color('#00FF00'), new THREE.Color('#F0FFF0')], // Nature
+    [new THREE.Color('#FF0000'), new THREE.Color('#FFFFFF'), new THREE.Color('#0000FF')], // Tricolor
+  ];
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -17,10 +29,10 @@ const FireworksScene: React.FC = () => {
 
     // --- 1. Scene Setup ---
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000000);
+    scene.background = new THREE.Color(0x000005); // Very dark blue/black for depth
 
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 20, 100);
+    camera.position.copy(baseCameraPos.current);
     camera.lookAt(0, 20, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -39,9 +51,9 @@ const FireworksScene: React.FC = () => {
       0.4, // radius
       0.85 // threshold
     );
-    bloomPass.strength = 1.2;
-    bloomPass.radius = 0.3;
-    bloomPass.threshold = 0.6;
+    bloomPass.strength = 2.0; // Enhanced bloom
+    bloomPass.radius = 0.5;
+    bloomPass.threshold = 0.2; // Catch more colors
 
     const composer = new EffectComposer(renderer);
     composer.addPass(renderScene);
@@ -86,6 +98,8 @@ const FireworksScene: React.FC = () => {
         maxLife: number;
         size: number;
         type: 'rocket' | 'spark' | 'trail';
+        palette?: THREE.Color[];
+        shouldSparkle?: boolean;
     }
 
     const particles: Particle[] = [];
@@ -134,20 +148,26 @@ const FireworksScene: React.FC = () => {
     scene.add(points);
 
     // Helper: Create Explosion
-    const createExplosion = (position: THREE.Vector3, color: THREE.Color, type: FireworkType) => {
+    const createExplosion = (position: THREE.Vector3, palette: THREE.Color[], type: FireworkType) => {
         const count = type === 'ring' ? 600 : (type === 'crossette' ? 300 : 1500);
         
+        // Camera shake on explosion
+        shakeIntensity.current += 0.5;
+
         for (let i = 0; i < count; i++) {
             if (particles.length >= maxParticles) break;
 
             const p = new THREE.Vector3().copy(position);
             const v = new THREE.Vector3();
             
+            // Pick color from palette
+            const targetColor = palette[Math.floor(Math.random() * palette.length)];
+            
             // Velocity distribution based on type
             if (type === 'sphere') {
                 const theta = Math.random() * Math.PI * 2;
                 const phi = Math.acos((Math.random() * 2) - 1);
-                const speed = 15 + Math.random() * 10; // Reduced speed (15-25)
+                const speed = 15 + Math.random() * 10; 
                 
                 v.x = speed * Math.sin(phi) * Math.cos(theta);
                 v.y = speed * Math.sin(phi) * Math.sin(theta);
@@ -155,55 +175,59 @@ const FireworksScene: React.FC = () => {
             } else if (type === 'willow') {
                 const theta = Math.random() * Math.PI * 2;
                 const phi = Math.acos((Math.random() * 2) - 1);
-                const speed = 10 + Math.random() * 10; // Slower for willow
+                const speed = 10 + Math.random() * 10; 
                 
                 v.x = speed * Math.sin(phi) * Math.cos(theta);
                 v.y = speed * Math.sin(phi) * Math.sin(theta);
                 v.z = speed * Math.cos(phi);
             } else if (type === 'ring') {
                 const theta = Math.random() * Math.PI * 2;
-                const speed = 20; // Reduced speed
-                // Flat ring in XZ plane or XY plane
+                const speed = 20; 
                 v.x = speed * Math.cos(theta);
-                v.y = speed * Math.sin(theta); // Vertical ring
-                v.z = (Math.random() - 0.5) * 4; // Slight thickness
+                v.y = speed * Math.sin(theta); 
+                v.z = (Math.random() - 0.5) * 4; 
             } else if (type === 'crossette') {
-                 // 4 directions
                  const angle = (Math.floor(i / (count/4)) * Math.PI / 2) + (Math.random() * 0.2);
-                 const speed = 25; // Reduced speed
+                 const speed = 25; 
                  v.x = Math.cos(angle) * speed;
                  v.y = Math.sin(angle) * speed;
                  v.z = (Math.random() - 0.5) * 10;
             }
 
+            // Size variation
+            let size = type === 'willow' ? 0.8 : 1.5;
+            if (Math.random() < 0.1) size *= 2.0; // Occasional large particles
+
             particles.push({
                 position: p,
                 velocity: v,
-                color: new THREE.Color(1, 1, 0.8), // Start bright white/yellow
-                baseColor: color.clone(),
+                color: new THREE.Color(1, 1, 0.8), 
+                baseColor: targetColor.clone(),
                 alpha: 1.0,
                 life: 0,
-                maxLife: type === 'willow' ? 3.0 : 2.0, // Reduced max life
-                size: type === 'willow' ? 0.8 : 1.5,
-                type: 'spark'
+                maxLife: type === 'willow' ? 3.0 : 2.0, 
+                size: size,
+                type: 'spark',
+                shouldSparkle: Math.random() < 0.2 // 20% sparkle chance
             });
         }
     };
 
     // Helper: Launch Rocket
     const launchRocket = () => {
-        const startX = (Math.random() - 0.5) * 150; // Wider launch area
-        const targetY = 60 + Math.random() * 40; // Higher targets
+        const startX = (Math.random() - 0.5) * 150; 
+        const targetY = 60 + Math.random() * 40; 
         const startPos = new THREE.Vector3(startX, -40, (Math.random() - 0.5) * 80);
         
-        // Calculate velocity to reach target height approx
         const velocity = new THREE.Vector3(
             (Math.random() - 0.5) * 8,
-            50 + Math.random() * 15, // Faster launch
+            50 + Math.random() * 15, 
             (Math.random() - 0.5) * 8
         );
 
-        const color = new THREE.Color().setHSL(Math.random(), 1.0, 0.5);
+        // Pick random palette
+        const palette = PALETTES[Math.floor(Math.random() * PALETTES.length)];
+        const color = palette[0]; // Use primary color for rocket
 
         particles.push({
             position: startPos,
@@ -212,9 +236,10 @@ const FireworksScene: React.FC = () => {
             baseColor: color,
             alpha: 1.0,
             life: 0,
-            maxLife: 1.5 + Math.random() * 0.5, // Time until explosion
-            size: 3.0, // Bigger rocket
-            type: 'rocket'
+            maxLife: 1.5 + Math.random() * 0.5, 
+            size: 3.0, 
+            type: 'rocket',
+            palette: palette
         });
     };
 
@@ -230,6 +255,19 @@ const FireworksScene: React.FC = () => {
         frameCount++;
         const delta = Math.min(clock.getDelta(), 0.1); // Cap delta
         const time = clock.getElapsedTime();
+
+        // Camera Shake
+        if (shakeIntensity.current > 0) {
+            const shake = shakeIntensity.current;
+            camera.position.x = baseCameraPos.current.x + (Math.random() - 0.5) * shake;
+            camera.position.y = baseCameraPos.current.y + (Math.random() - 0.5) * shake;
+            camera.position.z = baseCameraPos.current.z + (Math.random() - 0.5) * shake;
+            shakeIntensity.current *= 0.9; // Decay
+            if (shakeIntensity.current < 0.1) {
+                shakeIntensity.current = 0;
+                camera.position.copy(baseCameraPos.current);
+            }
+        }
 
         // Launch logic
         if (time - lastLaunchTime > 0.4) { // Launch more frequently (every 0.4s)
@@ -254,6 +292,11 @@ const FireworksScene: React.FC = () => {
             p.velocity.y *= 0.995; 
 
             p.position.addScaledVector(p.velocity, delta);
+
+            // Sparkle Effect
+            if (p.shouldSparkle) {
+                p.size = (Math.sin(time * 20 + i) * 0.5 + 1.0) * (p.type === 'willow' ? 0.8 : 1.5);
+            }
 
             // Color Transition for Sparks
             if (p.type === 'spark') {
@@ -298,7 +341,7 @@ const FireworksScene: React.FC = () => {
                     // Explode
                     const types: FireworkType[] = ['sphere', 'willow', 'ring', 'crossette'];
                     const type = types[Math.floor(Math.random() * types.length)];
-                    createExplosion(p.position, p.color, type);
+                    createExplosion(p.position, p.palette || [p.color], type);
                     particles[i] = particles[particles.length - 1];
                     particles.pop();
                     continue;
