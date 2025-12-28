@@ -42,6 +42,111 @@ const FireworksScene: React.FC = () => {
     renderer.toneMapping = THREE.ReinhardToneMapping;
     containerRef.current.appendChild(renderer.domElement);
 
+    // --- Audio Setup ---
+    const listener = new THREE.AudioListener();
+    camera.add(listener);
+
+    const soundBuffers: { [key: string]: AudioBuffer } = {};
+    const audioLoader = new THREE.AudioLoader();
+    
+    const loadSound = (name: string, file: string) => {
+        audioLoader.load(`/sounds/${file}`, (buffer) => {
+            soundBuffers[name] = buffer;
+        });
+    };
+
+    // Load the user provided MP3
+    loadSound('explosion', 'single-firework.mp3');
+    
+    // Keep procedural generation for launch/whistle as fallback/variety if needed, 
+    // or we can just use the MP3 for everything if it contains the full sequence.
+    // Assuming single-firework.mp3 is the explosion sound.
+    
+    const generateSounds = () => {
+        const ctx = listener.context;
+        const sampleRate = ctx.sampleRate;
+
+        // 3. Launch (Mortar Thud) - Keep procedural launch for now unless MP3 has it
+        const launchDuration = 0.5;
+        const launchBuffer = ctx.createBuffer(1, sampleRate * launchDuration, sampleRate);
+        const launchData = launchBuffer.getChannelData(0);
+        
+        for(let i=0; i<launchData.length; i++) {
+            const t = i / sampleRate;
+            // 120Hz -> 0Hz sweep
+            const freq = 120 * Math.exp(-t * 15);
+            const sine = Math.sin(t * freq * 2 * Math.PI);
+            
+            // Air noise
+            const noise = (Math.random() * 2 - 1) * Math.exp(-t * 10);
+            
+            launchData[i] = (sine * 0.8 + noise * 0.4) * Math.exp(-t * 5);
+        }
+        soundBuffers['launch'] = launchBuffer;
+
+        // 4. Whistle (Sine Sweep with Harmonics)
+        const whistleDuration = 0.8;
+        const whistleBuffer = ctx.createBuffer(1, sampleRate * whistleDuration, sampleRate);
+        const whistleData = whistleBuffer.getChannelData(0);
+        let phase = 0;
+        for(let i=0; i<whistleData.length; i++) {
+            const t = i / sampleRate;
+            const freq = 400 + t * 1500; 
+            phase += freq * 2 * Math.PI / sampleRate;
+            
+            const main = Math.sin(phase);
+            const harmonic = Math.sin(phase * 2) * 0.2; 
+            
+            const envelope = Math.min(1, t * 5) * (1 - t);
+            whistleData[i] = (main + harmonic) * 0.1 * envelope;
+        }
+        soundBuffers['whistle'] = whistleBuffer;
+    };
+
+    generateSounds();
+
+    // Resume Audio Context on Interaction
+    const resumeAudio = () => {
+        if (listener.context.state === 'suspended') {
+            listener.context.resume();
+        }
+    };
+    window.addEventListener('click', resumeAudio);
+    window.addEventListener('keydown', resumeAudio);
+    window.addEventListener('touchstart', resumeAudio);
+
+    // Simple pool for overlapping sounds
+    const MAX_AUDIO_INSTANCES = 20;
+    const audioPool: THREE.Audio[] = [];
+    for(let i=0; i<MAX_AUDIO_INSTANCES; i++) {
+        const audio = new THREE.Audio(listener);
+        scene.add(audio); // Add to scene just in case, though listener is on camera
+        audioPool.push(audio);
+    }
+    let audioPoolIndex = 0;
+
+    const playSound = (name: string, volume = 1.0, pitchVar = 0.0) => {
+        if (listener.context.state === 'suspended') return; 
+
+        const buffer = soundBuffers[name];
+        if (!buffer) return;
+
+        const audio = audioPool[audioPoolIndex];
+        audioPoolIndex = (audioPoolIndex + 1) % MAX_AUDIO_INSTANCES;
+        
+        if (audio.isPlaying) audio.stop();
+        
+        audio.setBuffer(buffer);
+        audio.setVolume(volume);
+        // Detune is in cents. 100 cents = 1 semitone.
+        if (pitchVar > 0) {
+             audio.setDetune((Math.random() - 0.5) * pitchVar * 1000); 
+        } else {
+             audio.setDetune(0);
+        }
+        audio.play();
+    };
+
     // --- 2. Post-Processing (Bloom) ---
     const renderScene = new RenderPass(scene, camera);
     
@@ -135,6 +240,7 @@ const FireworksScene: React.FC = () => {
         maxLife: number;
         size: number;
         type: 'rocket' | 'spark' | 'trail';
+        fireworkType?: FireworkType;
         palette?: THREE.Color[];
         shouldSparkle?: boolean;
         shapeIndex: number; // 0: Circle, 1: Star, 2: Diamond, 3: Cross
@@ -249,6 +355,16 @@ const FireworksScene: React.FC = () => {
         // Camera shake on explosion
         shakeIntensity.current += 0.5;
 
+        // Sound Effect
+        if (type === 'willow' || type === 'kamuro' || type === 'palm' || type === 'dahlia') {
+             // Use heavy procedural sound for big ones, or the MP3 if preferred.
+             // Let's use the MP3 'explosion' for everything now since user provided it,
+             // but maybe pitch shift it down for heavy ones.
+             playSound('explosion', 0.4, -0.2); 
+        } else {
+             playSound('explosion', 0.3, 0.1);
+        }
+
         for (let i = 0; i < count; i++) {
             if (particles.length >= maxParticles) break;
 
@@ -348,6 +464,7 @@ const FireworksScene: React.FC = () => {
                 maxLife: (type === 'willow' || type === 'kamuro') ? 3.5 : 2.0, 
                 size: size,
                 type: 'spark',
+                fireworkType: type,
                 shouldSparkle: Math.random() < 0.2,
                 shapeIndex: shapeIndex,
                 behavior: behavior
@@ -361,7 +478,6 @@ const FireworksScene: React.FC = () => {
     // Helper: Launch Rocket
     const launchRocket = () => {
         const startX = (Math.random() - 0.5) * 150; 
-        const targetY = 60 + Math.random() * 40; 
         const startPos = new THREE.Vector3(startX, -40, (Math.random() - 0.5) * 80);
         
         const velocity = new THREE.Vector3(
@@ -373,6 +489,13 @@ const FireworksScene: React.FC = () => {
         // Pick random palette
         const palette = PALETTES[Math.floor(Math.random() * PALETTES.length)];
         const color = palette[0]; // Use primary color for rocket
+
+        // Sound
+        if (Math.random() < 0.5) {
+             playSound('launch', 0.15, 0.5);
+        } else {
+             playSound('whistle', 0.1, 0.2);
+        }
 
         let textPayload: string | undefined;
         // 20% chance for text firework
@@ -459,7 +582,7 @@ const FireworksScene: React.FC = () => {
 
             // Sparkle Effect
             if (p.shouldSparkle) {
-                p.size = (Math.sin(time * 20 + i) * 0.5 + 1.0) * (p.type === 'willow' ? 0.8 : 1.5);
+                p.size = (Math.sin(time * 20 + i) * 0.5 + 1.0) * (p.fireworkType === 'willow' ? 0.8 : 1.5);
             }
 
             // Color Transition for Sparks
@@ -569,6 +692,9 @@ const FireworksScene: React.FC = () => {
     return () => {
         isMountedRef.current = false;
         window.removeEventListener('resize', onWindowResize);
+        window.removeEventListener('click', resumeAudio);
+        window.removeEventListener('keydown', resumeAudio);
+        window.removeEventListener('touchstart', resumeAudio);
         if (containerRef.current) {
             containerRef.current.removeChild(renderer.domElement);
         }

@@ -29,6 +29,26 @@ const soundFiles = [
     name: 'bid-success.mp3',
     url: 'https://cdn.freesound.org/previews/131/131142_5121236-lq.mp3',
     description: 'Bid success sound'
+  },
+  {
+    name: 'fw-launch.mp3',
+    url: 'https://cdn.freesound.org/previews/169/169044_2578041-lq.mp3',
+    description: 'Firework Launch'
+  },
+  {
+    name: 'fw-explosion.mp3',
+    url: 'https://cdn.freesound.org/previews/102/102734_1660626-lq.mp3',
+    description: 'Firework Explosion'
+  },
+  {
+    name: 'fw-whistle.mp3',
+    url: 'https://cdn.freesound.org/previews/244/244656_3905081-lq.mp3',
+    description: 'Firework Whistle'
+  },
+  {
+    name: 'fw-heavy.mp3',
+    url: 'https://cdn.freesound.org/previews/539/539238_11788662-lq.mp3',
+    description: 'Heavy Explosion'
   }
 ];
 

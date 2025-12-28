@@ -14,7 +14,7 @@ interface CountdownProps {
 const Countdown: React.FC<CountdownProps> = ({ onComplete }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const isMountedRef = useRef(true);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const onCompleteRef = useRef(onComplete);
   const hasCompletedRef = useRef(false);
 

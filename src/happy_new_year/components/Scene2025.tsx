@@ -176,7 +176,6 @@ const Scene2025: React.FC<Scene2025Props> = ({ onComplete }) => {
 
       const clock = new THREE.Clock();
       let animationPhase = 'forming'; // forming -> holding -> exploding
-      let explosionTime = 0;
       
       const animate = () => {
         if (!isMountedRef.current) return;
@@ -222,7 +221,7 @@ const Scene2025: React.FC<Scene2025Props> = ({ onComplete }) => {
         
         if (animationPhase === 'holding' && time > 8.0) {
             animationPhase = 'exploding';
-            explosionTime = time;
+
             
             // Initialize explosion velocities
             for (let i = 0; i < particleCount; i++) {
